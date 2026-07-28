@@ -14,6 +14,7 @@ for d in docs:
     secs = extract_sections(d["doc_id"], d["text"])
     before = len(secs)
     secs, merged = merge_orphans(secs)
+    secs = [s for s in secs if s.kind != "appendix"]
     all_sections.extend(secs)
 
     # 자식 유무 판정: 다음 섹션의 레벨이 더 깊으면 부모

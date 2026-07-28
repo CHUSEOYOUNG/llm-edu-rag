@@ -7,6 +7,7 @@ CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮"
 
 # (유형, 정규식, 레벨) — 레벨이 낮을수록 상위
 PATTERNS = [
+    ("appendix", re.compile(r"^부\s*록\s*(\d*)"), 1),
     ("chapter", re.compile(r"^제\s*(\d+)\s*장\b"), 1),
     ("roman",   re.compile(rf"^([{ROMAN}]+)\s*[.．]"), 1),
     ("article", re.compile(r"^제\s*(\d+조(?:의\s*\d+)?)\s*[(（]([^)）]*)[)）]"), 2),

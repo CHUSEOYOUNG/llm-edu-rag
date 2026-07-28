@@ -2,7 +2,7 @@ import re
 import unicodedata
 from collections import Counter
 
-MIDDLE_DOTS = "\u22c5\uff65\u00b7\u2027\u30fb"  # ⋅ ･ · ‧ ・
+MIDDLE_DOTS = "\u22c5\uff65\u00b7\u2027\u30fb\u2024\u2219\u00b7" # ⋅ ･ · ‧ ・
 _MARKER = re.compile(r"^[\s\-*>]+")
 _ONLY_DOTS = re.compile(rf"^[\s{MIDDLE_DOTS}]+$")
 _PAGENUM = re.compile(r"^[\s\-–—]*\d{1,4}[\s\-–—]*$")
