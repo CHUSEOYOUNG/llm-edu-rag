@@ -24,7 +24,10 @@ _EMPH = re.compile(r"\*\*|__|\*|`")
 
 # 문장으로 끝나면 제목이 아님
 _SENTENCE_END = ("다.", "다", "함.", "임.", "음.", "된다.", "한다.")
-
+_TITLE_MAX = 30
+# 문장 중간에서 잘렸음을 시사하는 어미·기호
+_TRUNCATED = ("·", ",", "및", "또는", "그리고", "하여", "따라", "위해",
+              "에서", "으로", "하고", "있는", "관한", "대한")
 
 def clean_line(line: str):
     """마크다운 마커 제거. (본문, 헤딩여부) 반환"""
@@ -51,11 +54,12 @@ def match_number(text: str):
 
 def looks_like_title(title: str, is_head: bool) -> bool:
     """제목처럼 보이는가 (본문 속 번호 목록 걸러내기)"""
-    if is_head:
-        return True
-    if not title or len(title) > 50:
+    t = title.strip()
+    if not t or len(t) > _TITLE_MAX:
         return False
-    if title.endswith(_SENTENCE_END):
+    if t.endswith(_SENTENCE_END):
+        return False
+    if t.endswith(_TRUNCATED):          # 문장 중간에서 잘린 경우
         return False
     return True
 
