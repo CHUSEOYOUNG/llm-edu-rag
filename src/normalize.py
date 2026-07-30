@@ -101,3 +101,4 @@ def count_stats(text: str) -> dict:
         "n_table": text.count("|---"),
         "n_orphan_dot": sum(1 for l in lines if _is_orphan_dot_line(l)),
     }
+

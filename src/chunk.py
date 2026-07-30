@@ -51,7 +51,7 @@ def hard_split(text: str, size: int) -> list:
     return out
 
 
-def chunk_section(sec: dict) -> list:
+def chunk_section(sec: dict, sec_idx: int) -> list:
     body = sec["text"].strip()
     if not body:
         return []
@@ -89,7 +89,8 @@ def chunk_section(sec: dict) -> list:
         groups[-1] += "\n\n" + tail
 
     return [{
-        "chunk_id": f"{sec['doc_id']}::{sec['number']}::{i}",
+
+        "chunk_id": f"{sec['doc_id']}::s{sec_idx:03d}::{sec['number']}::{i}",
         "doc_id": sec["doc_id"],
         "path": header,
         "text": f"{header}\n\n{g}" if header else g,
@@ -102,8 +103,8 @@ def chunk_section(sec: dict) -> list:
 
 sections = [json.loads(l) for l in IN.open(encoding="utf-8")]
 chunks = []
-for s in sections:
-    chunks.extend(chunk_section(s))
+for idx, s in enumerate(sections):
+    chunks.extend(chunk_section(s, idx))
 chunks = [c for c in chunks if c["n_chars"] >= 30]
 with OUT.open("w", encoding="utf-8") as f:
     for c in chunks:
