@@ -1,0 +1,42 @@
+{
+  "schema_version": "2-draft",
+  "status": "partial_review_q008_scope_pending",
+  "reviewed_qids": [
+    "q001",
+    "q002",
+    "q003",
+    "q004",
+    "q005",
+    "q006",
+    "q007",
+    "q009",
+    "q010",
+    "q011"
+  ],
+  "v1_sha256": "dcff62f99b22865f5c28d8e54ad362f332d2cd20b98b2184a4baf5ff8dba87c8",
+  "v2_sha256": "f135bceb19c20285b79ebc037107d3c0fd7a4e41ae3e82d13e8060920210fc32",
+  "chunks_sha256": "fecbadc3004eeb49d10a52fe518380318ae3b95131e21bd45b842d2d497aeb61",
+  "embedding_sha256": "cda516645a70558f009059b080064d616e11623fd28dc1374833f6d10a4234e2",
+  "index_text": "body",
+  "model": "BAAI/bge-m3",
+  "scope": "ten-question diagnostic snapshot; q008 withheld for effective-date ambiguity; not held-out evaluation",
+  "anchors": "Offsets are relative to current chunk body; corpus changes require re-annotation/remapping.",
+  "approved_question_changes": {
+    "q009": {
+      "original": "창의적 체험활동은 어떤 영역으로 구성되나요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?"
+    },
+    "q006": {
+      "original": "수업 한 시간은 몇 분인가요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 수업 한 시간은 각각 몇 분이 원칙인가요?"
+    },
+    "q007": {
+      "original": "정보 교육은 최소 몇 시간을 해야 하나요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?"
+    }
+  },
+  "withheld_qids": {
+    "q008": "Question lacks effective-date scope; proposed 2028 scope awaits user confirmation."
+  },
+  "snapshot_id": "v2-diagnostic-10q-2026-08-27"
+}

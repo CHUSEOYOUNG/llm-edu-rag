@@ -1,0 +1,17 @@
+{
+  "schema_version": "2-draft",
+  "status": "user_review_pending",
+  "reviewed_qids": [
+    "q001",
+    "q002",
+    "q009"
+  ],
+  "v1_sha256": "dcff62f99b22865f5c28d8e54ad362f332d2cd20b98b2184a4baf5ff8dba87c8",
+  "v2_sha256": "377228dddf7d49aad3db6c211292136cdb8ea233658f636eb0a9804195fa6773",
+  "chunks_sha256": "fecbadc3004eeb49d10a52fe518380318ae3b95131e21bd45b842d2d497aeb61",
+  "embedding_sha256": "cda516645a70558f009059b080064d616e11623fd28dc1374833f6d10a4234e2",
+  "index_text": "body",
+  "model": "BAAI/bge-m3",
+  "scope": "three-question diagnostic; not held-out evaluation; unreviewed questions excluded from v2 metrics",
+  "anchors": "Offsets are relative to current chunk body; corpus changes require re-annotation/remapping."
+}

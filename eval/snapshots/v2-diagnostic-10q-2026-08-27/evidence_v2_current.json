@@ -1,0 +1,579 @@
+{
+  "status": "diagnostic_draft_not_held_out",
+  "query_version": "v2",
+  "approved_question_changes": {
+    "q009": {
+      "original": "창의적 체험활동은 어떤 영역으로 구성되나요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?"
+    },
+    "q006": {
+      "original": "수업 한 시간은 몇 분인가요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 수업 한 시간은 각각 몇 분이 원칙인가요?"
+    },
+    "q007": {
+      "original": "정보 교육은 최소 몇 시간을 해야 하나요?",
+      "revised": "2022 개정 교육과정 기준으로 초등학교와 중학교의 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?"
+    }
+  },
+  "warning": "Label corrections and query revisions are separate; not a retriever upgrade.",
+  "rankings_sha256": "d677eb4e0d0e0c43727f25453959c72e4785ad52186dd4af45dfc9b557dceedb",
+  "original_rankings_sha256": "d296bd362b02e3e593db961b793aca6aeeb4faf33642918c74eaa76f48e690b9",
+  "v2_sha256": "f135bceb19c20285b79ebc037107d3c0fd7a4e41ae3e82d13e8060920210fc32",
+  "legacy_all_answerable": {
+    "n": 11,
+    "overall": {
+      "recall@1": 0.5227272727272727,
+      "recall@5": 0.75,
+      "recall@10": 0.75,
+      "hit@1": 0.7272727272727273,
+      "hit@5": 0.8181818181818182,
+      "hit@10": 0.8181818181818182,
+      "mrr@20": 0.7772727272727273
+    },
+    "per_question": {
+      "q001": {
+        "recall@1": 0.25,
+        "recall@5": 0.25,
+        "recall@10": 0.25,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q002": {
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "hit@1": 0.0,
+        "hit@5": 0.0,
+        "hit@10": 0.0,
+        "mrr@20": 0.0
+      },
+      "q003": {
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q004": {
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 0.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 0.5
+      },
+      "q005": {
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q006": {
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q007": {
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q008": {
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q009": {
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "hit@1": 0.0,
+        "hit@5": 0.0,
+        "hit@10": 0.0,
+        "mrr@20": 0.05
+      },
+      "q010": {
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      },
+      "q011": {
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "hit@1": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0,
+        "mrr@20": 1.0
+      }
+    }
+  },
+  "reviewed_subset": {
+    "n": 10,
+    "legacy_overall": {
+      "recall@1": 0.475,
+      "recall@5": 0.725,
+      "recall@10": 0.725,
+      "hit@1": 0.7,
+      "hit@5": 0.8,
+      "hit@10": 0.8,
+      "mrr@20": 0.755
+    },
+    "draft_on_original_query_overall": {
+      "hit@1": 0.8,
+      "coverage@1": 0.65,
+      "complete@1": 0.5,
+      "hit@5": 1.0,
+      "coverage@5": 1.0,
+      "complete@5": 1.0,
+      "hit@10": 1.0,
+      "coverage@10": 1.0,
+      "complete@10": 1.0,
+      "mrr@20": 0.8833333333333334
+    },
+    "draft_overall": {
+      "hit@1": 0.5,
+      "coverage@1": 0.5,
+      "complete@1": 0.5,
+      "hit@5": 0.9,
+      "coverage@5": 0.9,
+      "complete@5": 0.9,
+      "hit@10": 1.0,
+      "coverage@10": 0.95,
+      "complete@10": 0.9,
+      "mrr@20": 0.7
+    },
+    "per_question": [
+      {
+        "qid": "q001",
+        "legacy": {
+          "recall@1": 0.25,
+          "recall@5": 0.25,
+          "recall@10": 0.25,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "first_evidence_rank": {
+          "ordinary_deletion": 1,
+          "possible_earlier_deletion": 1
+        }
+      },
+      {
+        "qid": "q002",
+        "legacy": {
+          "recall@1": 0.0,
+          "recall@5": 0.0,
+          "recall@10": 0.0,
+          "hit@1": 0.0,
+          "hit@5": 0.0,
+          "hit@10": 0.0,
+          "mrr@20": 0.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.3333333333333333
+        },
+        "draft": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.3333333333333333
+        },
+        "first_evidence_rank": {
+          "closed_year_default": 3,
+          "objective_evidence_exception": 3
+        }
+      },
+      {
+        "qid": "q003",
+        "legacy": {
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "first_evidence_rank": {
+          "korean_character_bytes": 1
+        }
+      },
+      {
+        "qid": "q004",
+        "legacy": {
+          "recall@1": 0.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 0.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 0.5
+        },
+        "draft_on_original_query": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.5
+        },
+        "draft": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.5
+        },
+        "first_evidence_rank": {
+          "permitted_adjustment": 2,
+          "protected_subjects": 2
+        }
+      },
+      {
+        "qid": "q005",
+        "legacy": {
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "first_evidence_rank": {
+          "middle_elective_subjects": 1
+        }
+      },
+      {
+        "qid": "q006",
+        "legacy": {
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 0.5,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 0.0,
+          "coverage@5": 0.0,
+          "complete@5": 0.0,
+          "hit@10": 1.0,
+          "coverage@10": 0.5,
+          "complete@10": 0.0,
+          "mrr@20": 0.16666666666666666
+        },
+        "first_evidence_rank": {
+          "elementary_lesson_duration": 6,
+          "middle_lesson_duration": 16
+        }
+      },
+      {
+        "qid": "q007",
+        "legacy": {
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 0.5,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.5
+        },
+        "first_evidence_rank": {
+          "elementary_information_hours": 2,
+          "middle_information_hours": 4
+        }
+      },
+      {
+        "qid": "q009",
+        "legacy": {
+          "recall@1": 0.0,
+          "recall@5": 0.0,
+          "recall@10": 0.0,
+          "hit@1": 0.0,
+          "hit@5": 0.0,
+          "hit@10": 0.0,
+          "mrr@20": 0.05
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 0.5,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 0.0,
+          "coverage@1": 0.0,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 0.5
+        },
+        "first_evidence_rank": {
+          "elementary_areas": 2,
+          "middle_areas": 2
+        }
+      },
+      {
+        "qid": "q010",
+        "legacy": {
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "first_evidence_rank": {
+          "middle_korean_three_year_hours": 1
+        }
+      },
+      {
+        "qid": "q011",
+        "legacy": {
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "hit@1": 1.0,
+          "hit@5": 1.0,
+          "hit@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft_on_original_query": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "draft": {
+          "hit@1": 1.0,
+          "coverage@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "coverage@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "coverage@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@20": 1.0
+        },
+        "first_evidence_rank": {
+          "elementary_korean_grade34_hours": 1
+        }
+      }
+    ]
+  },
+  "excluded_from_v2": [
+    "q008",
+    "q012",
+    "q013"
+  ],
+  "exclusion_reasons": {
+    "q008": "Question lacks effective-date scope; proposed 2028 scope awaits user confirmation.",
+    "q012": "not_evaluated_unanswerable",
+    "q013": "not_evaluated_unanswerable"
+  }
+}

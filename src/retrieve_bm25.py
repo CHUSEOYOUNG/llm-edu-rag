@@ -46,7 +46,7 @@ def main():
     questions = [json.loads(l) for l in QUESTIONS.open(encoding="utf-8")]
 
     print(f"청크 {len(chunks)}개 색인 중...")
-    corpus = [tokenize(c["path"] + " " + c["body"]) for c in chunks]
+    corpus = [tokenize(c["body"]) for c in chunks]
     bm25 = BM25Okapi(corpus)
     ids = [c["chunk_id"] for c in chunks]
     by_id = {c["chunk_id"]: c for c in chunks}

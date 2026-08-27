@@ -57,7 +57,7 @@ def main():
     ids = [c["chunk_id"] for c in chunks]
 
     print("BM25 색인...")
-    bm25 = BM25Okapi([tokenize(c["path"] + " " + c["body"]) for c in chunks])
+    bm25 = BM25Okapi([tokenize(c["body"]) for c in chunks])
 
     print("임베딩 로드...")
     mat = np.load(EMB)
@@ -121,6 +121,9 @@ def main():
     OUT.write_text(json.dumps({
         "method": "hybrid_rrf",
         "rrf_k": RRF_K,
+        "index_text": "body",
+        "candidate_depth": TOP_N,
+        "evaluation_depth": 20,
         "n_questions": len(allm),
         "overall": {k: avg(allm, k) for k in allm[0]},
         "per_type": {t: {k: avg(ms, k) for k in ms[0]} for t, ms in per_type.items()},

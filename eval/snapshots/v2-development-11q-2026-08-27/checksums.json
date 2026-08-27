@@ -1,0 +1,9 @@
+{
+  "questions.v2.draft.jsonl": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
+  "questions.v2.draft.manifest.json": "0ef25f59a694c91f30d889835c25126768cd3c533469b84b6443ac607caa4486",
+  "dense_rankings_v2_current.json": "54e961c546d07732d06d9df8c6801854d7824f3e497c1afc41169ac9297f6122",
+  "evidence_v2_current.json": "52bbf811374c461ac700e830fb9fd671d116add834c87f4b6a55d2aec8e40d75",
+  "dense_rankings_v2_audit.json": "d296bd362b02e3e593db961b793aca6aeeb4faf33642918c74eaa76f48e690b9",
+  "evaluate_evidence.py": "56ede4ac662dd3ddb7ef54760127aba28d0683970481cce87e78121d629dd63b",
+  "test_evaluate_evidence.py": "0569e34b705cd339c2341954f140937afc0c7e180c76ccbd6344b6c808ac084d"
+}

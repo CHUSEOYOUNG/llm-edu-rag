@@ -51,7 +51,7 @@ def main():
 
     if mat is None:
         print(f"임베딩 생성 중 ({len(chunks)}개)... 5~10분 소요")
-        texts = [c["text"] for c in chunks]     # 경로 포함 본문
+        texts = [c["body"] for c in chunks]     # 검색 색인에는 본문만 사용
         mat = model.encode(
             texts, batch_size=8, normalize_embeddings=True,
             show_progress_bar=True,
