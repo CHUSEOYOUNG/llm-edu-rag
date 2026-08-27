@@ -1,0 +1,426 @@
+{
+  "raw": {
+    "n_chunks": 1359,
+    "n_eval": 11,
+    "skipped": [],
+    "per_question": [
+      {
+        "qid": "q001",
+        "type": "fact",
+        "n_gold": 7,
+        "recall@1": 0.0,
+        "recall@5": 0.42857142857142855,
+        "recall@10": 0.42857142857142855,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q002",
+        "type": "fact",
+        "n_gold": 6,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q003",
+        "type": "fact",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.2
+      },
+      {
+        "qid": "q004",
+        "type": "fact",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.25
+      },
+      {
+        "qid": "q005",
+        "type": "fact",
+        "n_gold": 1,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 1.0,
+        "mrr": 0.1111111111111111
+      },
+      {
+        "qid": "q006",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q007",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333
+      },
+      {
+        "qid": "q008",
+        "type": "cond",
+        "n_gold": 4,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q009",
+        "type": "cond",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q010",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q011",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      }
+    ]
+  },
+  "dot": {
+    "n_chunks": 1354,
+    "n_eval": 11,
+    "skipped": [],
+    "per_question": [
+      {
+        "qid": "q001",
+        "type": "fact",
+        "n_gold": 7,
+        "recall@1": 0.0,
+        "recall@5": 0.42857142857142855,
+        "recall@10": 0.42857142857142855,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q002",
+        "type": "fact",
+        "n_gold": 6,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q003",
+        "type": "fact",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.2
+      },
+      {
+        "qid": "q004",
+        "type": "fact",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.25
+      },
+      {
+        "qid": "q005",
+        "type": "fact",
+        "n_gold": 1,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 1.0,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q006",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q007",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333
+      },
+      {
+        "qid": "q008",
+        "type": "cond",
+        "n_gold": 4,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q009",
+        "type": "cond",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q010",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q011",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      }
+    ]
+  },
+  "head": {
+    "n_chunks": 1334,
+    "n_eval": 11,
+    "skipped": [],
+    "per_question": [
+      {
+        "qid": "q001",
+        "type": "fact",
+        "n_gold": 7,
+        "recall@1": 0.0,
+        "recall@5": 0.42857142857142855,
+        "recall@10": 0.42857142857142855,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q002",
+        "type": "fact",
+        "n_gold": 6,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q003",
+        "type": "fact",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.2
+      },
+      {
+        "qid": "q004",
+        "type": "fact",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q005",
+        "type": "fact",
+        "n_gold": 1,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 1.0,
+        "mrr": 0.1111111111111111
+      },
+      {
+        "qid": "q006",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q007",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333
+      },
+      {
+        "qid": "q008",
+        "type": "cond",
+        "n_gold": 4,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q009",
+        "type": "cond",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q010",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q011",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      }
+    ]
+  },
+  "both": {
+    "n_chunks": 1331,
+    "n_eval": 11,
+    "skipped": [],
+    "per_question": [
+      {
+        "qid": "q001",
+        "type": "fact",
+        "n_gold": 7,
+        "recall@1": 0.0,
+        "recall@5": 0.42857142857142855,
+        "recall@10": 0.42857142857142855,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q002",
+        "type": "fact",
+        "n_gold": 6,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q003",
+        "type": "fact",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.2
+      },
+      {
+        "qid": "q004",
+        "type": "fact",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.5
+      },
+      {
+        "qid": "q005",
+        "type": "fact",
+        "n_gold": 1,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 1.0,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q006",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.5,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q007",
+        "type": "cond",
+        "n_gold": 2,
+        "recall@1": 0.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333
+      },
+      {
+        "qid": "q008",
+        "type": "cond",
+        "n_gold": 4,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.125
+      },
+      {
+        "qid": "q009",
+        "type": "cond",
+        "n_gold": 3,
+        "recall@1": 0.0,
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0
+      },
+      {
+        "qid": "q010",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      },
+      {
+        "qid": "q011",
+        "type": "table",
+        "n_gold": 1,
+        "recall@1": 1.0,
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0
+      }
+    ]
+  }
+}

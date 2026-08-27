@@ -83,13 +83,11 @@ def chunk_section(sec: dict, sec_idx: int) -> list:
         groups.append("\n\n".join(buf))
 
     # 너무 작은 마지막 조각은 앞에 흡수
-# 너무 작은 마지막 조각은 앞에 흡수
     if len(groups) > 1 and len(groups[-1]) < MIN:
         tail = groups.pop()
         groups[-1] += "\n\n" + tail
 
     return [{
-
         "chunk_id": f"{sec['doc_id']}::s{sec_idx:03d}::{sec['number']}::{i}",
         "doc_id": sec["doc_id"],
         "path": header,
@@ -101,18 +99,26 @@ def chunk_section(sec: dict, sec_idx: int) -> list:
     } for i, g in enumerate(groups)]
 
 
-sections = [json.loads(l) for l in IN.open(encoding="utf-8")]
-chunks = []
-for idx, s in enumerate(sections):
-    chunks.extend(chunk_section(s, idx))
-chunks = [c for c in chunks if c["n_chars"] >= 30]
-with OUT.open("w", encoding="utf-8") as f:
-    for c in chunks:
-        f.write(json.dumps(c, ensure_ascii=False) + "\n")
+def main():
+    sections = [json.loads(l) for l in IN.open(encoding="utf-8")]
+    chunks = []
+    for idx, s in enumerate(sections):
+        chunks.extend(chunk_section(s, idx))
 
-sizes = sorted(c["n_chars"] for c in chunks)
-n = len(sizes)
-print(f"섹션 {len(sections)} → 청크 {n}")
-print(f"  최소 {sizes[0]:,} / 25% {sizes[n//4]:,} / 중앙 {sizes[n//2]:,} / 75% {sizes[3*n//4]:,} / 최대 {sizes[-1]:,}")
-print(f"  1500자 초과: {sum(1 for s in sizes if s > MAX)}개")
-print(f"→ {OUT}")
+    chunks = [c for c in chunks if c["n_chars"] >= 30]
+
+    with OUT.open("w", encoding="utf-8") as f:
+        for c in chunks:
+            f.write(json.dumps(c, ensure_ascii=False) + "\n")
+
+    sizes = sorted(c["n_chars"] for c in chunks)
+    n = len(sizes)
+    print(f"섹션 {len(sections)} → 청크 {n}")
+    print(f"  최소 {sizes[0]:,} / 25% {sizes[n//4]:,} / 중앙 {sizes[n//2]:,} "
+          f"/ 75% {sizes[3*n//4]:,} / 최대 {sizes[-1]:,}")
+    print(f"  1500자 초과: {sum(1 for s in sizes if s > MAX)}개")
+    print(f"→ {OUT}")
+
+
+if __name__ == "__main__":
+    main()
