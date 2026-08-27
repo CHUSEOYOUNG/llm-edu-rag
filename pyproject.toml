@@ -5,5 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "kiwipiepy>=0.23.2",
     "pymupdf4llm>=0.0.27",
+    "rank-bm25>=0.2.2",
 ]
