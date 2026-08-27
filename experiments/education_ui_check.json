@@ -1,0 +1,85 @@
+{
+  "ui": "학교생활 안내",
+  "python_tests_passed": 53,
+  "javascript_tests_passed": 4,
+  "real_http_queries": 13,
+  "browser_visual_check": "blocked_browser_tool_startup",
+  "per_question": [
+    {
+      "qid": "q001",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q002",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q003",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q004",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q005",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q006",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q007",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q008",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q009",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q010",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q011",
+      "source_count": 5,
+      "generation_called": false,
+      "baseline_top5_matches": true
+    },
+    {
+      "qid": "q012",
+      "source_count": 5,
+      "generation_called": false
+    },
+    {
+      "qid": "q013",
+      "source_count": 5,
+      "generation_called": false
+    }
+  ]
+}

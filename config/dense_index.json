@@ -1,0 +1,7 @@
+{
+  "model": "BAAI/bge-m3",
+  "index_text": "body",
+  "chunks_sha256": "fecbadc3004eeb49d10a52fe518380318ae3b95131e21bd45b842d2d497aeb61",
+  "embedding_sha256": "cda516645a70558f009059b080064d616e11623fd28dc1374833f6d10a4234e2",
+  "provenance": "v2-development-11q-2026-08-27; existing body-only index"
+}

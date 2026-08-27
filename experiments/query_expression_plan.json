@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "snapshot_id": "v2-development-11q-2026-08-27",
+  "questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
+  "method": "one manually authored core query per question; no post-result selection",
+  "limitation": "Author has seen development questions, gold and earlier failures; not a blinded or held-out evaluation.",
+  "scope_filters_applied": false,
+  "rows": [
+    {
+      "qid": "q001",
+      "full_question": "학교폭력으로 4호나 5호 조치를 받으면 생기부에서 언제 지워지나요?",
+      "core_query": "학교폭력 4호 5호 조치 생기부 삭제 시기",
+      "constraints": [
+        {
+          "kind": "action",
+          "value": "4호",
+          "start": 7,
+          "end": 9,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "action",
+          "value": "5호",
+          "start": 11,
+          "end": 13,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q002",
+      "full_question": "작년 생기부에 잘못 쓴 내용이 있는데 지금 고칠 수 있나요?",
+      "core_query": "작년 생기부 잘못 쓴 내용 정정 가능 여부",
+      "constraints": [
+        {
+          "kind": "relative_year",
+          "value": "작년",
+          "start": 0,
+          "end": 2,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q003",
+      "full_question": "생기부 글자수 셀 때 한글 한 글자는 몇 바이트로 계산되나요?",
+      "core_query": "생기부 한글 한 글자 바이트 계산",
+      "constraints": [
+        {
+          "kind": "character_type",
+          "value": "한글",
+          "start": 12,
+          "end": 14,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q004",
+      "full_question": "초등학교에서 교과 수업시수를 학교 재량으로 줄일 수 있나요?",
+      "core_query": "초등학교 교과 수업시수 감축 허용 범위와 제한",
+      "constraints": [
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 0,
+          "end": 4,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q005",
+      "full_question": "중학교 선택 교과에는 어떤 과목들이 있나요?",
+      "core_query": "중학교 선택 교과 과목 목록",
+      "constraints": [
+        {
+          "kind": "school_level",
+          "value": "중학교",
+          "start": 0,
+          "end": 3,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q006",
+      "full_question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 수업 한 시간은 각각 몇 분이 원칙인가요?",
+      "core_query": "초등학교 중학교 수업 한 시간 몇 분",
+      "constraints": [
+        {
+          "kind": "curriculum",
+          "value": "2022 개정 교육과정",
+          "start": 0,
+          "end": 12,
+          "placement": "context_only"
+        },
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 18,
+          "end": 22,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "school_level",
+          "value": "중학교",
+          "start": 24,
+          "end": 27,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q007",
+      "full_question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?",
+      "core_query": "초등학교 중학교 정보 교육 최소 편성 시간",
+      "constraints": [
+        {
+          "kind": "curriculum",
+          "value": "2022 개정 교육과정",
+          "start": 0,
+          "end": 12,
+          "placement": "context_only"
+        },
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 18,
+          "end": 22,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "school_level",
+          "value": "중학교",
+          "start": 24,
+          "end": 27,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "bound",
+          "value": "최소",
+          "start": 39,
+          "end": 41,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q008",
+      "full_question": "코퍼스에 포함된 국가교육위원회 고시 제2026-1호에서, 2028년 3월 1일부터 초등학교 1·2학년에 적용하도록 정한 교과는 무엇인가요?",
+      "core_query": "초등학교 1·2학년 교과 목록",
+      "constraints": [
+        {
+          "kind": "notice",
+          "value": "국가교육위원회 고시 제2026-1호",
+          "start": 9,
+          "end": 28,
+          "placement": "context_only"
+        },
+        {
+          "kind": "effective_date",
+          "value": "2028년 3월 1일",
+          "start": 32,
+          "end": 43,
+          "placement": "context_only"
+        },
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 46,
+          "end": 50,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "grade",
+          "value": "1·2학년",
+          "start": 51,
+          "end": 56,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q009",
+      "full_question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?",
+      "core_query": "초등학교 중학교 창의적 체험활동 영역 구성",
+      "constraints": [
+        {
+          "kind": "curriculum",
+          "value": "2022 개정 교육과정",
+          "start": 0,
+          "end": 12,
+          "placement": "context_only"
+        },
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 18,
+          "end": 22,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "school_level",
+          "value": "중학교",
+          "start": 24,
+          "end": 27,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q010",
+      "full_question": "중학교 국어 수업 시수는 3년간 몇 시간인가요?",
+      "core_query": "중학교 국어 3년간 수업 시수",
+      "constraints": [
+        {
+          "kind": "school_level",
+          "value": "중학교",
+          "start": 0,
+          "end": 3,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "period",
+          "value": "3년간",
+          "start": 14,
+          "end": 17,
+          "placement": "search_and_context"
+        }
+      ]
+    },
+    {
+      "qid": "q011",
+      "full_question": "초등학교 3~4학년 국어 수업 시수는 몇 시간인가요?",
+      "core_query": "초등학교 3~4학년 국어 수업 시수",
+      "constraints": [
+        {
+          "kind": "school_level",
+          "value": "초등학교",
+          "start": 0,
+          "end": 4,
+          "placement": "search_and_context"
+        },
+        {
+          "kind": "grade",
+          "value": "3~4학년",
+          "start": 5,
+          "end": 10,
+          "placement": "search_and_context"
+        }
+      ]
+    }
+  ]
+}
