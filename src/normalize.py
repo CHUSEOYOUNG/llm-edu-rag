@@ -84,10 +84,7 @@ def strip_running_heads(pages: list, edge: int = 3, min_repeat: int = 3) -> list
                         removed += 1
                         continue
                     seen.add(k)
-            kept.append(l)
-        out.append("\n".join(kept))
-
-    print(f"  머리말/꼬리말 {removed}줄 제거 (반복 패턴 {len(repeated)}종)")
+        print(f"  머리말/꼬리말 {removed}줄 제거 (반복 패턴 {len(repeated)}종)")
     return out
 
 
