@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import threading
 import time
+from urllib.parse import quote, unquote, urlsplit
 
 from rag import ROOT, DenseRetriever, build_packet, compact, missing_dates
 
@@ -36,9 +37,24 @@ def condition_audit(packet):
 
 
 class SearchService:
-    def __init__(self, retriever):
+    def __init__(self, retriever, source_root=ROOT / "data/raw"):
         self.retriever = retriever
         self.lock = threading.Lock()
+        source_root = source_root.resolve()
+        self.source_files = {}
+        for doc_id in {chunk["doc_id"] for chunk in retriever.chunks}:
+            candidate = (source_root / f"{doc_id}.pdf").resolve()
+            if candidate.parent == source_root and candidate.is_file():
+                self.source_files[doc_id] = candidate
+
+    def source_path(self, doc_id):
+        return self.source_files.get(doc_id)
+
+    def add_source_links(self, packet):
+        for source in packet["sources"]:
+            page = source.get("page_start")
+            if self.source_path(source["doc_id"]) and type(page) is int and page >= 1:
+                source["source_url"] = f"/source/{quote(source['doc_id'], safe='')}.pdf#page={page}"
 
     def info(self):
         return {"mode": "local_retrieval_only", "generation_enabled": False,
@@ -59,6 +75,7 @@ class SearchService:
         try:
             hits = self.retriever.search(question, k)
             packet = build_packet(question, hits)
+            self.add_source_links(packet)
         finally:
             self.lock.release()
         return {"status": "retrieved_only", "answer": None, "generation_called": False,
@@ -114,16 +131,34 @@ class Handler(BaseHTTPRequestHandler):
     def send_json(self, status, payload):
         self.send_body(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
 
+    def source_path(self, request_path):
+        prefix, suffix = "/source/", ".pdf"
+        if not request_path.startswith(prefix) or not request_path.endswith(suffix):
+            return None
+        encoded = request_path[len(prefix):-len(suffix)]
+        try:
+            doc_id = unquote(encoded, errors="strict")
+        except UnicodeError:
+            return None
+        return self.server.service.source_path(doc_id)
+
     def do_GET(self):
         if not self.allowed_request():
             return
-        if self.path in STATIC:
-            filename, content_type = STATIC[self.path]
+        request_path = urlsplit(self.path).path
+        if request_path in STATIC:
+            filename, content_type = STATIC[request_path]
             self.send_body(200, (WEB / filename).read_bytes(), content_type)
-        elif self.path == "/api/info":
+        elif request_path == "/api/info":
             self.send_json(200, self.server.service.info())
-        elif self.path == "/favicon.ico":
+        elif request_path == "/favicon.ico":
             self.send_body(204, b"", "image/x-icon")
+        elif request_path.startswith("/source/"):
+            source = self.source_path(request_path)
+            if source:
+                self.send_body(200, source.read_bytes(), "application/pdf")
+            else:
+                self.send_json(404, {"error": "원문 파일을 찾을 수 없어요."})
         else:
             self.send_json(404, {"error": "요청한 경로가 없습니다."})
 

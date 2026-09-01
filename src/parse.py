@@ -3,7 +3,7 @@ import pathlib
 import unicodedata
 import pymupdf4llm
 
-from normalize import normalize, count_stats, strip_running_heads
+from normalize import normalize_pages, count_stats, strip_running_heads
 
 RAW = pathlib.Path("data/raw")
 OUT = pathlib.Path("data/processed")
@@ -19,6 +19,7 @@ pdfs = sorted(RAW.glob("*.pdf"))
 print(f"대상 PDF: {len(pdfs)}개\n")
 
 results = []
+raw_pages = {}
 for pdf in pdfs:
     name = nfc(pdf.name)
     print(name)
@@ -31,17 +32,19 @@ for pdf in pdfs:
         print(f"  [실패] {e}\n")
         continue
 
-    page_texts = strip_running_heads([p["text"] for p in pages])
-    md = "\n\n".join(page_texts)
+    doc_id = nfc(pdf.stem)
+    raw_pages[doc_id] = [p["text"] for p in pages]
+    page_texts = strip_running_heads(raw_pages[doc_id])
+    raw_stats = count_stats("\n\n".join(page_texts))
+    md, page_starts = normalize_pages(page_texts)
 
-    raw_stats = count_stats(md)
-    md = normalize(md)
     stats = count_stats(md)
 
     results.append({
-        "doc_id": nfc(pdf.stem),
+        "doc_id": doc_id,
         "source": name,
         "n_pages": len(pages),
+        "page_starts": page_starts,
         "text": md,
         **stats,
     })
@@ -52,6 +55,9 @@ for pdf in pdfs:
 with open(OUT / "docs.jsonl", "w", encoding="utf-8") as f:
     for r in results:
         f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+with open(OUT / "raw_pages.json", "w", encoding="utf-8") as f:
+    json.dump(raw_pages, f, ensure_ascii=False)
 
 sample = OUT / "sample"
 sample.mkdir(exist_ok=True)

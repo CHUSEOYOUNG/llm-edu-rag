@@ -46,6 +46,11 @@ function selectSource(source) {
   $("reader-title").textContent = schoolGuide.displayTitle(source.doc_id);
   $("reader-original-title").textContent = source.doc_id;
   $("reader-path").textContent = source.path || "이 자료에는 위치 정보가 없어요.";
+  $("reader-page").textContent = schoolGuide.pageLabel(source);
+  const sourceLink = $("source-link");
+  sourceLink.hidden = !source.source_url;
+  if (source.source_url) sourceLink.href = source.source_url;
+  else sourceLink.removeAttribute("href");
   $("reader-body").textContent = source.body;
   $("reader-body").scrollTop = 0;
   $("copy-button").textContent = "내용 복사";
@@ -82,6 +87,7 @@ function renderResults(data) {
     card.setAttribute("aria-label", `${schoolGuide.displayTitle(source.doc_id)} 내용 보기`);
     card.querySelector(".topic-badge").textContent = schoolGuide.topicFor(source.doc_id);
     card.querySelector(".card-title").textContent = schoolGuide.displayTitle(source.doc_id);
+    card.querySelector(".card-page").textContent = schoolGuide.pageLabel(source);
     card.querySelector(".card-preview").textContent = source.body.slice(0, 300);
     card.addEventListener("click", () => selectSource(source));
     $("result-list").append(fragment);

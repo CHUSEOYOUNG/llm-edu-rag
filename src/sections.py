@@ -1,4 +1,5 @@
 import re
+from bisect import bisect_right
 from dataclasses import dataclass, field
 
 ROMAN = "ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ"
@@ -73,10 +74,21 @@ class Section:
     title: str
     path: list = field(default_factory=list)
     lines: list = field(default_factory=list)
+    line_pages: list = field(default_factory=list)
+    heading_page: int | None = None
+
+    def append(self, line: str, page: int | None):
+        self.lines.append(line)
+        self.line_pages.append(page)
 
     def to_dict(self):
-        body = "\n".join(self.lines).strip()
-        return {
+        start, end = 0, len(self.lines)
+        while start < end and not self.lines[start].strip():
+            start += 1
+        while end > start and not self.lines[end - 1].strip():
+            end -= 1
+        body = "\n".join(self.lines[start:end])
+        result = {
             "doc_id": self.doc_id,
             "level": self.level,
             "kind": self.kind,
@@ -86,17 +98,25 @@ class Section:
             "text": body,
             "n_chars": len(body),
         }
+        pages = self.line_pages[start:end]
+        if pages and all(page is not None for page in pages):
+            result["line_pages"] = pages
+        return result
 
 
-def extract_sections(doc_id: str, text: str) -> list:
+def extract_sections(doc_id: str, text: str, page_starts: list[int] | None = None) -> list:
     sections = []
     stack = []  # (level, title)
-    current = Section(doc_id, 0, "root", "", "(문서 서두)")
+    current = Section(doc_id, 0, "root", "", "(문서 서두)", heading_page=1 if page_starts else None)
 
-    for line in text.splitlines():
+    offset = 0
+    for source_line in text.splitlines(keepends=True):
+        line = source_line.rstrip("\r\n")
+        page = bisect_right(page_starts, offset) if page_starts else None
+        offset += len(source_line)
         clean, is_head = clean_line(line)
         if not clean:
-            current.lines.append("")
+            current.append("", page)
             continue
 
         hit = match_number(clean)
@@ -110,12 +130,12 @@ def extract_sections(doc_id: str, text: str) -> list:
                 path = [t for _, t in stack]
                 stack.append((level, f"{number} {title}".strip()))
 
-                current = Section(doc_id, level, kind, number, title, path)
+                current = Section(doc_id, level, kind, number, title, path, heading_page=page)
                 if rest:
-                    current.lines.append(rest)
+                    current.append(rest, page)
                 continue
 
-        current.lines.append(clean)
+        current.append(clean, page)
 
     sections.append(current)
     return [s for s in sections if s.lines or s.title]
@@ -138,7 +158,7 @@ def merge_orphans(sections: list, max_pass: int = 5) -> tuple:
 
             if is_orphan and kept:
                 label = f"{s.number} {s.title}".strip()
-                kept[-1].lines.append(label)
+                kept[-1].append(label, s.heading_page)
                 merged += 1
                 continue
             kept.append(s)

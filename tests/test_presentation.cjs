@@ -32,6 +32,13 @@ test('plain-language condition labels distinguish literal locations without clai
   assert.deepEqual(guide.conditionLabel([]), {text: '이 내용에서는 찾지 못했어요', tone: 'absent'});
 });
 
+test('PDF pages use reader-friendly labels in cards and saved notes', () => {
+  assert.equal(guide.pageLabel({page_start: 7, page_end: 7}), '7쪽');
+  assert.equal(guide.pageLabel({page_start: 7, page_end: 9}), '7~9쪽');
+  assert.equal(guide.pageLabel({}), '페이지 정보가 없어요');
+  assert.match(guide.sourceText({doc_id: '문서', path: '위치', body: '본문', page_start: 3, page_end: 4}, 1), /원문 페이지: 3~4쪽/);
+});
+
 test('saved notes preserve original content and citations but exclude developer identifiers and scores', () => {
   const source = {doc_id: '2026 학교생활기록부 기재요령(중)_F_260227', path: '입력 안내',
     body: '한글 1자는 3Byte\n<img src=x onerror=alert(1)>', chunk_id: 'internal_chunk_id', score: 0.123456};

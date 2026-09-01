@@ -44,8 +44,15 @@ const schoolGuide = (() => {
     return {text: "이 내용에서는 찾지 못했어요", tone: "absent"};
   }
 
+  function pageLabel(source) {
+    const start = Number(source.page_start);
+    const end = Number(source.page_end);
+    if (!Number.isInteger(start) || start < 1) return "페이지 정보가 없어요";
+    return Number.isInteger(end) && end > start ? `${start}~${end}쪽` : `${start}쪽`;
+  }
+
   function sourceText(source, number) {
-    return [`관련 자료 ${number}`, `자료 이름: ${source.doc_id}`, `자료 안의 위치: ${source.path || "위치 정보가 없어요"}`, "", source.body].join("\n");
+    return [`관련 자료 ${number}`, `자료 이름: ${source.doc_id}`, `원문 페이지: ${pageLabel(source)}`, `자료 안의 위치: ${source.path || "위치 정보가 없어요"}`, "", source.body].join("\n");
   }
 
   function saveText(data) {
@@ -56,7 +63,7 @@ const schoolGuide = (() => {
       ...data.context.sources.map((source, index) => "────────────────────────\n" + sourceText(source, index+1))].join("\n") + "\n";
   }
 
-  return {examplesFor, displayTitle, topicFor, conditionLabel, sourceText, saveText};
+  return {examplesFor, displayTitle, topicFor, conditionLabel, pageLabel, sourceText, saveText};
 })();
 
 if (typeof module !== "undefined") module.exports = schoolGuide;

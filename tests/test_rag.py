@@ -11,6 +11,8 @@ from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from rag import DenseRetriever, answer_packet, build_packet, main, missing_dates, validate_answer
 from rag_generate import GenerationError, NoRedirect, generate, parse_response, request_payload
+from chunk import chunk_section
+from normalize import normalize, normalize_pages
 
 
 def hit(cid="c1", body="한글 한 글자는 3바이트로 계산한다.", path="기재 요령", doc_id="문서"):
@@ -40,6 +42,12 @@ class RagTests(unittest.TestCase):
         self.assertEqual(packet["scope_conditions"], ["2028년 3월 1일", "초등학교", "1·2학년"])
         self.assertNotIn("secret-gold", json.dumps(packet))
         self.assertNotIn("source_hint", packet["sources"][0])
+
+    def test_pdf_page_provenance_is_preserved_without_accepting_arbitrary_fields(self):
+        source = build_packet("질문", [{**hit(), "page_start": 12, "page_end": 13,
+                                        "source_url": "https://untrusted.invalid"}])["sources"][0]
+        self.assertEqual((source["page_start"], source["page_end"]), (12, 13))
+        self.assertNotIn("source_url", source)
 
     def test_context_budget_omits_whole_chunks_and_deduplicates(self):
         small = hit("small", body="짧은 본문", path="", doc_id="")
@@ -124,6 +132,23 @@ class RagTests(unittest.TestCase):
             (root/"data/processed/chunks.jsonl").write_text("changed")
             with self.assertRaisesRegex(ValueError, "지문 불일치"):
                 DenseRetriever(root)
+
+
+class PageMetadataTests(unittest.TestCase):
+    def test_page_boundaries_do_not_change_normalized_document_text(self):
+        pages = ["", "첫 페이지  ", "", "   - 둘째 내용\n\n마지막"]
+        text, starts = normalize_pages(pages)
+        self.assertEqual(text, normalize("\n\n".join(pages)))
+        self.assertEqual(len(starts), len(pages))
+        self.assertEqual(starts, sorted(starts))
+
+    def test_chunk_keeps_the_pages_of_its_source_lines(self):
+        section = {"doc_id": "문서", "number": "1", "path": "안내", "title": "제목",
+                   "text": "첫 페이지 내용\n\n다음 페이지 내용", "line_pages": [4, 4, 5]}
+        chunks = chunk_section(section, 0)
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual((chunks[0]["page_start"], chunks[0]["page_end"]), (4, 5))
+        self.assertEqual(chunks[0]["body"], section["text"])
 
 
 class CliCostSafetyTests(unittest.TestCase):

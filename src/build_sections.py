@@ -13,7 +13,7 @@ def main():
     all_sections = []
 
     for d in docs:
-        secs = extract_sections(d["doc_id"], d["text"])
+        secs = extract_sections(d["doc_id"], d["text"], d.get("page_starts"))
         secs = [s for s in secs if s.kind != "appendix"]
         before = len(secs)
         secs, merged = merge_orphans(secs)

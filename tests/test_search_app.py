@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import re
 import threading
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -61,6 +62,21 @@ class SearchServiceTests(unittest.TestCase):
         self.assertEqual(audit[0]["sources"][0]["fields"], ["doc_id"])
         self.assertEqual(audit[0]["semantic_verdict"], "not_verified")
         self.assertEqual(audit[1]["sources"][0]["fields"], ["body"])
+
+    def test_only_existing_local_pdf_gets_a_page_link(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "문서.pdf"
+            source.write_bytes(b"%PDF-1.7 test")
+            retriever = Mock()
+            retriever.config = {"model": "test-model", "index_text": "body"}
+            retriever.chunks = [{**hit(), "page_start": 7, "page_end": 8}]
+            retriever.search.return_value = retriever.chunks
+            search = SearchService(retriever, Path(temp))
+            result = search.search({"question": "질문"})
+            found = result["context"]["sources"][0]
+            self.assertEqual((found["page_start"], found["page_end"]), (7, 8))
+            self.assertEqual(found["source_url"], "/source/%EB%AC%B8%EC%84%9C.pdf#page=7")
+            self.assertEqual(search.source_path("문서"), source.resolve())
 
 
 class SearchHttpTests(unittest.TestCase):
@@ -126,6 +142,39 @@ class SearchHttpTests(unittest.TestCase):
 
     def test_server_cannot_bind_public_interface(self):
         with self.assertRaises(ValueError): SearchServer(("0.0.0.0", 0), self.service)
+
+
+class SourcePdfHttpTests(unittest.TestCase):
+    def test_whitelisted_pdf_is_served_and_other_paths_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            source = Path(temp) / "문서.pdf"
+            source.write_bytes(b"%PDF-1.7 local-source")
+            retriever = Mock()
+            retriever.config = {"model": "test-model", "index_text": "body"}
+            retriever.chunks = [hit()]
+            service_with_pdf = SearchService(retriever, Path(temp))
+            server = SearchServer(("127.0.0.1", 0), service_with_pdf)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=3)
+                connection.request("GET", "/source/%EB%AC%B8%EC%84%9C.pdf")
+                response = connection.getresponse()
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.getheader("Content-Type"), "application/pdf")
+                self.assertEqual(response.read(), source.read_bytes())
+                connection.close()
+
+                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=3)
+                connection.request("GET", "/source/..%2F.env.pdf")
+                response = connection.getresponse()
+                self.assertEqual(response.status, 404)
+                response.read()
+                connection.close()
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=2)
 
 
 class EducationPageTests(unittest.TestCase):

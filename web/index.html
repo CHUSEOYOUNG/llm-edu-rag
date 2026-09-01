@@ -87,12 +87,12 @@
       <div class="workspace">
         <aside class="result-list-panel" aria-label="관련 자료 목록"><div class="list-caption">자료를 선택해 내용을 살펴보세요.</div><div id="result-list"></div></aside>
         <article class="reader" id="reader" aria-labelledby="reader-title">
-          <div class="reader-top"><span id="reader-topic" class="topic-badge"></span><button id="copy-button" type="button" class="text-button">내용 복사</button></div>
+          <div class="reader-top"><span id="reader-topic" class="topic-badge"></span><div class="reader-actions"><button id="copy-button" type="button" class="text-button">내용 복사</button><a id="source-link" class="source-link" target="_blank" rel="noopener" hidden>원문에서 확인하기 <span aria-hidden="true">↗</span></a></div></div>
           <h3 id="reader-title"></h3>
           <p class="reader-intro">아래는 선택한 자료에서 찾은 내용이에요. 직접 읽어보며 궁금한 점과 맞는지 확인해 주세요.</p>
           <div class="condition-section" id="condition-section"><div class="section-label">읽으면서 함께 확인해 주세요</div><div id="condition-list" class="condition-list"></div><p class="condition-help">학교급·학년·날짜가 내 상황과 맞는지 살펴보세요. 같은 말이 적혀 있어도 적용되는 내용은 다를 수 있어요.</p></div>
           <div class="body-label">자료에서 찾은 내용</div><pre id="reader-body" class="reader-body" tabindex="0"></pre>
-          <details class="source-details"><summary>어떤 자료에서 찾았나요?</summary><dl><dt>자료 이름</dt><dd id="reader-original-title"></dd><dt>자료 안의 위치</dt><dd id="reader-path"></dd></dl></details>
+          <details class="source-details"><summary>어떤 자료에서 찾았나요?</summary><dl><dt>자료 이름</dt><dd id="reader-original-title"></dd><dt>원문 페이지</dt><dd id="reader-page"></dd><dt>자료 안의 위치</dt><dd id="reader-path"></dd></dl></details>
         </article>
       </div>
       <p class="review-note"><span aria-hidden="true">ⓘ</span> 찾은 내용은 자료의 일부이며, 자동으로 작성한 답변이 아니에요. 학교별 운영이나 개인 상황에 대한 확인이 필요하면 학교의 안내도 함께 살펴봐 주세요.</p>
@@ -106,6 +106,6 @@
   </main>
 
   <template id="example-template"><button type="button" class="example-card"><span class="example-topic"></span><span class="example-question"></span><span class="example-arrow" aria-hidden="true">↗</span></button></template>
-  <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-preview"></span><span class="card-bottom">내용 살펴보기 <span aria-hidden="true">→</span></span></button></template>
+  <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-page"></span><span class="card-preview"></span><span class="card-bottom">내용 살펴보기 <span aria-hidden="true">→</span></span></button></template>
 </body>
 </html>

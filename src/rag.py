@@ -82,9 +82,11 @@ def build_packet(question, hits, max_context_chars=24000):
         if used + size > max_context_chars:
             omitted.append(cid)
             continue
+        provenance = {field: hit[field] for field in ("page_start", "page_end") if field in hit}
         sources.append({"source_id": f"S{len(sources)+1}", "chunk_id": cid,
                         "retrieval_rank": rank, "score": hit["score"],
-                        **{field: hit[field] for field in ("body", "path", "doc_id")}})
+                        **{field: hit[field] for field in ("body", "path", "doc_id")},
+                        **provenance})
         used += size
     return {
         "original_question": question, "search_query": question,

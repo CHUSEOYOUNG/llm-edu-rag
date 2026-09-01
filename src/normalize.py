@@ -6,6 +6,8 @@ MIDDLE_DOTS = "\u22c5\uff65\u00b7\u2027\u30fb\u2024\u2219"  # ⋅ ･ · ‧ ・
 _MARKER = re.compile(r"^[\s\-*>]+")
 _ONLY_DOTS = re.compile(rf"^[\s{MIDDLE_DOTS}]+$")
 _PAGENUM = re.compile(r"^[\s\-–—]*\d{1,4}[\s\-–—]*$")
+_PAGE_MARKER = "\ue000PDF_PAGE_{index:04d}\ue001"
+_PAGE_MARKER_RE = re.compile(r"\ue000PDF_PAGE_\d{4}\ue001(?:\n\n)?")
 
 
 # ---------- 가운뎃점 정규화 ----------
@@ -33,6 +35,35 @@ def normalize(text: str) -> str:
     text = re.sub(r"[ \t]+$", "", text, flags=re.M)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
+
+
+def normalize_pages(pages: list[str]) -> tuple[str, list[int]]:
+    """전체 문서 정규화 결과를 보존하면서 PDF 페이지 시작 위치를 기록한다.
+
+    반환하는 ``page_starts``는 PDF의 1쪽부터 순서대로, 정규화된 문서
+    문자열에서 각 페이지가 시작하는 문자 위치다. 내용이 없는 페이지는
+    다음 페이지와 같은 위치를 가질 수 있다.
+    """
+    if not pages:
+        return "", []
+
+    if len(pages) > 9999 or any("\ue000PDF_PAGE_" in page for page in pages):
+        raise ValueError("PDF 페이지 표식을 안전하게 추가할 수 없습니다.")
+    tagged = [f"{_PAGE_MARKER.format(index=index)}\n\n{page}"
+              for index, page in enumerate(pages)]
+    normalized = normalize("\n\n".join(tagged))
+
+    page_starts = []
+    removed = 0
+    for match in _PAGE_MARKER_RE.finditer(normalized):
+        page_starts.append(match.start() - removed)
+        removed += len(match.group())
+
+    text = _PAGE_MARKER_RE.sub("", normalized)
+    expected = normalize("\n\n".join(pages))
+    if text != expected or len(page_starts) != len(pages):
+        raise ValueError("PDF 페이지 경계를 보존하지 못했습니다.")
+    return text, page_starts
 
 
 # ---------- 머리말/꼬리말 제거 ----------
