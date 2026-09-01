@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from search_app import BusyError, SearchServer, SearchService, condition_audit
+from search_app import BusyError, SearchServer, SearchService, condition_audit, keyword_rerank, keyword_terms
 from rag import build_packet
 from test_rag import hit
 
@@ -24,6 +24,29 @@ def service():
 
 
 class SearchServiceTests(unittest.TestCase):
+    def test_short_keywords_prefer_matching_section_titles_over_dense_mentions(self):
+        dense_first = hit("dense", body="정정 사례의 출결상황 입력 누락", path="자료의 정정")
+        overview = hit("overview", body="수업일수와 결석일수를 입력한다.", path="8조 출결상황")
+        middle = hit("middle", body="출결 처리 안내", path="8조 출결상황",
+                     doc_id="2026 학교생활기록부 기재요령(중)_F_260227")
+        self.assertEqual(keyword_terms("출결"), ["출결"])
+        self.assertEqual(keyword_terms("중학교 출결"), ["중학교", "출결"])
+        self.assertEqual(keyword_terms("출결은 어떻게 처리하나요?"), [])
+        self.assertEqual(keyword_rerank("출결", [dense_first, overview])[0]["chunk_id"], "overview")
+        self.assertEqual(keyword_rerank("중학교 출결", [overview, middle])[0]["chunk_id"], "middle")
+
+    def test_short_keyword_search_expands_candidates_before_reranking(self):
+        retriever = Mock()
+        retriever.config = {"model": "test-model", "index_text": "body"}
+        retriever.chunks = [hit(f"c{i}") for i in range(150)]
+        retriever.search.return_value = [
+            hit("dense", body="출결 입력 누락", path="자료의 정정"),
+            hit("overview", body="결석일수 안내", path="8조 출결상황"),
+        ]
+        result = SearchService(retriever).search({"question": "출결", "top_k": 5})
+        retriever.search.assert_called_once_with("출결", 100)
+        self.assertEqual(result["context"]["sources"][0]["chunk_id"], "overview")
+
     def test_search_preserves_original_question_and_never_generates(self):
         search = service()
         question = "한글 한 글자는 몇 바이트인가요?"

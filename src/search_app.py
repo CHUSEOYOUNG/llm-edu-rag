@@ -11,6 +11,7 @@ from pathlib import Path
 import threading
 import time
 from urllib.parse import quote, unquote, urlsplit
+import re
 
 from rag import ROOT, DenseRetriever, build_packet, compact, missing_dates
 
@@ -24,6 +25,49 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
 
 class BusyError(RuntimeError):
     pass
+
+
+def keyword_terms(question):
+    """Return 1-3 visible terms only for short keyword-style searches."""
+    stripped = question.strip()
+    if len(stripped) > 30 or not re.fullmatch(r"[0-9A-Za-z가-힣·~∼〜\-\s]+", stripped):
+        return []
+    terms = [compact(term) for term in re.findall(r"[0-9A-Za-z가-힣]+", stripped)]
+    return terms if 1 <= len(terms) <= 3 and all(len(term) >= 2 for term in terms) else []
+
+
+def keyword_rerank(question, hits):
+    """Prefer literal section/grade matches for short queries; keep Dense ties stable."""
+    terms = keyword_terms(question)
+    if not terms:
+        return hits
+
+    ranked = []
+    for dense_rank, hit in enumerate(hits):
+        path = compact(hit["path"])
+        body = compact(hit["body"])
+        doc = compact(hit["doc_id"])
+        if "(초)" in hit["doc_id"]:
+            doc += "초등학교"
+        if "(중)" in hit["doc_id"]:
+            doc += "중학교"
+        if "(고)" in hit["doc_id"]:
+            doc += "고등학교"
+        path_hits = sum(term in path for term in terms)
+        doc_hits = sum(term in doc for term in terms)
+        body_hits = sum(term in body for term in terms)
+        all_terms = all(term in path or term in doc or term in body for term in terms)
+        ranked.append((hit, all_terms, path_hits, doc_hits, body_hits, dense_rank))
+
+    if not any(item[1] for item in ranked):
+        return hits
+    ranked.sort(key=lambda item: (
+        not item[1], -item[2], -item[3],
+        item[0]["path"].count(">") if item[2] else 999,
+        len(item[0]["path"]) if item[2] else 999,
+        -item[4], item[5],
+    ))
+    return [item[0] for item in ranked]
 
 
 def condition_audit(packet):
@@ -59,6 +103,7 @@ class SearchService:
     def info(self):
         return {"mode": "local_retrieval_only", "generation_enabled": False,
                 "model": self.retriever.config["model"], "index_text": "body",
+                "short_keyword_rerank": True,
                 "chunk_count": len(self.retriever.chunks),
                 "document_count": len({c["doc_id"] for c in self.retriever.chunks})}
 
@@ -73,7 +118,9 @@ class SearchService:
             raise BusyError("다른 내용을 찾고 있어요. 잠시 후 다시 시도해 주세요.")
         started = time.perf_counter()
         try:
-            hits = self.retriever.search(question, k)
+            terms = keyword_terms(question)
+            candidate_k = min(len(self.retriever.chunks), max(k, 100)) if terms else k
+            hits = keyword_rerank(question, self.retriever.search(question, candidate_k))[:k]
             packet = build_packet(question, hits)
             self.add_source_links(packet)
         finally:

@@ -58,8 +58,8 @@ class DenseRetriever:
 
     def search(self, question, k=5):
         import numpy as np
-        if not question.strip() or not 1 <= k <= 20:
-            raise ValueError("질문은 비어 있을 수 없고 top-k는 1~20이어야 합니다.")
+        if not question.strip() or not 1 <= k <= len(self.chunks):
+            raise ValueError("질문은 비어 있을 수 없고 검색 개수는 전체 자료 수 이하여야 합니다.")
         vector = self.model.encode([question], normalize_embeddings=True)[0]
         scores = self.matrix @ vector
         return [{**self.chunks[i], "score": float(scores[i])}
