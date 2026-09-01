@@ -37,6 +37,48 @@ function setLoading(value) {
   document.querySelectorAll("[data-example], [data-audience]").forEach((button) => { button.disabled = value; });
 }
 
+function renderReaderBody(raw) {
+  const container = $("reader-body");
+  container.replaceChildren();
+  for (const block of schoolGuide.readableBlocks(raw)) {
+    if (block.type === "text") {
+      const text = document.createElement("div");
+      text.className = "reader-text-block";
+      text.textContent = block.text;
+      container.append(text);
+      continue;
+    }
+    const wrapper = document.createElement("div");
+    wrapper.className = "reader-table-wrap";
+    const table = document.createElement("table");
+    table.className = "reader-table";
+    table.setAttribute("aria-label", "자료에 포함된 표");
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    for (const value of block.headers) {
+      const cell = document.createElement("th");
+      cell.scope = "col";
+      cell.textContent = value;
+      headRow.append(cell);
+    }
+    head.append(headRow);
+    table.append(head);
+    const body = document.createElement("tbody");
+    for (const row of block.rows) {
+      const tableRow = document.createElement("tr");
+      for (const value of row) {
+        const cell = document.createElement("td");
+        cell.textContent = value;
+        tableRow.append(cell);
+      }
+      body.append(tableRow);
+    }
+    table.append(body);
+    wrapper.append(table);
+    container.append(wrapper);
+  }
+}
+
 function selectSource(source) {
   selected = source;
   document.querySelectorAll(".result-card").forEach((card) => {
@@ -51,7 +93,7 @@ function selectSource(source) {
   sourceLink.hidden = !source.source_url;
   if (source.source_url) sourceLink.href = source.source_url;
   else sourceLink.removeAttribute("href");
-  $("reader-body").textContent = source.body;
+  renderReaderBody(source.body);
   $("reader-body").scrollTop = 0;
   $("copy-button").textContent = "내용 복사";
   const chips = $("condition-list");
@@ -88,7 +130,7 @@ function renderResults(data) {
     card.querySelector(".topic-badge").textContent = schoolGuide.topicFor(source.doc_id);
     card.querySelector(".card-title").textContent = schoolGuide.displayTitle(source.doc_id);
     card.querySelector(".card-page").textContent = schoolGuide.pageLabel(source);
-    card.querySelector(".card-preview").textContent = source.body.slice(0, 300);
+    card.querySelector(".card-preview").textContent = schoolGuide.readablePreview(source.body).slice(0, 300);
     card.addEventListener("click", () => selectSource(source));
     $("result-list").append(fragment);
   }

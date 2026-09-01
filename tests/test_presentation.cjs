@@ -39,13 +39,23 @@ test('PDF pages use reader-friendly labels in cards and saved notes', () => {
   assert.match(guide.sourceText({doc_id: '문서', path: '위치', body: '본문', page_start: 3, page_end: 4}, 1), /원문 페이지: 3~4쪽/);
 });
 
-test('saved notes preserve original content and citations but exclude developer identifiers and scores', () => {
+test('HTML markers are removed and markdown tables become readable blocks', () => {
+  const raw = '<!-- Start of picture text -->\n|항목|내용|\n|---|---|\n|글자|한글<br>3Byte<sup>1</sup>|\n<!-- End of picture text -->';
+  assert.equal(guide.readableText(raw), '|항목|내용|\n|---|---|\n|글자|한글\n3Byte1|');
+  assert.deepEqual(guide.readableBlocks(raw), [{type: 'table', headers: ['항목', '내용'], rows: [['글자', '한글\n3Byte1']]}]);
+  assert.equal(guide.readablePreview(raw), '항목 · 내용\n글자 · 한글\n3Byte1');
+  assert(!guide.readableDocument(raw).includes('|---|'));
+  assert(!guide.readableText('본문<img src=x onerror=alert(1)>').includes('onerror'));
+});
+
+test('saved notes use readable content and exclude developer identifiers and scores', () => {
   const source = {doc_id: '2026 학교생활기록부 기재요령(중)_F_260227', path: '입력 안내',
     body: '한글 1자는 3Byte\n<img src=x onerror=alert(1)>', chunk_id: 'internal_chunk_id', score: 0.123456};
   const data = {missing_date_conditions: ['2028년 3월 1일'],
     context: {original_question: '질문 내용', sources: [source], omitted_chunk_ids: ['hidden-id']}};
   const saved = guide.saveText(data);
-  assert(saved.includes(source.body));
+  assert(saved.includes('한글 1자는 3Byte'));
+  assert(!saved.includes('<img'));
   assert(saved.includes(source.doc_id));
   assert(saved.includes('질문: 질문 내용'));
   assert(saved.includes('확인이 필요한 날짜: 2028년 3월 1일'));

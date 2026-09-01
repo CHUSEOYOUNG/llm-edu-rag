@@ -103,7 +103,7 @@ class SearchHttpTests(unittest.TestCase):
             connection.close()
 
     def test_static_assets_and_info_are_served_without_external_resources(self):
-        for path in ("/", "/app.css", "/app.css?v=20260901-1", "/presentation.js",
+        for path in ("/", "/app.css", "/app.css?v=20260901-3", "/presentation.js",
                      "/app.js", "/api/info"):
             with self.subTest(path=path):
                 status, headers, body = self.request("GET", path)

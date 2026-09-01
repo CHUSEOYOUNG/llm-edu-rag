@@ -51,8 +51,79 @@ const schoolGuide = (() => {
     return Number.isInteger(end) && end > start ? `${start}~${end}쪽` : `${start}쪽`;
   }
 
+  function cleanMarkup(value, lineBreak) {
+    const entities = {nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'"};
+    return String(value || "")
+      .replace(/<!--[\s\S]*?-->/g, "")
+      .replace(/<br\s*\/?>/gi, lineBreak)
+      .replace(/<\/(?:p|div|li|tr|h[1-6])\s*>/gi, lineBreak)
+      .replace(/<li(?:\s[^>]*)?>/gi, "• ")
+      .replace(/<\/?[A-Za-z][^>]*>/g, "")
+      .replace(/&(nbsp|amp|lt|gt|quot|#39);/gi, (_, name) => entities[name.toLowerCase()])
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n[ \t]*·[ \t]*(?=\n|$)/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+  }
+
+  function readableText(value) {
+    return cleanMarkup(value, "\n");
+  }
+
+  function tableCells(line) {
+    const trimmed = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+    return trimmed.split("|").map((cell) => cell.replace(/\u000b/g, "\n").trim());
+  }
+
+  function readableBlocks(value) {
+    const lines = cleanMarkup(value, "\u000b").split("\n");
+    const blocks = [];
+    let textLines = [];
+    const flushText = () => {
+      const text = textLines.join("\n").replace(/\u000b/g, "\n").trim();
+      if (text) blocks.push({type: "text", text});
+      textLines = [];
+    };
+
+    for (let index = 0; index < lines.length;) {
+      if (lines[index].trim().startsWith("|")) {
+        let end = index;
+        while (end < lines.length && lines[end].trim().startsWith("|")) end += 1;
+        const rows = lines.slice(index, end).map(tableCells);
+        const separator = rows[1] && rows[1].every((cell) => /^:?-{3,}:?$/.test(cell));
+        if (separator) {
+          flushText();
+          blocks.push({type: "table", headers: rows[0], rows: rows.slice(2)});
+          index = end;
+          continue;
+        }
+      }
+      textLines.push(lines[index]);
+      index += 1;
+    }
+    flushText();
+    return blocks;
+  }
+
+  function blocksToText(value, tableRowLimit) {
+    return readableBlocks(value).map((block) => {
+      if (block.type === "text") return block.text;
+      const rows = [block.headers, ...block.rows];
+      const visibleRows = Number.isInteger(tableRowLimit) ? rows.slice(0, tableRowLimit) : rows;
+      return visibleRows.map((row) => row.filter((cell) => cell).join(" · ")).join("\n");
+    }).join("\n\n");
+  }
+
+  function readablePreview(value) {
+    return blocksToText(value, 4);
+  }
+
+  function readableDocument(value) {
+    return blocksToText(value);
+  }
+
   function sourceText(source, number) {
-    return [`관련 자료 ${number}`, `자료 이름: ${source.doc_id}`, `원문 페이지: ${pageLabel(source)}`, `자료 안의 위치: ${source.path || "위치 정보가 없어요"}`, "", source.body].join("\n");
+    return [`관련 자료 ${number}`, `자료 이름: ${source.doc_id}`, `원문 페이지: ${pageLabel(source)}`, `자료 안의 위치: ${source.path || "위치 정보가 없어요"}`, "", readableDocument(source.body)].join("\n");
   }
 
   function saveText(data) {
@@ -63,7 +134,7 @@ const schoolGuide = (() => {
       ...data.context.sources.map((source, index) => "────────────────────────\n" + sourceText(source, index+1))].join("\n") + "\n";
   }
 
-  return {examplesFor, displayTitle, topicFor, conditionLabel, pageLabel, sourceText, saveText};
+  return {examplesFor, displayTitle, topicFor, conditionLabel, pageLabel, readableText, readableBlocks, readablePreview, readableDocument, sourceText, saveText};
 })();
 
 if (typeof module !== "undefined") module.exports = schoolGuide;
