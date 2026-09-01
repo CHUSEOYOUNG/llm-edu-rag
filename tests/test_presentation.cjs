@@ -25,6 +25,29 @@ test('filenames become readable titles without changing the source object', () =
   assert.equal(guide.topicFor('기타 자료'), '교육 자료');
 });
 
+test('school helpers detect one explicit level and label source documents', () => {
+  assert.equal(guide.detectedSchoolLevel('중학교 출결이 궁금해요'), 'middle');
+  assert.equal(guide.detectedSchoolLevel('초등학교와 중학교 수업 시간'), 'all');
+  assert.equal(guide.detectedSchoolLevel('출결'), 'all');
+  assert.deepEqual(guide.schoolLevelFor('기재요령(고)_F_1'), {value: 'high', label: '고등학교'});
+  assert.deepEqual(guide.schoolLevelFor('교육과정 총론'), {value: 'all', label: '공통 자료'});
+  assert.equal(guide.sectionTitle('학교생활 > 8조 출결상황'), '8조 출결상황');
+});
+
+test('highlight terms stay concise and similar source sections are grouped stably', () => {
+  assert.deepEqual(guide.highlightTerms('중학교에서는 출결은 어떻게 처리하나요?'), ['중학교', '출결', '처리']);
+  const sources = [
+    {source_id: 'S1', doc_id: '문서', path: '출결'},
+    {source_id: 'S2', doc_id: '문서', path: '출결'},
+    {source_id: 'S3', doc_id: '문서', path: '학적'},
+  ];
+  const groups = guide.groupSources(sources);
+  assert.equal(groups.length, 2);
+  assert.deepEqual(groups[0].sources.map(source => source.source_id), ['S1', 'S2']);
+  assert.deepEqual(groups[1].sources.map(source => source.source_id), ['S3']);
+  assert.equal(sources[0].group, undefined);
+});
+
 test('plain-language condition labels distinguish literal locations without claiming applicability', () => {
   assert.deepEqual(guide.conditionLabel(['body', 'path']), {text: '내용에서 찾았어요', tone: 'found'});
   assert.deepEqual(guide.conditionLabel(['path']), {text: '항목 이름에서 찾았어요', tone: 'metadata'});

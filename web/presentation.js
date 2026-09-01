@@ -37,6 +37,60 @@ const schoolGuide = (() => {
     return "교육 자료";
   }
 
+  function sectionTitle(path) {
+    const parts = String(path || "").split(">").map((part) => part.trim()).filter(Boolean);
+    return parts.at(-1) || "관련 안내";
+  }
+
+  function schoolLevelFor(name) {
+    if (name.includes("(초)")) return {value: "elementary", label: "초등학교"};
+    if (name.includes("(중)")) return {value: "middle", label: "중학교"};
+    if (name.includes("(고)")) return {value: "high", label: "고등학교"};
+    return {value: "all", label: "공통 자료"};
+  }
+
+  function detectedSchoolLevel(value) {
+    const compact = String(value || "").replace(/[^0-9A-Za-z가-힣]+/g, "");
+    const found = [];
+    if (/초등학교|초등/.test(compact)) found.push("elementary");
+    if (/중학교|중등/.test(compact)) found.push("middle");
+    if (/고등학교|고등/.test(compact)) found.push("high");
+    return found.length === 1 ? found[0] : "all";
+  }
+
+  function highlightTerms(value) {
+    const ignored = new Set(["어떻게", "무엇", "무슨", "관련", "내용", "대해서", "알려주세요", "궁금해요", "있나요", "인가요", "되나요", "할까요"]);
+    const suffixes = ["에서는", "으로부터", "에게서", "하나요", "인가요", "으로", "에서", "에게", "부터", "까지", "처럼", "보다", "하고", "나요", "까요", "어요", "아요", "해요", "과", "와", "은", "는", "이", "가", "을", "를", "도", "의"];
+    const terms = [];
+    for (const raw of String(value || "").match(/[0-9A-Za-z가-힣]+/g) || []) {
+      if (ignored.has(raw)) continue;
+      let term = raw;
+      for (const suffix of suffixes) {
+        if (term.endsWith(suffix) && term.length - suffix.length >= 2) {
+          term = term.slice(0, -suffix.length);
+          break;
+        }
+      }
+      if (term.length >= 2 && !ignored.has(term) && !terms.includes(term)) terms.push(term);
+    }
+    return terms.sort((a, b) => b.length - a.length).slice(0, 8);
+  }
+
+  function groupSources(sources) {
+    const groups = [];
+    const byKey = new Map();
+    for (const source of sources) {
+      const key = `${source.doc_id}\n${source.path || ""}`;
+      if (!byKey.has(key)) {
+        const group = {key, sources: []};
+        byKey.set(key, group);
+        groups.push(group);
+      }
+      byKey.get(key).sources.push(source);
+    }
+    return groups;
+  }
+
   function conditionLabel(fields) {
     if (fields.includes("body")) return {text: "내용에서 찾았어요", tone: "found"};
     if (fields.includes("path")) return {text: "항목 이름에서 찾았어요", tone: "metadata"};
@@ -134,7 +188,8 @@ const schoolGuide = (() => {
       ...data.context.sources.map((source, index) => "────────────────────────\n" + sourceText(source, index+1))].join("\n") + "\n";
   }
 
-  return {examplesFor, displayTitle, topicFor, conditionLabel, pageLabel, readableText, readableBlocks, readablePreview, readableDocument, sourceText, saveText};
+  return {examplesFor, displayTitle, topicFor, sectionTitle, schoolLevelFor, detectedSchoolLevel, highlightTerms, groupSources,
+    conditionLabel, pageLabel, readableText, readableBlocks, readablePreview, readableDocument, sourceText, saveText};
 })();
 
 if (typeof module !== "undefined") module.exports = schoolGuide;

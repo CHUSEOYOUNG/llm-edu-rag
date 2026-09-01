@@ -21,6 +21,12 @@ STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.css": ("app.css", "text/css; charset=utf-8"),
           "/presentation.js": ("presentation.js", "text/javascript; charset=utf-8"),
           "/app.js": ("app.js", "text/javascript; charset=utf-8")}
+SCHOOL_LEVELS = {
+    "all": None,
+    "elementary": ("(초)", "초등학교"),
+    "middle": ("(중)", "중학교"),
+    "high": ("(고)", "고등학교"),
+}
 
 
 class BusyError(RuntimeError):
@@ -70,6 +76,20 @@ def keyword_rerank(question, hits):
     return [item[0] for item in ranked]
 
 
+def matches_school_level(hit, school_level):
+    """Match a grade-specific document or an explicit grade mention in a general one."""
+    markers = SCHOOL_LEVELS[school_level]
+    if markers is None:
+        return True
+    document_marker, visible_name = markers
+    specific_markers = tuple(level[0] for level in SCHOOL_LEVELS.values() if level)
+    if any(marker in hit["doc_id"] for marker in specific_markers):
+        return document_marker in hit["doc_id"]
+    return compact(visible_name) in compact(
+        " ".join((hit["doc_id"], hit["path"], hit["body"]))
+    )
+
+
 def condition_audit(packet):
     """Literal occurrences only, never semantic applicability judgments."""
     return [{"condition": condition, "semantic_verdict": "not_verified", "sources": [
@@ -108,25 +128,36 @@ class SearchService:
                 "document_count": len({c["doc_id"] for c in self.retriever.chunks})}
 
     def search(self, payload):
-        if not isinstance(payload, dict) or set(payload) - {"question", "top_k"}:
+        if not isinstance(payload, dict) or set(payload) - {"question", "top_k", "school_level"}:
             raise ValueError("입력한 검색 내용을 확인해 주세요.")
         question, k = payload.get("question"), payload.get("top_k", 5)
+        school_level = payload.get("school_level", "all")
         build_packet(question, [])
         if type(k) is not int or not 1 <= k <= 20:
             raise ValueError("검색 개수는 1~20 사이의 정수여야 합니다.")
+        if school_level not in SCHOOL_LEVELS:
+            raise ValueError("학교급 선택을 확인해 주세요.")
         if not self.lock.acquire(blocking=False):
             raise BusyError("다른 내용을 찾고 있어요. 잠시 후 다시 시도해 주세요.")
         started = time.perf_counter()
         try:
             terms = keyword_terms(question)
-            candidate_k = min(len(self.retriever.chunks), max(k, 100)) if terms else k
-            hits = keyword_rerank(question, self.retriever.search(question, candidate_k))[:k]
+            if school_level != "all":
+                candidate_k = len(self.retriever.chunks)
+            else:
+                candidate_k = min(len(self.retriever.chunks), max(k, 100)) if terms else k
+            candidates = self.retriever.search(question, candidate_k)
+            candidates = [hit for hit in candidates if matches_school_level(hit, school_level)]
+            hits = keyword_rerank(question, candidates)[:k]
             packet = build_packet(question, hits)
+            packet["scope_filters_applied"] = school_level != "all"
+            packet["school_level_filter"] = school_level
             self.add_source_links(packet)
         finally:
             self.lock.release()
         return {"status": "retrieved_only", "answer": None, "generation_called": False,
                 "top_k": k, "retrieved_count": len(hits), "context": packet,
+                "school_level": school_level,
                 "missing_date_conditions": missing_dates(packet),
                 "condition_audit": condition_audit(packet),
                 "elapsed_ms": round((time.perf_counter()-started)*1000),

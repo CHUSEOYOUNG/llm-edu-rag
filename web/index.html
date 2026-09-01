@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>학교생활 안내 · 학교가 궁금할 때</title>
-  <link rel="stylesheet" href="/app.css?v=20260901-3">
-  <script src="/presentation.js?v=20260901-3" defer></script>
-  <script src="/app.js?v=20260901-3" defer></script>
+  <link rel="stylesheet" href="/app.css?v=20260901-4">
+  <script src="/presentation.js?v=20260901-4" defer></script>
+  <script src="/app.js?v=20260901-4" defer></script>
 </head>
 <body>
   <a class="skip" href="#question">궁금한 점 입력하기</a>
@@ -63,6 +63,7 @@
       <form id="search-form">
         <label for="question" class="field-label"><span class="search-mark" aria-hidden="true">⌕</span> 어떤 점이 궁금하세요?</label>
         <textarea id="question" name="question" rows="2" maxlength="4000" required placeholder="예: 중학교에서는 어떤 과목을 선택할 수 있나요?"></textarea>
+        <div class="school-filter-row"><span class="school-filter-label">학교급</span><div class="school-filter" role="group" aria-label="검색할 학교급"><button type="button" data-school-level="all" aria-pressed="true">전체</button><button type="button" data-school-level="elementary" aria-pressed="false">초등학교</button><button type="button" data-school-level="middle" aria-pressed="false">중학교</button><button type="button" data-school-level="high" aria-pressed="false">고등학교</button></div><span id="school-filter-help" class="school-filter-help">전체 자료에서 찾아요.</span></div>
         <div class="search-toolbar"><span class="keyboard-hint">Enter로 찾기 <span>·</span> Shift + Enter로 줄바꿈</span><div class="search-controls"><label for="top-k">한 번에 보기</label><select id="top-k" name="top_k"><option value="5">5개</option><option value="10">10개</option><option value="20">20개</option></select><button class="search-button" id="search-button" type="submit"><span id="search-label">찾아보기</span><span aria-hidden="true">→</span></button></div></div>
       </form>
       <p class="search-hint">학교급과 학년, 궁금한 연도를 함께 적으면 더 구체적으로 찾아볼 수 있어요.</p>
@@ -82,6 +83,7 @@
     <section id="results-section" hidden aria-labelledby="results-title">
       <div class="results-heading"><div><p class="section-kicker">궁금한 내용과 관련된 자료</p><h2 id="results-title">이런 내용을 찾았어요 <span id="result-count"></span></h2></div><button id="export-button" type="button" class="outline-button">찾은 내용 저장 <span aria-hidden="true">↓</span></button></div>
       <p id="result-question" class="result-question"></p>
+      <p id="active-filter" class="active-filter" hidden></p>
       <div id="date-warning" class="notice warning" hidden></div>
       <div id="budget-warning" class="notice warning" hidden></div>
       <div class="workspace">
@@ -90,6 +92,7 @@
           <div class="reader-top"><span id="reader-topic" class="topic-badge"></span><div class="reader-actions"><button id="copy-button" type="button" class="text-button">내용 복사</button><a id="source-link" class="source-link" target="_blank" rel="noopener" hidden>원문에서 확인하기 <span aria-hidden="true">↗</span></a></div></div>
           <h3 id="reader-title"></h3>
           <p class="reader-intro">아래는 선택한 자료에서 찾은 내용이에요. 직접 읽어보며 궁금한 점과 맞는지 확인해 주세요.</p>
+          <div id="source-choices" class="source-choices" hidden><span>같은 항목의 다른 내용</span><div id="source-choice-list"></div></div>
           <div class="condition-section" id="condition-section"><div class="section-label">읽으면서 함께 확인해 주세요</div><div id="condition-list" class="condition-list"></div><p class="condition-help">학교급·학년·날짜가 내 상황과 맞는지 살펴보세요. 같은 말이 적혀 있어도 적용되는 내용은 다를 수 있어요.</p></div>
           <div class="body-label">자료에서 찾은 내용</div><div id="reader-body" class="reader-body" tabindex="0"></div>
           <details class="source-details"><summary>어떤 자료에서 찾았나요?</summary><dl><dt>자료 이름</dt><dd id="reader-original-title"></dd><dt>원문 페이지</dt><dd id="reader-page"></dd><dt>자료 안의 위치</dt><dd id="reader-path"></dd></dl></details>
@@ -106,6 +109,6 @@
   </main>
 
   <template id="example-template"><button type="button" class="example-card"><span class="example-topic"></span><span class="example-question"></span><span class="example-arrow" aria-hidden="true">↗</span></button></template>
-  <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-page"></span><span class="card-preview"></span><span class="card-bottom">내용 살펴보기 <span aria-hidden="true">→</span></span></button></template>
+  <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-document"></span><span class="card-page"></span><span class="card-preview"></span><span class="card-bottom"><span class="card-related">내용 살펴보기</span><span aria-hidden="true">→</span></span></button></template>
 </body>
 </html>

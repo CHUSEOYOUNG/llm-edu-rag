@@ -7,6 +7,52 @@ let result = null;
 let selected = null;
 let loading = false;
 let audience = "all";
+let schoolLevel = "all";
+let schoolLevelManuallySet = false;
+let sourceGroups = [];
+let searchTerms = [];
+
+const schoolLabels = {all: "전체", elementary: "초등학교", middle: "중학교", high: "고등학교"};
+
+function renderSchoolFilter() {
+  document.querySelectorAll("[data-school-level]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.schoolLevel === schoolLevel));
+  });
+  $("school-filter-help").textContent = schoolLevel === "all"
+    ? "전체 자료에서 찾아요."
+    : `${schoolLabels[schoolLevel]} 관련 자료만 찾아요.`;
+}
+
+function appendHighlighted(element, value, terms = searchTerms) {
+  const text = String(value || "");
+  element.replaceChildren();
+  if (!terms.length) {
+    element.textContent = text;
+    return;
+  }
+  const lowered = text.toLocaleLowerCase();
+  let offset = 0;
+  while (offset < text.length) {
+    let matchIndex = -1;
+    let matchTerm = "";
+    for (const term of terms) {
+      const found = lowered.indexOf(term.toLocaleLowerCase(), offset);
+      if (found >= 0 && (matchIndex < 0 || found < matchIndex || (found === matchIndex && term.length > matchTerm.length))) {
+        matchIndex = found;
+        matchTerm = term;
+      }
+    }
+    if (matchIndex < 0) {
+      element.append(document.createTextNode(text.slice(offset)));
+      break;
+    }
+    if (matchIndex > offset) element.append(document.createTextNode(text.slice(offset, matchIndex)));
+    const mark = document.createElement("mark");
+    mark.textContent = text.slice(matchIndex, matchIndex + matchTerm.length);
+    element.append(mark);
+    offset = matchIndex + matchTerm.length;
+  }
+}
 
 function renderExamples() {
   $("examples").replaceChildren();
@@ -34,7 +80,7 @@ function setLoading(value) {
   $("top-k").disabled = value;
   $("search-label").textContent = value ? "찾고 있어요…" : "찾아보기";
   form.setAttribute("aria-busy", String(value));
-  document.querySelectorAll("[data-example], [data-audience]").forEach((button) => { button.disabled = value; });
+  document.querySelectorAll("[data-example], [data-audience], [data-school-level]").forEach((button) => { button.disabled = value; });
 }
 
 function renderReaderBody(raw) {
@@ -44,7 +90,7 @@ function renderReaderBody(raw) {
     if (block.type === "text") {
       const text = document.createElement("div");
       text.className = "reader-text-block";
-      text.textContent = block.text;
+      appendHighlighted(text, block.text);
       container.append(text);
       continue;
     }
@@ -58,7 +104,7 @@ function renderReaderBody(raw) {
     for (const value of block.headers) {
       const cell = document.createElement("th");
       cell.scope = "col";
-      cell.textContent = value;
+      appendHighlighted(cell, value);
       headRow.append(cell);
     }
     head.append(headRow);
@@ -68,7 +114,7 @@ function renderReaderBody(raw) {
       const tableRow = document.createElement("tr");
       for (const value of row) {
         const cell = document.createElement("td");
-        cell.textContent = value;
+        appendHighlighted(cell, value);
         tableRow.append(cell);
       }
       body.append(tableRow);
@@ -79,13 +125,13 @@ function renderReaderBody(raw) {
   }
 }
 
-function selectSource(source) {
+function selectSource(source, group) {
   selected = source;
   document.querySelectorAll(".result-card").forEach((card) => {
-    card.setAttribute("aria-pressed", String(card.dataset.sourceId === source.source_id));
+    card.setAttribute("aria-pressed", String(Number(card.dataset.groupIndex) === sourceGroups.indexOf(group)));
   });
   $("reader-topic").textContent = schoolGuide.topicFor(source.doc_id);
-  $("reader-title").textContent = schoolGuide.displayTitle(source.doc_id);
+  appendHighlighted($("reader-title"), schoolGuide.sectionTitle(source.path));
   $("reader-original-title").textContent = source.doc_id;
   $("reader-path").textContent = source.path || "이 자료에는 위치 정보가 없어요.";
   $("reader-page").textContent = schoolGuide.pageLabel(source);
@@ -96,6 +142,19 @@ function selectSource(source) {
   renderReaderBody(source.body);
   $("reader-body").scrollTop = 0;
   $("copy-button").textContent = "내용 복사";
+  const sourceChoices = $("source-choices");
+  const choiceList = $("source-choice-list");
+  choiceList.replaceChildren();
+  sourceChoices.hidden = group.sources.length < 2;
+  for (const [index, choice] of group.sources.entries()) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "source-choice";
+    button.setAttribute("aria-pressed", String(choice.source_id === source.source_id));
+    button.textContent = `${index + 1}. ${schoolGuide.pageLabel(choice)}`;
+    button.addEventListener("click", () => selectSource(choice, group));
+    choiceList.append(button);
+  }
   const chips = $("condition-list");
   chips.replaceChildren();
   $("condition-section").hidden = result.condition_audit.length === 0;
@@ -113,31 +172,41 @@ function renderResults(data) {
   result = data;
   selected = null;
   const packet = data.context;
+  searchTerms = schoolGuide.highlightTerms(packet.original_question);
+  sourceGroups = schoolGuide.groupSources(packet.sources);
   $("empty-state").hidden = true;
   $("results-section").hidden = false;
-  $("result-count").textContent = `${packet.sources.length}개`;
+  $("result-count").textContent = sourceGroups.length === packet.sources.length
+    ? `${sourceGroups.length}개`
+    : `${sourceGroups.length}개 항목 · 내용 ${packet.sources.length}개`;
   $("result-question").textContent = `궁금한 점: ${packet.original_question}`;
+  $("active-filter").hidden = data.school_level === "all";
+  $("active-filter").textContent = data.school_level === "all" ? "" : `${schoolLabels[data.school_level]} 자료만 모아봤어요. ‘전체’를 누르면 다른 학교급 자료도 함께 볼 수 있어요.`;
   $("date-warning").hidden = data.missing_date_conditions.length === 0;
   $("date-warning").textContent = `${data.missing_date_conditions.join(", ")}에 적용되는 내용인지 확인이 필요해요. 찾은 내용과 항목 이름에 이 날짜가 적혀 있지 않아요. 다른 방식으로 날짜가 쓰여 있거나 별도의 안내가 있을 수 있어요.`;
   $("budget-warning").hidden = packet.omitted_chunk_ids.length === 0;
   $("budget-warning").textContent = "내용이 길어 일부 자료를 이번 화면에 모두 담지 못했어요. 질문을 조금 더 구체적으로 적어 다시 찾아보세요.";
   $("result-list").replaceChildren();
-  for (const source of packet.sources) {
+  for (const [groupIndex, group] of sourceGroups.entries()) {
+    const source = group.sources[0];
     const fragment = $("result-template").content.cloneNode(true);
     const card = fragment.querySelector(".result-card");
-    card.dataset.sourceId = source.source_id;
-    card.setAttribute("aria-label", `${schoolGuide.displayTitle(source.doc_id)} 내용 보기`);
+    card.dataset.groupIndex = String(groupIndex);
+    card.setAttribute("aria-label", `${schoolGuide.sectionTitle(source.path)} 내용 보기`);
     card.querySelector(".topic-badge").textContent = schoolGuide.topicFor(source.doc_id);
-    card.querySelector(".card-title").textContent = schoolGuide.displayTitle(source.doc_id);
+    appendHighlighted(card.querySelector(".card-title"), schoolGuide.sectionTitle(source.path));
+    const level = schoolGuide.schoolLevelFor(source.doc_id);
+    card.querySelector(".card-document").textContent = `${level.label} · ${schoolGuide.displayTitle(source.doc_id)}`;
     card.querySelector(".card-page").textContent = schoolGuide.pageLabel(source);
-    card.querySelector(".card-preview").textContent = schoolGuide.readablePreview(source.body).slice(0, 300);
-    card.addEventListener("click", () => selectSource(source));
+    appendHighlighted(card.querySelector(".card-preview"), schoolGuide.readablePreview(source.body).slice(0, 300));
+    card.querySelector(".card-related").textContent = group.sources.length > 1 ? `관련 내용 ${group.sources.length}개 모아보기` : "내용 살펴보기";
+    card.addEventListener("click", () => selectSource(source, group));
     $("result-list").append(fragment);
   }
   $("reader").hidden = packet.sources.length === 0;
   $("export-button").disabled = packet.sources.length === 0;
-  $("status").textContent = packet.sources.length ? `관련 내용 ${packet.sources.length}개를 찾았어요. 자료를 선택해 살펴보세요.` : "표시할 내용을 찾지 못했어요. 다른 말로 질문하거나 한 번에 보는 개수를 바꿔보세요.";
-  if (packet.sources.length) selectSource(packet.sources[0]);
+  $("status").textContent = packet.sources.length ? `관련 내용 ${packet.sources.length}개를 ${sourceGroups.length}개 항목으로 정리했어요.` : `${schoolLabels[data.school_level]} 자료에서는 관련 내용을 찾지 못했어요. 학교급을 ‘전체’로 바꾸거나 다른 말로 찾아보세요.`;
+  if (packet.sources.length) selectSource(sourceGroups[0].sources[0], sourceGroups[0]);
 }
 
 form.addEventListener("submit", async (event) => {
@@ -149,6 +218,10 @@ form.addEventListener("submit", async (event) => {
     question.focus();
     return;
   }
+  if (!schoolLevelManuallySet) {
+    schoolLevel = schoolGuide.detectedSchoolLevel(question.value);
+    renderSchoolFilter();
+  }
   setLoading(true);
   $("error").hidden = true;
   $("results-section").hidden = true;
@@ -157,8 +230,8 @@ form.addEventListener("submit", async (event) => {
   try {
     const response = await fetch("/api/search", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      // Audience selection changes suggestions only, never the submitted question or filters.
-      body: JSON.stringify({ question: question.value, top_k: Number($("top-k").value) })
+      // Audience selection changes suggestions only. School level is an explicit, visible filter.
+      body: JSON.stringify({ question: question.value, top_k: Number($("top-k").value), school_level: schoolLevel })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
@@ -187,6 +260,15 @@ document.querySelectorAll("[data-audience]").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-school-level]").forEach((button) => {
+  button.addEventListener("click", () => {
+    schoolLevel = button.dataset.schoolLevel;
+    schoolLevelManuallySet = true;
+    renderSchoolFilter();
+    if (result && question.value.trim()) form.requestSubmit();
+  });
+});
+
 $("copy-button").addEventListener("click", async () => {
   if (!selected) return;
   try {
@@ -210,6 +292,7 @@ $("export-button").addEventListener("click", () => {
 });
 
 renderExamples();
+renderSchoolFilter();
 fetch("/api/info").then((response) => {
   if (!response.ok) throw new Error("service unavailable");
   return response.json();

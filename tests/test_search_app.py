@@ -10,7 +10,8 @@ import unittest
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from search_app import BusyError, SearchServer, SearchService, condition_audit, keyword_rerank, keyword_terms
+from search_app import (BusyError, SearchServer, SearchService, condition_audit,
+                        keyword_rerank, keyword_terms, matches_school_level)
 from rag import build_packet
 from test_rag import hit
 
@@ -47,6 +48,29 @@ class SearchServiceTests(unittest.TestCase):
         retriever.search.assert_called_once_with("출결", 100)
         self.assertEqual(result["context"]["sources"][0]["chunk_id"], "overview")
 
+    def test_school_filter_keeps_specific_and_explicit_general_material(self):
+        elementary = hit("e", doc_id="2026 학교생활기록부 기재요령(초)_F_260219")
+        middle = hit("m", doc_id="2026 학교생활기록부 기재요령(중)_F_260227")
+        general_middle = hit("g", body="중학교 수업은 45분을 원칙으로 한다.", doc_id="교육과정 총론")
+        unrelated_general = hit("x", body="공통 운영 안내", doc_id="교육과정 총론")
+        self.assertTrue(matches_school_level(middle, "middle"))
+        self.assertTrue(matches_school_level(general_middle, "middle"))
+        self.assertFalse(matches_school_level(elementary, "middle"))
+        self.assertFalse(matches_school_level(
+            hit("cross", body="고등학교와 함께 보는 안내", doc_id=middle["doc_id"]), "high"))
+        self.assertFalse(matches_school_level(unrelated_general, "middle"))
+
+        retriever = Mock()
+        retriever.config = {"model": "test-model", "index_text": "body"}
+        retriever.chunks = [elementary, middle, general_middle, unrelated_general]
+        retriever.search.return_value = retriever.chunks
+        result = SearchService(retriever).search(
+            {"question": "수업 시간", "top_k": 5, "school_level": "middle"})
+        retriever.search.assert_called_once_with("수업 시간", 4)
+        self.assertEqual([source["chunk_id"] for source in result["context"]["sources"]], ["m", "g"])
+        self.assertEqual(result["school_level"], "middle")
+        self.assertTrue(result["context"]["scope_filters_applied"])
+
     def test_search_preserves_original_question_and_never_generates(self):
         search = service()
         question = "한글 한 글자는 몇 바이트인가요?"
@@ -62,7 +86,8 @@ class SearchServiceTests(unittest.TestCase):
         search = service()
         for payload in (None, {}, [], {"question": ""}, {"question": "x"*4001},
                         {"question": "질문", "top_k": True}, {"question": "질문", "top_k": 21},
-                        {"question": "질문", "top_k": 1.5}, {"question": "질문", "generate": True}):
+                        {"question": "질문", "top_k": 1.5}, {"question": "질문", "generate": True},
+                        {"question": "질문", "school_level": "university"}):
             with self.subTest(payload=str(payload)[:40]):
                 with self.assertRaises(ValueError): search.search(payload)
         search.retriever.search.assert_not_called()
