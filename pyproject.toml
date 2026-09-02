@@ -5,10 +5,13 @@ description = "Local-first retrieval and cited RAG experiments for Korean educat
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "huggingface-hub>=0.20.0",
     "kiwipiepy>=0.23.2",
     "pymupdf4llm>=0.0.27",
     "rank-bm25>=0.2.2",
     "sentence-transformers>=6.0.0",
+    "torch>=2.1.0",
+    "transformers>=4.38.1",
 ]
 
 [project.urls]

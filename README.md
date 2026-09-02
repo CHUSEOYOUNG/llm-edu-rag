@@ -28,6 +28,7 @@
 - 선택한 내용 복사와 텍스트 파일 저장
 - 출처 ID와 원문 인용을 검사하는 RAG 파이프라인
 - 구조 기반·overlap·고정 길이 청킹 비교 실험
+- multilingual CrossEncoder reranker 비교 실험
 
 웹 화면에는 검색 점수나 청크 ID 대신 항목 이름, 학교급, 페이지처럼 실제로 자료를 확인할 때 필요한 정보만 보여준다.
 
@@ -84,7 +85,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 66개와 JavaScript 테스트 8개를 통과한다. 검색 API와 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
+현재 Python 테스트 70개와 JavaScript 테스트 8개를 통과한다. 검색 API와 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
 
 ## 검색 실험
 
@@ -108,6 +109,8 @@ node --test tests/test_presentation.cjs
 
 overlap은 첫 근거의 순위를 일부 높였지만 top-5에서 두 질문이 회귀했고 색인할 문자 수도 약 19% 늘었다. 고정 800자 방식도 현재 구조 기반 방식보다 Complete@5가 낮았다. 따라서 기본 청킹은 구조 기반 방식을 유지한다. 세 방식 모두 주석한 17개 근거 그룹을 새 청크에 다시 연결할 수 있는지 확인한 뒤 평가했다.
 
+Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR@20이 `0.636 → 0.700`, Complete@10이 `0.818 → 0.909`로 올랐다. 하지만 Complete@5는 `0.818`로 같았고 한 질문을 회복하는 대신 다른 질문 하나가 회귀했다. 로컬 CPU에서 질문당 평균 12.8초가 걸려 현재 검색 화면에는 적용하지 않았다.
+
 이후에는 같은 답을 뒷받침하는 여러 판본을 하나의 근거 그룹으로 묶어 평가 규칙을 다시 정리했다. 현재 v2 개발셋에서 원문 질문 Dense의 Complete@5는 `9/11`이다. 질문을 손으로 줄이면 `10/11`까지 올라갔지만 한 질문의 정답 근거가 2위에서 10위로 내려가는 회귀가 있어 기본 검색에는 반영하지 않았다.
 
 자세한 조건과 질문별 결과는 아래 기록에 남겨두었다.
@@ -116,6 +119,7 @@ overlap은 첫 근거의 순위를 일부 높였지만 top-5에서 두 질문이
 - [검색문 표현 비교](notes/2026-08-27-query-expression.md)
 - [평가셋 v2 감사](notes/2026-08-27-eval-v2-audit.md)
 - [청킹 방식 비교](notes/2026-09-02-chunking-ablation.md)
+- [CrossEncoder reranker 비교](notes/2026-09-02-reranker-ablation.md)
 
 ## 답변 생성 코드
 
@@ -148,7 +152,6 @@ config/       현재 Dense 색인의 설정과 파일 지문
 
 - 평가 질문을 늘리고 개발셋과 테스트셋 분리
 - 외부 Vector DB와 현재 NumPy 검색의 정확도·운영 복잡도 비교
-- 학습형 reranker 후보를 같은 평가셋에서 비교
 - 문서 연도와 개정 이력을 이용한 적용 시점 확인
 - 답변 가능 여부와 생성 답변 품질 평가
 - 배포용 FastAPI와 Docker 구성
