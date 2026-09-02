@@ -1,17 +1,18 @@
-import http.client
 from html.parser import HTMLParser
 import json
 from pathlib import Path
 import sys
 import re
-import threading
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
+from fastapi.testclient import TestClient
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from search_app import (BusyError, SearchServer, SearchService, condition_audit,
-                        keyword_rerank, keyword_terms, matches_school_level)
+from search_app import (BusyError, SearchService, condition_audit, create_app,
+                        keyword_rerank, keyword_terms, matches_school_level,
+                        run_server)
 from rag import build_packet
 from test_rag import hit
 
@@ -131,24 +132,16 @@ class SearchHttpTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.service = service()
-        cls.server = SearchServer(("127.0.0.1", 0), cls.service)
-        cls.thread = threading.Thread(target=cls.server.serve_forever, daemon=True)
-        cls.thread.start()
+        cls.client_context = TestClient(create_app(cls.service))
+        cls.client = cls.client_context.__enter__()
 
     @classmethod
     def tearDownClass(cls):
-        cls.server.shutdown()
-        cls.server.server_close()
-        cls.thread.join(timeout=2)
+        cls.client_context.__exit__(None, None, None)
 
     def request(self, method, path, body=None, headers=None):
-        connection = http.client.HTTPConnection("127.0.0.1", self.server.server_port, timeout=3)
-        try:
-            connection.request(method, path, body=body, headers=headers or {})
-            response = connection.getresponse()
-            return response.status, dict(response.getheaders()), response.read()
-        finally:
-            connection.close()
+        response = self.client.request(method, path, content=body, headers=headers or {})
+        return response.status_code, response.headers, response.content
 
     def test_static_assets_and_info_are_served_without_external_resources(self):
         for path in ("/", "/app.css", "/app.css?v=20260901-3", "/presentation.js",
@@ -161,6 +154,19 @@ class SearchHttpTests(unittest.TestCase):
                 self.assertTrue(body)
         _, _, body = self.request("GET", "/api/info")
         self.assertFalse(json.loads(body)["generation_enabled"])
+
+    def test_health_and_openapi_document_the_search_contract(self):
+        response = self.client.get("/health")
+        self.assertEqual(response.json(), {
+            "status": "ok", "ready": True, "mode": "local_retrieval_only"})
+        schema = self.client.get("/openapi.json").json()
+        self.assertIn("/api/search", schema["paths"])
+        self.assertIn("SearchRequest", schema["components"]["schemas"])
+        request_schema = schema["components"]["schemas"]["SearchRequest"]
+        self.assertEqual(request_schema["additionalProperties"], False)
+        docs = self.client.get("/docs")
+        self.assertEqual(docs.status_code, 200)
+        self.assertIn("cdn.jsdelivr.net", docs.headers["Content-Security-Policy"])
 
     def test_search_returns_full_source_and_no_generated_answer(self):
         status, _, body = self.request("POST", "/api/search", json.dumps({"question": "한글?"}),
@@ -189,8 +195,22 @@ class SearchHttpTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertEqual(self.request("POST", "/api/search", body, headers)[0], expected)
 
+    def test_request_schema_rejects_extra_and_coerced_fields(self):
+        invalid = [
+            {"question": "출결", "unknown": "field"},
+            {"question": "출결", "top_k": True},
+            {"question": "출결", "school_level": "university"},
+        ]
+        calls_before = self.service.retriever.search.call_count
+        for payload in invalid:
+            with self.subTest(payload=payload):
+                response = self.client.post("/api/search", json=payload)
+                self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.service.retriever.search.call_count, calls_before)
+
     def test_server_cannot_bind_public_interface(self):
-        with self.assertRaises(ValueError): SearchServer(("0.0.0.0", 0), self.service)
+        with self.assertRaises(ValueError):
+            run_server(8765, host="0.0.0.0")
 
 
 class SourcePdfHttpTests(unittest.TestCase):
@@ -202,28 +222,14 @@ class SourcePdfHttpTests(unittest.TestCase):
             retriever.config = {"model": "test-model", "index_text": "body"}
             retriever.chunks = [hit()]
             service_with_pdf = SearchService(retriever, Path(temp))
-            server = SearchServer(("127.0.0.1", 0), service_with_pdf)
-            thread = threading.Thread(target=server.serve_forever, daemon=True)
-            thread.start()
-            try:
-                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=3)
-                connection.request("GET", "/source/%EB%AC%B8%EC%84%9C.pdf")
-                response = connection.getresponse()
-                self.assertEqual(response.status, 200)
-                self.assertEqual(response.getheader("Content-Type"), "application/pdf")
-                self.assertEqual(response.read(), source.read_bytes())
-                connection.close()
+            with TestClient(create_app(service_with_pdf)) as client:
+                response = client.get("/source/%EB%AC%B8%EC%84%9C.pdf")
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.headers["Content-Type"], "application/pdf")
+                self.assertEqual(response.content, source.read_bytes())
 
-                connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=3)
-                connection.request("GET", "/source/..%2F.env.pdf")
-                response = connection.getresponse()
-                self.assertEqual(response.status, 404)
-                response.read()
-                connection.close()
-            finally:
-                server.shutdown()
-                server.server_close()
-                thread.join(timeout=2)
+                response = client.get("/source/..%2F.env.pdf")
+                self.assertEqual(response.status_code, 404)
 
 
 class EducationPageTests(unittest.TestCase):

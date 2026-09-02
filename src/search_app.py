@@ -1,17 +1,22 @@
-"""Loopback-only evidence browser. No generation routes, keys, or paid API calls.
+"""Loopback-only FastAPI evidence browser with no paid generation routes.
 
 Run: python src/search_app.py, then open http://127.0.0.1:8765.
-This standard-library development server is not intended for public deployment.
 """
 
 import argparse
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
+from contextlib import asynccontextmanager
 from pathlib import Path
+import re
 import threading
 import time
-from urllib.parse import quote, unquote, urlsplit
-import re
+from typing import Any, Literal
+from urllib.parse import quote
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import FileResponse, JSONResponse, Response
+from pydantic import BaseModel, ConfigDict, Field
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from rag import ROOT, DenseRetriever, build_packet, compact, missing_dates
 
@@ -27,10 +32,64 @@ SCHOOL_LEVELS = {
     "middle": ("(중)", "중학교"),
     "high": ("(고)", "고등학교"),
 }
+ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
+CONTENT_SECURITY_POLICY = (
+    "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
+    "img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+)
+DOCS_CONTENT_SECURITY_POLICY = (
+    "default-src 'none'; script-src https://cdn.jsdelivr.net; "
+    "style-src https://cdn.jsdelivr.net; connect-src 'self'; img-src data: https:; "
+    "base-uri 'none'; frame-ancestors 'none'; form-action 'none'"
+)
 
 
 class BusyError(RuntimeError):
     pass
+
+
+class SearchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    question: str = Field(min_length=1, max_length=4000,
+                          description="학교생활이나 교육과정에 관한 질문")
+    top_k: int = Field(default=5, ge=1, le=20,
+                       description="한 번에 받을 관련 내용 수")
+    school_level: Literal["all", "elementary", "middle", "high"] = "all"
+
+
+class RetrieverInfo(BaseModel):
+    mode: str
+    generation_enabled: bool
+    model: str
+    index_text: str
+    short_keyword_rerank: bool
+    chunk_count: int
+    document_count: int
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok"]
+    ready: Literal[True]
+    mode: Literal["local_retrieval_only"]
+
+
+class SearchResponse(BaseModel):
+    status: Literal["retrieved_only"]
+    answer: None
+    generation_called: Literal[False]
+    top_k: int
+    retrieved_count: int
+    context: dict[str, Any]
+    school_level: str
+    missing_date_conditions: list[str]
+    condition_audit: list[dict[str, Any]]
+    elapsed_ms: int
+    retriever: RetrieverInfo
+
+
+class ErrorResponse(BaseModel):
+    error: str
 
 
 def keyword_terms(question):
@@ -164,128 +223,159 @@ class SearchService:
                 "retriever": self.info()}
 
 
-class SearchServer(ThreadingHTTPServer):
-    daemon_threads = True
-
-    def __init__(self, address, service):
-        if address[0] != "127.0.0.1":
-            raise ValueError("로컬 주소 127.0.0.1에서만 실행할 수 있습니다.")
-        self.service = service
-        super().__init__(address, Handler)
+def request_host(request):
+    return request.headers.get("host", "").split(":", 1)[0].lower()
 
 
-class Handler(BaseHTTPRequestHandler):
-    def setup(self):
-        super().setup()
-        self.connection.settimeout(20)
+def add_security_headers(response, docs=False):
+    response.headers["Cache-Control"] = "no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Content-Security-Policy"] = (
+        DOCS_CONTENT_SECURITY_POLICY if docs else CONTENT_SECURITY_POLICY)
+    return response
 
-    def log_message(self, format, *args):
-        # No request/query logging: questions stay out of terminal history/logs.
-        pass
 
-    def allowed_request(self):
-        port = self.server.server_port
-        hosts = {f"127.0.0.1:{port}", f"localhost:{port}"}
-        origin = self.headers.get("Origin")
-        if self.headers.get("Host") not in hosts:
-            self.send_json(403, {"error": "안내된 주소로 다시 접속해 주세요."})
-            return False
-        if origin is not None and origin not in {f"http://{host}" for host in hosts}:
-            self.send_json(403, {"error": "다른 사이트에서의 요청은 허용하지 않습니다."})
-            return False
-        return True
+def create_app(service=None):
+    @asynccontextmanager
+    async def lifespan(app):
+        app.state.search_service = service or SearchService(DenseRetriever())
+        yield
+        app.state.search_service = None
 
-    def send_body(self, status, body, content_type):
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Referrer-Policy", "no-referrer")
-        self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
-        self.end_headers()
-        self.wfile.write(body)
+    api = FastAPI(
+        title="학교생활 교육 문서 검색 API",
+        description="교육 문서에서 관련 원문과 PDF 페이지를 찾는 로컬 검색 API",
+        version="1.0.0",
+        lifespan=lifespan,
+        redoc_url=None,
+    )
 
-    def send_json(self, status, payload):
-        self.send_body(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"), "application/json; charset=utf-8")
-
-    def source_path(self, request_path):
-        prefix, suffix = "/source/", ".pdf"
-        if not request_path.startswith(prefix) or not request_path.endswith(suffix):
-            return None
-        encoded = request_path[len(prefix):-len(suffix)]
-        try:
-            doc_id = unquote(encoded, errors="strict")
-        except UnicodeError:
-            return None
-        return self.server.service.source_path(doc_id)
-
-    def do_GET(self):
-        if not self.allowed_request():
-            return
-        request_path = urlsplit(self.path).path
-        if request_path in STATIC:
-            filename, content_type = STATIC[request_path]
-            self.send_body(200, (WEB / filename).read_bytes(), content_type)
-        elif request_path == "/api/info":
-            self.send_json(200, self.server.service.info())
-        elif request_path == "/favicon.ico":
-            self.send_body(204, b"", "image/x-icon")
-        elif request_path.startswith("/source/"):
-            source = self.source_path(request_path)
-            if source:
-                self.send_body(200, source.read_bytes(), "application/pdf")
-            else:
-                self.send_json(404, {"error": "원문 파일을 찾을 수 없어요."})
-        else:
-            self.send_json(404, {"error": "요청한 경로가 없습니다."})
-
-    def do_POST(self):
-        if not self.allowed_request():
-            return
-        if self.path != "/api/search":
-            self.send_json(404, {"error": "요청한 기능을 찾을 수 없어요."})
-            return
-        if self.headers.get("Content-Type", "").split(";")[0].strip() != "application/json":
-            self.send_json(415, {"error": "검색 요청을 읽지 못했어요. 화면을 새로고침한 뒤 다시 시도해 주세요."})
-            return
-        if self.headers.get("Transfer-Encoding"):
-            self.send_json(400, {"error": "검색 요청을 읽지 못했어요. 다시 시도해 주세요."})
-            return
-        try:
-            size = int(self.headers.get("Content-Length", "0"))
+    @api.middleware("http")
+    async def local_security(request, call_next):
+        host = request_host(request)
+        if host not in ALLOWED_HOSTS:
+            response = JSONResponse(
+                status_code=403, content={"error": "안내된 주소로 다시 접속해 주세요."})
+            return add_security_headers(response)
+        origin = request.headers.get("origin")
+        if origin is not None and origin != f"http://{request.headers.get('host', '')}":
+            response = JSONResponse(
+                status_code=403, content={"error": "다른 사이트에서의 요청은 허용하지 않습니다."})
+            return add_security_headers(response)
+        if request.method == "POST" and request.url.path == "/api/search":
+            if request.headers.get("transfer-encoding"):
+                response = JSONResponse(
+                    status_code=400, content={"error": "검색 요청을 읽지 못했어요. 다시 시도해 주세요."})
+                return add_security_headers(response)
+            content_type = request.headers.get("content-type", "").split(";", 1)[0].strip()
+            if content_type != "application/json":
+                response = JSONResponse(
+                    status_code=415,
+                    content={"error": "검색 요청을 읽지 못했어요. 화면을 새로고침한 뒤 다시 시도해 주세요."})
+                return add_security_headers(response)
+            try:
+                size = int(request.headers.get("content-length", "0"))
+            except ValueError:
+                size = 0
             if not 0 < size <= MAX_REQUEST_BYTES:
-                self.send_json(413, {"error": "요청 크기가 허용 범위를 벗어났습니다."})
-                return
-            payload = json.loads(self.rfile.read(size))
-            self.send_json(200, self.server.service.search(payload))
-        except (ValueError, UnicodeError):
-            self.send_json(400, {"error": "질문은 1~4000자, 검색 개수는 1~20으로 입력하세요."})
+                response = JSONResponse(
+                    status_code=413, content={"error": "요청 크기가 허용 범위를 벗어났습니다."})
+                return add_security_headers(response)
+        response = await call_next(request)
+        return add_security_headers(response, request.url.path == "/docs")
+
+    @api.exception_handler(RequestValidationError)
+    async def validation_error(_request, _exc):
+        return JSONResponse(
+            status_code=400,
+            content={"error": "질문은 1~4000자, 검색 개수는 1~20으로 입력하세요."},
+        )
+
+    @api.exception_handler(StarletteHTTPException)
+    async def http_error(_request, exc):
+        if exc.status_code == 404:
+            return JSONResponse(status_code=404, content={"error": "요청한 경로가 없습니다."})
+        return JSONResponse(status_code=exc.status_code, content={"error": "요청을 처리하지 못했습니다."})
+
+    @api.get("/health", response_model=HealthResponse, tags=["운영"])
+    def health():
+        return {"status": "ok", "ready": True, "mode": "local_retrieval_only"}
+
+    @api.get("/api/info", response_model=RetrieverInfo, tags=["검색"])
+    def info(request: Request):
+        return request.app.state.search_service.info()
+
+    @api.post(
+        "/api/search",
+        response_model=SearchResponse,
+        responses={400: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+        tags=["검색"],
+    )
+    def search(payload: SearchRequest, request: Request):
+        try:
+            return request.app.state.search_service.search(payload.model_dump())
         except BusyError as exc:
-            self.send_json(503, {"error": str(exc)})
+            return JSONResponse(status_code=503, content={"error": str(exc)})
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "질문은 1~4000자, 검색 개수는 1~20으로 입력하세요."})
         except Exception:
-            self.send_json(500, {"error": "자료를 찾는 중에 문제가 생겼어요. 잠시 후 다시 시도해 주세요."})
+            return JSONResponse(
+                status_code=500,
+                content={"error": "자료를 찾는 중에 문제가 생겼어요. 잠시 후 다시 시도해 주세요."})
+
+    @api.get("/source/{doc_id}.pdf", include_in_schema=False)
+    def source_pdf(doc_id: str, request: Request):
+        source = request.app.state.search_service.source_path(doc_id)
+        if source is None:
+            return JSONResponse(status_code=404, content={"error": "원문 파일을 찾을 수 없어요."})
+        return FileResponse(source, media_type="application/pdf")
+
+    def static_response(path, content_type):
+        def serve_static():
+            return FileResponse(path, media_type=content_type)
+        return serve_static
+
+    for route, (filename, media_type) in STATIC.items():
+        api.add_api_route(
+            route,
+            static_response(WEB / filename, media_type),
+            methods=["GET"],
+            include_in_schema=False,
+        )
+
+    @api.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return Response(status_code=204, media_type="image/x-icon")
+
+    return api
+
+
+app = create_app()
+
+
+def run_server(port=8765, host="127.0.0.1"):
+    if host != "127.0.0.1":
+        raise ValueError("로컬 주소 127.0.0.1에서만 실행할 수 있습니다.")
+    if not 1 <= port <= 65535:
+        raise ValueError("포트는 1~65535여야 합니다.")
+    import uvicorn
+
+    print("로컬 검색 모델을 준비합니다. API 호출·모델 다운로드는 하지 않습니다.", flush=True)
+    print(f"검색 화면: http://{host}:{port}  | API 문서: http://{host}:{port}/docs", flush=True)
+    uvicorn.run(app, host=host, port=port, access_log=False, log_level="warning")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
     args = parser.parse_args()
-    if not 1 <= args.port <= 65535:
-        parser.error("포트는 1~65535여야 합니다.")
-    print("로컬 검색 모델을 준비합니다. API 호출·모델 다운로드는 하지 않습니다.", flush=True)
     try:
-        service = SearchService(DenseRetriever())
-        server = SearchServer(("127.0.0.1", args.port), service)
-    except (OSError, ValueError) as exc:
+        run_server(args.port)
+    except ValueError as exc:
         parser.exit(1, f"서버를 시작할 수 없습니다: {exc}\n")
-    print(f"검색 화면: http://127.0.0.1:{server.server_port}  | 종료: Ctrl+C", flush=True)
-    try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        server.server_close()
 
 
 if __name__ == "__main__":

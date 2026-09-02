@@ -27,6 +27,7 @@
 - 원문 PDF 페이지 표시 및 해당 페이지 바로 열기
 - 선택한 내용 복사와 텍스트 파일 저장
 - 출처 ID와 원문 인용을 검사하는 RAG 파이프라인
+- FastAPI 검색 API, OpenAPI 문서, 상태 확인 경로
 - 구조 기반·overlap·고정 길이 청킹 비교 실험
 - multilingual CrossEncoder reranker 비교 실험
 - BGE-M3 벡터와 본문 metadata를 저장하는 Qdrant 영속 로컬 색인
@@ -67,7 +68,21 @@ uv run python src/search_app.py
 uv run python src/search_app.py --port 8766
 ```
 
-이 서버는 로컬 확인용이다. 외부 배포를 전제로 만든 서버는 아니다.
+화면과 검색 API는 FastAPI와 Uvicorn으로 실행된다. 현재는 `127.0.0.1`에만 바인딩하는 로컬 실행 구성이다.
+
+### 검색 API
+
+서버를 실행하면 API 문서는 <http://127.0.0.1:8765/docs>, OpenAPI 스키마는 <http://127.0.0.1:8765/openapi.json>에서 확인할 수 있다.
+
+```sh
+curl http://127.0.0.1:8765/health
+
+curl -X POST http://127.0.0.1:8765/api/search \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"중학교 출결","top_k":3,"school_level":"middle"}'
+```
+
+검색 요청은 `question`, `top_k`, `school_level`을 받는다. 응답에는 관련 원문과 문서명, 구조 경로, PDF 페이지가 들어가며 생성 답변은 포함하지 않는다.
 
 ### CLI 검색
 
@@ -86,7 +101,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 73개와 JavaScript 테스트 8개를 통과한다. 검색 API와 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결, Qdrant 색인 재로딩도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
+현재 Python 테스트 75개와 JavaScript 테스트 8개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결, Qdrant 색인 재로딩도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
 
 ## 검색 실험
 
@@ -124,6 +139,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [청킹 방식 비교](notes/2026-09-02-chunking-ablation.md)
 - [CrossEncoder reranker 비교](notes/2026-09-02-reranker-ablation.md)
 - [NumPy와 Qdrant 비교](notes/2026-09-02-vector-store-ablation.md)
+- [FastAPI 검색 API 전환](notes/2026-09-02-fastapi-migration.md)
 
 ## 답변 생성 코드
 
@@ -157,6 +173,6 @@ config/       현재 Dense 색인의 설정과 파일 지문
 - 평가 질문을 늘리고 개발셋과 테스트셋 분리
 - 문서 연도와 개정 이력을 이용한 적용 시점 확인
 - 답변 가능 여부와 생성 답변 품질 평가
-- 배포용 FastAPI와 Docker 구성
+- Docker 이미지와 배포용 Qdrant 서버 구성
 
 지금 화면이 보여주는 것은 질문과 가까운 **원문 일부**다. 학교급이나 시행일이 검색어와 일치하더라도 실제 적용 여부까지 자동으로 판단하지는 않는다. 이 부분은 검색 정확도와 별개로 계속 확인할 예정이다.
