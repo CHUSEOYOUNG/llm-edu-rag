@@ -43,3 +43,19 @@ jobs:
 
       - name: Run JavaScript tests
         run: node --test tests/test_presentation.cjs
+
+  container-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build CPU runtime image
+        run: docker build --tag llm-edu-rag:test .
+
+      - name: Check image user and runtime imports
+        run: |
+          test "$(docker image inspect --format '{{.Config.User}}' llm-edu-rag:test)" = "app"
+          docker run --rm --entrypoint python llm-edu-rag:test -c \
+            "import sys, torch; sys.path.insert(0, '/app/src'); import search_app; assert torch.version.cuda is None; print(search_app.app.title)"

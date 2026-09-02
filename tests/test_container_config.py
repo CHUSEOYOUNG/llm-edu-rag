@@ -1,4 +1,5 @@
 from pathlib import Path
+import tomllib
 import unittest
 
 import yaml
@@ -8,6 +9,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ContainerConfigTests(unittest.TestCase):
+    def test_runtime_pins_torch_to_the_cpu_only_index(self):
+        project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+        self.assertEqual(project["tool"]["uv"]["sources"]["torch"],
+                         {"index": "pytorch-cpu"})
+        indexes = {item["name"]: item for item in project["tool"]["uv"]["index"]}
+        self.assertEqual(indexes["pytorch-cpu"]["url"],
+                         "https://download.pytorch.org/whl/cpu")
+        self.assertTrue(indexes["pytorch-cpu"]["explicit"])
+
     def test_image_uses_locked_runtime_dependencies_and_non_root_user(self):
         dockerfile = (ROOT / "Dockerfile").read_text()
         self.assertIn("uv sync --locked --no-dev --no-install-project", dockerfile)
