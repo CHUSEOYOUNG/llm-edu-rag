@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+__pycache__
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+data
+docs
+eval
+experiments
+notes
+runs
+tests

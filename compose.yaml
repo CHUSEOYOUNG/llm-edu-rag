@@ -1,0 +1,32 @@
+services:
+  search:
+    build:
+      context: .
+    image: llm-edu-rag:local
+    init: true
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - type: bind
+        source: ./data/processed
+        target: /app/data/processed
+        read_only: true
+      - type: bind
+        source: ./data/raw
+        target: /app/data/raw
+        read_only: true
+      - type: bind
+        source: ${HOME}/.cache/huggingface
+        target: /home/app/.cache/huggingface
+        read_only: true
+    environment:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

@@ -28,6 +28,7 @@
 - 선택한 내용 복사와 텍스트 파일 저장
 - 출처 ID와 원문 인용을 검사하는 RAG 파이프라인
 - FastAPI 검색 API, OpenAPI 문서, 상태 확인 경로
+- 비루트 사용자와 읽기 전용 마운트를 적용한 Docker/Compose 구성
 - 구조 기반·overlap·고정 길이 청킹 비교 실험
 - multilingual CrossEncoder reranker 비교 실험
 - BGE-M3 벡터와 본문 metadata를 저장하는 Qdrant 영속 로컬 색인
@@ -84,6 +85,23 @@ curl -X POST http://127.0.0.1:8765/api/search \
 
 검색 요청은 `question`, `top_k`, `school_level`을 받는다. 응답에는 관련 원문과 문서명, 구조 경로, PDF 페이지가 들어가며 생성 답변은 포함하지 않는다.
 
+### Docker
+
+Docker 이미지에는 원문 PDF, 임베딩, BGE-m3 모델을 넣지 않는다. 저장소에서 만든 `data/raw`, `data/processed`와 사용자 홈의 Hugging Face 캐시를 읽기 전용으로 연결한다. 따라서 먼저 [데이터 준비](data/README.md)를 마쳐야 한다.
+
+```sh
+docker compose up --build
+```
+
+준비가 끝나면 <http://127.0.0.1:8765/>에서 화면을 열고 상태를 확인한다.
+
+```sh
+curl http://127.0.0.1:8765/health
+docker compose down
+```
+
+Compose는 호스트의 `127.0.0.1`에만 포트를 공개한다. BGE-m3를 기본 위치가 아닌 다른 Hugging Face 캐시에 저장했다면 `compose.yaml`의 모델 캐시 마운트 경로를 그 위치에 맞춰야 한다. 첫 이미지 빌드는 PyTorch 등 실행 의존성을 설치하므로 시간과 디스크 공간이 필요하다.
+
 ### CLI 검색
 
 ```sh
@@ -101,7 +119,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 75개와 JavaScript 테스트 8개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결, Qdrant 색인 재로딩도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
+현재 Python 테스트 78개와 JavaScript 테스트 8개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
 
 ## 검색 실험
 
@@ -140,6 +158,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [CrossEncoder reranker 비교](notes/2026-09-02-reranker-ablation.md)
 - [NumPy와 Qdrant 비교](notes/2026-09-02-vector-store-ablation.md)
 - [FastAPI 검색 API 전환](notes/2026-09-02-fastapi-migration.md)
+- [Docker 실행 구성](notes/2026-09-02-docker.md)
 
 ## 답변 생성 코드
 
@@ -166,6 +185,8 @@ eval/         평가 질문, 근거 주석, 고정 스냅샷
 experiments/  실험 결과 JSON
 notes/        실험 과정과 실패 분석
 config/       현재 Dense 색인의 설정과 파일 지문
+Dockerfile    FastAPI 검색 서비스 이미지
+compose.yaml  로컬 데이터와 모델 캐시를 연결하는 실행 구성
 ```
 
 ## 남은 작업
@@ -173,6 +194,7 @@ config/       현재 Dense 색인의 설정과 파일 지문
 - 평가 질문을 늘리고 개발셋과 테스트셋 분리
 - 문서 연도와 개정 이력을 이용한 적용 시점 확인
 - 답변 가능 여부와 생성 답변 품질 평가
-- Docker 이미지와 배포용 Qdrant 서버 구성
+- Docker 설치 환경에서 이미지 빌드·상태 확인 실제 검증
+- 배포용 Qdrant 서버 구성
 
 지금 화면이 보여주는 것은 질문과 가까운 **원문 일부**다. 학교급이나 시행일이 검색어와 일치하더라도 실제 적용 여부까지 자동으로 판단하지는 않는다. 이 부분은 검색 정확도와 별개로 계속 확인할 예정이다.

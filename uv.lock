@@ -494,6 +494,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "httpx2" },
+    { name = "pyyaml" },
 ]
 
 [package.metadata]
@@ -511,7 +512,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "httpx2", specifier = ">=0.1.0" }]
+dev = [
+    { name = "httpx2", specifier = ">=0.1.0" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
+]
 
 [[package]]
 name = "markdown-it-py"
