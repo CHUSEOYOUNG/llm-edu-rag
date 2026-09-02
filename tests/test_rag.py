@@ -11,6 +11,7 @@ from urllib.error import HTTPError
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from rag import DenseRetriever, answer_packet, build_packet, main, missing_dates, validate_answer
 from rag_generate import GenerationError, NoRedirect, generate, parse_response, request_payload
+from build_dense_index import make_manifest, read_chunks
 from chunk import chunk_section
 from normalize import normalize, normalize_pages
 
@@ -149,6 +150,28 @@ class PageMetadataTests(unittest.TestCase):
         self.assertEqual(len(chunks), 1)
         self.assertEqual((chunks[0]["page_start"], chunks[0]["page_end"]), (4, 5))
         self.assertEqual(chunks[0]["body"], section["text"])
+
+
+class DenseIndexBuildTests(unittest.TestCase):
+    def test_manifest_fingerprints_valid_unique_body_chunks(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            chunks_path = root / "chunks.jsonl"
+            embedding_path = root / "embeddings.npy"
+            chunks = [hit("a", body="첫 본문"), hit("b", body="둘째 본문")]
+            chunks_path.write_text("\n".join(json.dumps(chunk, ensure_ascii=False)
+                                               for chunk in chunks) + "\n")
+            embedding_path.write_bytes(b"test-embedding")
+            self.assertEqual([chunk["chunk_id"] for chunk in read_chunks(chunks_path)], ["a", "b"])
+            manifest = make_manifest("test-model", chunks_path, embedding_path)
+            self.assertEqual(manifest["index_text"], "body")
+            self.assertEqual(len(manifest["chunks_sha256"]), 64)
+            self.assertEqual(len(manifest["embedding_sha256"]), 64)
+
+            chunks_path.write_text("\n".join(json.dumps(chunks[0], ensure_ascii=False)
+                                               for _ in range(2)) + "\n")
+            with self.assertRaisesRegex(ValueError, "중복"):
+                read_chunks(chunks_path)
 
 
 class CliCostSafetyTests(unittest.TestCase):

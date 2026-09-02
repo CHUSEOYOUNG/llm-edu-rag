@@ -1,5 +1,7 @@
 # llm-edu-rag
 
+[![tests](https://github.com/CHUSEOYOUNG/llm-edu-rag/actions/workflows/tests.yml/badge.svg)](https://github.com/CHUSEOYOUNG/llm-edu-rag/actions/workflows/tests.yml)
+
 교육부 PDF는 분량이 길고 비슷한 표현이 여러 학교급 문서에 반복된다. 필요한 내용을 찾을 때마다 PDF 전체를 넘겨보는 불편을 줄여보려고 만든 교육 문서 검색 프로젝트다.
 
 현재는 **로컬 검색과 원문 확인**까지 사용할 수 있다. BGE-m3로 관련 내용을 찾고, 결과가 나온 PDF 페이지를 바로 열어볼 수 있다. 답변 생성 코드는 별도로 두었지만 유료 API를 연결하지 않아 기본 실행에서는 검색만 한다.
@@ -48,7 +50,7 @@ PDF
 
 ## 실행
 
-Python 3.12 이상과 [uv](https://docs.astral.sh/uv/)가 필요하다. 화면 JavaScript 테스트까지 실행하려면 Node.js도 필요하다. 원문 PDF, 처리된 청크, 임베딩 파일과 로컬 BGE-m3 모델 캐시는 저장소에 포함하지 않았다.
+Python 3.12 이상과 [uv](https://docs.astral.sh/uv/)가 필요하다. 화면 JavaScript 테스트까지 실행하려면 Node.js도 필요하다. 원문 PDF, 처리된 청크, 임베딩 파일과 로컬 BGE-m3 모델 캐시는 저장소에 포함하지 않았다. 처음부터 색인을 만드는 과정은 [데이터 준비 문서](data/README.md)에 정리했다.
 
 ### 웹 화면
 
@@ -81,7 +83,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 61개와 JavaScript 테스트 8개를 통과한다. 검색 API와 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결도 테스트에 포함되어 있다.
+현재 Python 테스트 62개와 JavaScript 테스트 8개를 통과한다. 검색 API와 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결도 테스트에 포함되어 있다. 같은 검사는 push와 pull request마다 GitHub Actions에서도 실행한다.
 
 ## 검색 실험
 
