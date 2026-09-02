@@ -70,7 +70,17 @@ uv run python src/build_dense_index.py --local-files-only
 
 검색기는 두 지문이 현재 파일과 다르면 오래된 임베딩을 잘못 쓰지 않도록 실행을 중단한다. 개인 자료로 색인을 다시 만들면 추적 중인 `config/dense_index.json`이 수정될 수 있으므로 공식 코퍼스를 갱신하는 작업이 아니라면 커밋하지 않는다.
 
-## 4. 확인
+## 4. Qdrant 로컬 색인 만들기(선택)
+
+기본 검색은 `embeddings.npy`를 NumPy로 직접 읽는다. 동일한 벡터와 본문 metadata를 디스크 영속 Qdrant collection으로 만들려면 다음 명령을 추가로 실행한다.
+
+```sh
+uv run python src/qdrant_store.py --recreate
+```
+
+생성되는 `data/processed/qdrant/`는 Git에서 제외된다. collection 설정과 입력 파일 지문은 `config/qdrant_index.json`에 기록된다. 현재 구현은 개발과 재현을 위한 Qdrant 로컬 모드이며 배포용 Qdrant 서버와는 성능 특성이 다르다.
+
+## 5. 확인
 
 ```sh
 uv run python src/rag.py "중학교 출결"
