@@ -33,6 +33,7 @@ SCHOOL_LEVELS = {
     "high": ("(고)", "고등학교"),
 }
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
+STRONG_CANDIDATE_THRESHOLD = 0.61
 CONTENT_SECURITY_POLICY = (
     "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
     "img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
@@ -74,6 +75,11 @@ class HealthResponse(BaseModel):
     mode: Literal["local_retrieval_only"]
 
 
+class ResultAssessment(BaseModel):
+    level: Literal["strong_candidate", "review_recommended", "no_results"]
+    answerability_verified: Literal[False]
+
+
 class SearchResponse(BaseModel):
     status: Literal["retrieved_only"]
     answer: None
@@ -84,6 +90,7 @@ class SearchResponse(BaseModel):
     school_level: str
     missing_date_conditions: list[str]
     condition_audit: list[dict[str, Any]]
+    result_assessment: ResultAssessment
     elapsed_ms: int
     retriever: RetrieverInfo
 
@@ -159,6 +166,17 @@ def condition_audit(packet):
     ]} for condition in packet["scope_conditions"]]
 
 
+def assess_results(hits, threshold=STRONG_CANDIDATE_THRESHOLD):
+    """Flag weak candidates without claiming that a question is unanswerable."""
+    if not hits:
+        level = "no_results"
+    elif max(float(hit["score"]) for hit in hits) >= threshold:
+        level = "strong_candidate"
+    else:
+        level = "review_recommended"
+    return {"level": level, "answerability_verified": False}
+
+
 class SearchService:
     def __init__(self, retriever, source_root=ROOT / "data/raw"):
         self.retriever = retriever
@@ -219,6 +237,7 @@ class SearchService:
                 "school_level": school_level,
                 "missing_date_conditions": missing_dates(packet),
                 "condition_audit": condition_audit(packet),
+                "result_assessment": assess_results(hits),
                 "elapsed_ms": round((time.perf_counter()-started)*1000),
                 "retriever": self.info()}
 

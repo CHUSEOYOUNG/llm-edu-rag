@@ -1,0 +1,135 @@
+{
+  "experiment": "dense_top_score_answerability_baseline",
+  "status": "development_diagnostic_not_held_out",
+  "n_questions": 13,
+  "n_answerable": 11,
+  "n_unanswerable": 2,
+  "model": "BAAI/bge-m3",
+  "index_text": "body",
+  "questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
+  "roc_auc": 0.8181818181818182,
+  "service_review_threshold": 0.61,
+  "service_threshold_metrics": {
+    "tp": 9,
+    "fp": 0,
+    "tn": 2,
+    "fn": 2,
+    "precision": 1.0,
+    "recall": 0.8181818181818182,
+    "specificity": 1.0,
+    "balanced_accuracy": 0.9090909090909092,
+    "accuracy": 0.8461538461538461
+  },
+  "best_development_threshold": 0.613817423582077,
+  "best_development_metrics": {
+    "tp": 9,
+    "fp": 0,
+    "tn": 2,
+    "fn": 2,
+    "precision": 1.0,
+    "recall": 0.8181818181818182,
+    "specificity": 1.0,
+    "balanced_accuracy": 0.9090909090909092,
+    "accuracy": 0.8461538461538461
+  },
+  "per_question": [
+    {
+      "qid": "q001",
+      "question": "학교폭력으로 4호나 5호 조치를 받으면 생기부에서 언제 지워지나요?",
+      "answerable": true,
+      "top_score": 0.7288639545440674,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s153::16조의2::5"
+    },
+    {
+      "qid": "q002",
+      "question": "작년 생기부에 잘못 쓴 내용이 있는데 지금 고칠 수 있나요?",
+      "answerable": true,
+      "top_score": 0.5659052133560181,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s553::2::3"
+    },
+    {
+      "qid": "q003",
+      "question": "생기부 글자수 셀 때 한글 한 글자는 몇 바이트로 계산되나요?",
+      "answerable": true,
+      "top_score": 0.633429229259491,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(중)_F_260227::s416::7::7"
+    },
+    {
+      "qid": "q004",
+      "question": "초등학교에서 교과 수업시수를 학교 재량으로 줄일 수 있나요?",
+      "answerable": true,
+      "top_score": 0.6255539059638977,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0"
+    },
+    {
+      "qid": "q005",
+      "question": "중학교 선택 교과에는 어떤 과목들이 있나요?",
+      "answerable": true,
+      "top_score": 0.7472717761993408,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"
+    },
+    {
+      "qid": "q006",
+      "question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 수업 한 시간은 각각 몇 분이 원칙인가요?",
+      "answerable": true,
+      "top_score": 0.6314460635185242,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0"
+    },
+    {
+      "qid": "q007",
+      "question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?",
+      "answerable": true,
+      "top_score": 0.5983790755271912,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0"
+    },
+    {
+      "qid": "q008",
+      "question": "코퍼스에 포함된 국가교육위원회 고시 제2026-1호에서, 2028년 3월 1일부터 초등학교 1·2학년에 적용하도록 정한 교과는 무엇인가요?",
+      "answerable": true,
+      "top_score": 0.6193126440048218,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s002::다::0"
+    },
+    {
+      "qid": "q009",
+      "question": "2022 개정 교육과정 기준으로 초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?",
+      "answerable": true,
+      "top_score": 0.6404455900192261,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s000::::1"
+    },
+    {
+      "qid": "q010",
+      "question": "중학교 국어 수업 시수는 3년간 몇 시간인가요?",
+      "answerable": true,
+      "top_score": 0.643531084060669,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"
+    },
+    {
+      "qid": "q011",
+      "question": "초등학교 3~4학년 국어 수업 시수는 몇 시간인가요?",
+      "answerable": true,
+      "top_score": 0.6857202649116516,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0"
+    },
+    {
+      "qid": "q012",
+      "question": "대학 입시에서 학생부종합전형 반영 비율은 어떻게 되나요?",
+      "answerable": false,
+      "top_score": 0.6083222031593323,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s250::7::6"
+    },
+    {
+      "qid": "q013",
+      "question": "중등교사 임용시험 원서접수는 언제인가요?",
+      "answerable": false,
+      "top_score": 0.5989652276039124,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s002::다::0"
+    }
+  ],
+  "decision": "review_flag_only_do_not_auto_reject",
+  "limitations": [
+    "Only two unanswerable questions are labeled.",
+    "The threshold and metrics use the same small development set.",
+    "Dense similarity measures topical closeness, not whether a passage entails an answer.",
+    "The service keeps low-score candidates visible and never labels them unanswerable."
+  ]
+}

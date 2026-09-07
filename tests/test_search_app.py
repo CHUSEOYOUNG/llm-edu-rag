@@ -11,8 +11,8 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
-                        keyword_rerank, keyword_terms, matches_school_level,
-                        run_server)
+                        assess_results, keyword_rerank, keyword_terms,
+                        matches_school_level, run_server)
 from rag import build_packet
 from test_rag import hit
 
@@ -26,6 +26,14 @@ def service():
 
 
 class SearchServiceTests(unittest.TestCase):
+    def test_result_assessment_never_claims_answerability(self):
+        self.assertEqual(assess_results([]), {
+            "level": "no_results", "answerability_verified": False})
+        self.assertEqual(assess_results([{**hit(), "score": .7}]), {
+            "level": "strong_candidate", "answerability_verified": False})
+        self.assertEqual(assess_results([{**hit(), "score": .59}]), {
+            "level": "review_recommended", "answerability_verified": False})
+
     def test_short_keywords_prefer_matching_section_titles_over_dense_mentions(self):
         dense_first = hit("dense", body="정정 사례의 출결상황 입력 누락", path="자료의 정정")
         overview = hit("overview", body="수업일수와 결석일수를 입력한다.", path="8조 출결상황")
@@ -175,6 +183,8 @@ class SearchHttpTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(result["status"], "retrieved_only")
         self.assertEqual(result["context"]["sources"][0]["body"], hit()["body"])
+        self.assertEqual(result["result_assessment"], {
+            "level": "strong_candidate", "answerability_verified": False})
 
     def test_filesystem_paths_and_generation_routes_are_not_exposed(self):
         for method, path in (("GET", "/.env"), ("GET", "/../README.md"), ("GET", "/src/rag.py"),
