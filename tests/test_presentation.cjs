@@ -71,6 +71,28 @@ test('HTML markers are removed and markdown tables become readable blocks', () =
   assert(!guide.readableText('본문<img src=x onerror=alert(1)>').includes('onerror'));
 });
 
+test('PDF tables without a markdown separator do not leak pipe markup', () => {
+  const raw = '|구분|2023학년도 대입|2024학년도 이후 대입|\n' +
+    '|교과활동|방과후학교 활동 미기재|영재교육 실적 미반영|\n' +
+    '|동아리활동|자율동아리 1개|대입 미반영|';
+  const blocks = guide.readableBlocks(raw);
+  assert.deepEqual(blocks, [{
+    type: 'table',
+    headers: ['구분', '2023학년도 대입', '2024학년도 이후 대입'],
+    rows: [
+      ['교과활동', '방과후학교 활동 미기재', '영재교육 실적 미반영'],
+      ['동아리활동', '자율동아리 1개', '대입 미반영'],
+    ],
+  }]);
+  assert(!guide.readablePreview(raw).includes('|'));
+});
+
+test('uneven extracted table rows are padded to a stable column count', () => {
+  const block = guide.readableBlocks('|항목|내용|비고|\n|수업|40분|\n|정보|34시간|초등|추가 조각|')[0];
+  assert.equal(block.headers.length, 4);
+  assert(block.rows.every((row) => row.length === 4));
+});
+
 test('saved notes use readable content and exclude developer identifiers and scores', () => {
   const source = {doc_id: '2026 학교생활기록부 기재요령(중)_F_260227', path: '입력 안내',
     body: '한글 1자는 3Byte\n<img src=x onerror=alert(1)>', chunk_id: 'internal_chunk_id', score: 0.123456};

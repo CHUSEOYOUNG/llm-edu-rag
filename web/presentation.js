@@ -129,6 +129,16 @@ const schoolGuide = (() => {
     return trimmed.split("|").map((cell) => cell.replace(/\u000b/g, "\n").trim());
   }
 
+  function tableBlock(rows) {
+    if (rows.length < 2) return null;
+    const hasSeparator = rows[1].every((cell) => /^:?-{3,}:?$/.test(cell));
+    const bodyRows = rows.slice(hasSeparator ? 2 : 1);
+    const width = Math.max(...rows.map((row) => row.length));
+    if (width < 2 || bodyRows.length === 0) return null;
+    const pad = (row) => [...row, ...Array(Math.max(0, width - row.length)).fill("")];
+    return {type: "table", headers: pad(rows[0]), rows: bodyRows.map(pad)};
+  }
+
   function readableBlocks(value) {
     const lines = cleanMarkup(value, "\u000b").split("\n");
     const blocks = [];
@@ -144,10 +154,10 @@ const schoolGuide = (() => {
         let end = index;
         while (end < lines.length && lines[end].trim().startsWith("|")) end += 1;
         const rows = lines.slice(index, end).map(tableCells);
-        const separator = rows[1] && rows[1].every((cell) => /^:?-{3,}:?$/.test(cell));
-        if (separator) {
+        const table = tableBlock(rows);
+        if (table) {
           flushText();
-          blocks.push({type: "table", headers: rows[0], rows: rows.slice(2)});
+          blocks.push(table);
           index = end;
           continue;
         }
