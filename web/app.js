@@ -11,6 +11,7 @@ let schoolLevel = "all";
 let schoolLevelManuallySet = false;
 let sourceGroups = [];
 let searchTerms = [];
+let previousQuestion = null;
 
 const schoolLabels = {all: "전체", elementary: "초등학교", middle: "중학교", high: "고등학교"};
 
@@ -172,7 +173,7 @@ function renderResults(data) {
   result = data;
   selected = null;
   const packet = data.context;
-  searchTerms = schoolGuide.highlightTerms(packet.original_question);
+  searchTerms = schoolGuide.highlightTerms(data.search_query || packet.original_question);
   sourceGroups = schoolGuide.groupSources(packet.sources);
   $("empty-state").hidden = true;
   $("results-section").hidden = false;
@@ -180,6 +181,10 @@ function renderResults(data) {
     ? `${sourceGroups.length}개`
     : `${sourceGroups.length}개 항목 · 내용 ${packet.sources.length}개`;
   $("result-question").textContent = `궁금한 점: ${packet.original_question}`;
+  $("follow-up-notice").hidden = !data.follow_up_applied;
+  $("follow-up-notice").textContent = data.follow_up_applied
+    ? `이전 질문과 이어서 “${data.search_query}”로 찾아봤어요.`
+    : "";
   $("active-filter").hidden = data.school_level === "all";
   $("active-filter").textContent = data.school_level === "all" ? "" : `${schoolLabels[data.school_level]} 자료만 모아봤어요. ‘전체’를 누르면 다른 학교급 자료도 함께 볼 수 있어요.`;
   const reviewRecommended = data.result_assessment.level === "review_recommended";
@@ -228,20 +233,24 @@ form.addEventListener("submit", async (event) => {
     schoolLevel = schoolGuide.detectedSchoolLevel(question.value);
     renderSchoolFilter();
   }
+  const currentQuestion = question.value.trim();
   setLoading(true);
   $("error").hidden = true;
   $("results-section").hidden = true;
   $("empty-state").hidden = true;
   $("status").textContent = "궁금한 내용과 관련된 교육 자료를 찾고 있어요. 잠시만 기다려 주세요.";
   try {
+    const payload = {question: currentQuestion, top_k: Number($("top-k").value), school_level: schoolLevel};
+    if (previousQuestion) payload.previous_question = previousQuestion;
     const response = await fetch("/api/search", {
       method: "POST", headers: { "Content-Type": "application/json" },
       // Audience selection changes suggestions only. School level is an explicit, visible filter.
-      body: JSON.stringify({ question: question.value, top_k: Number($("top-k").value), school_level: schoolLevel })
+      body: JSON.stringify(payload)
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
     renderResults(data);
+    previousQuestion = data.search_query;
   } catch (error) {
     $("status").textContent = "";
     $("error").textContent = error instanceof TypeError ? "지금은 자료를 불러올 수 없어요. 화면을 새로고침하거나 잠시 후 다시 시도해 주세요." : error.message;

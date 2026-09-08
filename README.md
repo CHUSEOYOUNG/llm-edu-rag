@@ -21,6 +21,7 @@
 ## 지금 구현된 기능
 
 - 자연어 질문과 `출결` 같은 짧은 키워드 검색
+- `그럼 중학교는?`처럼 직전 질문을 이어 묻는 검색
 - 초등학교·중학교·고등학교 자료 필터
 - 같은 문서의 같은 항목에서 나온 결과 묶기
 - 검색어 강조, 표 정리, PDF 추출용 HTML 흔적 제거
@@ -83,9 +84,13 @@ curl http://127.0.0.1:8765/health
 curl -X POST http://127.0.0.1:8765/api/search \
   -H 'Content-Type: application/json' \
   -d '{"question":"중학교 출결","top_k":3,"school_level":"middle"}'
+
+curl -X POST http://127.0.0.1:8765/api/search \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"그럼 중학교는?","previous_question":"초등학교 수업 한 시간은 몇 분인가요?","top_k":3,"school_level":"middle"}'
 ```
 
-검색 요청은 `question`, `top_k`, `school_level`을 받는다. 응답에는 관련 원문과 문서명, 구조 경로, PDF 페이지가 들어가며 생성 답변은 포함하지 않는다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
+검색 요청은 `question`, `top_k`, `school_level`과 선택 항목인 `previous_question`을 받는다. `그럼`, `그러면`, `중학교는?`처럼 이어 묻는 표현일 때만 직전 질문의 주제를 검색문에 보충한다. 서버에는 대화 기록을 저장하지 않으며 응답의 `search_query`와 `follow_up_applied`에서 실제 검색문과 적용 여부를 확인할 수 있다. 응답에는 관련 원문과 문서명, 구조 경로, PDF 페이지가 들어가며 생성 답변은 포함하지 않는다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
 
 ### Docker
 
@@ -121,7 +126,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 88개와 JavaScript 테스트 10개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, PDF 페이지 연결, 깨진 표 표시, 답변 가능 여부 평가셋 분리, 학교별 최신 정보 범위 안내, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 91개와 JavaScript 테스트 10개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, PDF 페이지 연결, 깨진 표 표시, 답변 가능 여부 평가셋 분리, 학교별 최신 정보 범위 안내, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 
@@ -169,6 +174,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [Docker 실행 구성](notes/2026-09-02-docker.md)
 - [답변 가능 여부 점수 기준 실험](notes/2026-09-07-answerability-baseline.md)
 - [답변 가능 여부 개발/테스트 분리 평가](notes/2026-09-08-answerability-split.md)
+- [직전 질문을 잇는 검색](notes/2026-09-08-follow-up-search.md)
 
 ## 답변 생성 코드
 

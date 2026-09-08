@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
-                        assess_results, keyword_rerank, keyword_terms,
+                        assess_results, follow_up_query, keyword_rerank, keyword_terms,
                         local_information_request, matches_school_level, run_server)
 from rag import build_packet
 from test_rag import hit
@@ -26,6 +26,40 @@ def service():
 
 
 class SearchServiceTests(unittest.TestCase):
+    def test_school_level_follow_up_reuses_the_previous_topic(self):
+        previous = "초등학교 수업 한 시간은 몇 분인가요?"
+        self.assertEqual(
+            follow_up_query(previous, "그럼 중학교는?"),
+            ("중학교 수업 한 시간은 몇 분인가요", True))
+        self.assertEqual(
+            follow_up_query(previous, "고등학교도?"),
+            ("고등학교 수업 한 시간은 몇 분인가요", True))
+        self.assertEqual(
+            follow_up_query("초등학교와 중학교 수업은 몇 분인가요?", "그럼 고등학교는?"),
+            ("고등학교 수업은 몇 분인가요", True))
+        self.assertEqual(follow_up_query(None, "중학교는?"), ("중학교는?", False))
+
+    def test_only_explicit_follow_up_language_reuses_the_previous_question(self):
+        previous = "중학교 출결은 어떻게 처리하나요?"
+        self.assertEqual(
+            follow_up_query(previous, "그럼 지각은 어떻게 기록하나요?"),
+            ("중학교 출결은 어떻게 처리하나요 지각은 어떻게 기록하나요?", True))
+        unrelated = "창의적 체험활동은 어떤 영역으로 구성되나요?"
+        self.assertEqual(follow_up_query(previous, unrelated), (unrelated, False))
+
+    def test_follow_up_search_uses_resolved_query_but_keeps_visible_question(self):
+        search = service()
+        result = search.search({
+            "question": "그럼 중학교는?",
+            "previous_question": "초등학교 수업 한 시간은 몇 분인가요?",
+        })
+        resolved = "중학교 수업 한 시간은 몇 분인가요"
+        search.retriever.search.assert_called_once_with(resolved, 5)
+        self.assertEqual(result["context"]["original_question"], "그럼 중학교는?")
+        self.assertEqual(result["search_query"], resolved)
+        self.assertEqual(result["context"]["search_query"], resolved)
+        self.assertTrue(result["follow_up_applied"])
+
     def test_result_assessment_never_claims_answerability(self):
         self.assertEqual(assess_results("질문", []), {
             "level": "no_results", "answerability_verified": False,
@@ -106,6 +140,9 @@ class SearchServiceTests(unittest.TestCase):
     def test_invalid_payloads_never_reach_retrieval(self):
         search = service()
         for payload in (None, {}, [], {"question": ""}, {"question": "x"*4001},
+                        {"question": "질문", "previous_question": ""},
+                        {"question": "질문", "previous_question": "x"*4001},
+                        {"question": "질문", "previous_question": 3},
                         {"question": "질문", "top_k": True}, {"question": "질문", "top_k": 21},
                         {"question": "질문", "top_k": 1.5}, {"question": "질문", "generate": True},
                         {"question": "질문", "school_level": "university"}):
@@ -184,6 +221,7 @@ class SearchHttpTests(unittest.TestCase):
         self.assertIn("SearchRequest", schema["components"]["schemas"])
         request_schema = schema["components"]["schemas"]["SearchRequest"]
         self.assertEqual(request_schema["additionalProperties"], False)
+        self.assertIn("previous_question", request_schema["properties"])
         docs = self.client.get("/docs")
         self.assertEqual(docs.status_code, 200)
         self.assertIn("cdn.jsdelivr.net", docs.headers["Content-Security-Policy"])
@@ -223,6 +261,8 @@ class SearchHttpTests(unittest.TestCase):
             {"question": "출결", "unknown": "field"},
             {"question": "출결", "top_k": True},
             {"question": "출결", "school_level": "university"},
+            {"question": "출결", "previous_question": 3},
+            {"question": "출결", "previous_question": ""},
         ]
         calls_before = self.service.retriever.search.call_count
         for payload in invalid:

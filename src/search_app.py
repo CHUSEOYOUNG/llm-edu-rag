@@ -40,6 +40,15 @@ LOCAL_INFORMATION = re.compile(
     r"|(?:오늘|이번\s*(?:학기|주|달)|올해).{0,30}"
     r"(?:급식|메뉴|축제|상담|행사|일정|마감|발표)"
 )
+SCHOOL_NAME = re.compile(r"초등학교|중학교|고등학교|초등|중등|고등")
+SCHOOL_ONLY_FOLLOW_UP = re.compile(
+    r"^\s*(?:(?:그럼|그러면|그렇다면)\s*)?"
+    r"(?P<school>초등학교|중학교|고등학교|초등|중등|고등)"
+    r"(?:은|는|도|의\s*경우)?\s*(?:요|인가요|어때요)?\s*[?？.!]*\s*$"
+)
+FOLLOW_UP_CUE = re.compile(
+    r"^\s*(?:그럼|그러면|그렇다면|그건|그때|그\s*경우|그중(?:에)?|그것도)\s*"
+)
 CONTENT_SECURITY_POLICY = (
     "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
     "img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
@@ -63,6 +72,9 @@ class SearchRequest(BaseModel):
     top_k: int = Field(default=5, ge=1, le=20,
                        description="한 번에 받을 관련 내용 수")
     school_level: Literal["all", "elementary", "middle", "high"] = "all"
+    previous_question: str | None = Field(
+        default=None, min_length=1, max_length=4000,
+        description="이어 묻는 질문을 해석할 때만 참고하는 직전 검색 질문")
 
 
 class RetrieverInfo(BaseModel):
@@ -94,6 +106,8 @@ class SearchResponse(BaseModel):
     top_k: int
     retrieved_count: int
     context: dict[str, Any]
+    search_query: str
+    follow_up_applied: bool
     school_level: str
     missing_date_conditions: list[str]
     condition_audit: list[dict[str, Any]]
@@ -113,6 +127,44 @@ def keyword_terms(question):
         return []
     terms = [compact(term) for term in re.findall(r"[0-9A-Za-z가-힣]+", stripped)]
     return terms if 1 <= len(terms) <= 3 and all(len(term) >= 2 for term in terms) else []
+
+
+def follow_up_query(previous_question, question):
+    """Resolve a narrow one-turn follow-up without keeping server-side history."""
+    if previous_question is None:
+        return question, False
+
+    school_only = SCHOOL_ONLY_FOLLOW_UP.fullmatch(question)
+    has_cue = FOLLOW_UP_CUE.match(question)
+    if not school_only and not has_cue:
+        return question, False
+
+    previous = previous_question.strip().rstrip(" ?？.!\n\t")
+    if school_only:
+        alias = school_only.group("school")
+        target = {"초등": "초등학교", "중등": "중학교", "고등": "고등학교"}.get(alias, alias)
+        seen = False
+
+        def replace_school(_match):
+            nonlocal seen
+            if seen:
+                return ""
+            seen = True
+            return target
+
+        if SCHOOL_NAME.search(previous):
+            resolved = SCHOOL_NAME.sub(replace_school, previous)
+            resolved = re.sub(rf"{target}\s*(?:와|과|및|·|,)\s*", f"{target} ", resolved)
+        else:
+            resolved = f"{target} {previous}"
+    else:
+        tail = FOLLOW_UP_CUE.sub("", question, count=1).strip()
+        if not tail:
+            return question, False
+        resolved = f"{previous} {tail}"
+
+    resolved = re.sub(r"\s+", " ", resolved).strip()
+    return (resolved, True) if len(resolved) <= 4000 else (question, False)
 
 
 def keyword_rerank(question, hits):
@@ -218,11 +270,16 @@ class SearchService:
                 "document_count": len({c["doc_id"] for c in self.retriever.chunks})}
 
     def search(self, payload):
-        if not isinstance(payload, dict) or set(payload) - {"question", "top_k", "school_level"}:
+        if not isinstance(payload, dict) or set(payload) - {
+                "question", "top_k", "school_level", "previous_question"}:
             raise ValueError("입력한 검색 내용을 확인해 주세요.")
         question, k = payload.get("question"), payload.get("top_k", 5)
         school_level = payload.get("school_level", "all")
+        previous_question = payload.get("previous_question")
         build_packet(question, [])
+        if previous_question is not None:
+            build_packet(previous_question, [])
+        search_query, follow_up_applied = follow_up_query(previous_question, question)
         if type(k) is not int or not 1 <= k <= 20:
             raise ValueError("검색 개수는 1~20 사이의 정수여야 합니다.")
         if school_level not in SCHOOL_LEVELS:
@@ -231,15 +288,17 @@ class SearchService:
             raise BusyError("다른 내용을 찾고 있어요. 잠시 후 다시 시도해 주세요.")
         started = time.perf_counter()
         try:
-            terms = keyword_terms(question)
+            terms = keyword_terms(search_query)
             if school_level != "all":
                 candidate_k = len(self.retriever.chunks)
             else:
                 candidate_k = min(len(self.retriever.chunks), max(k, 100)) if terms else k
-            candidates = self.retriever.search(question, candidate_k)
+            candidates = self.retriever.search(search_query, candidate_k)
             candidates = [hit for hit in candidates if matches_school_level(hit, school_level)]
-            hits = keyword_rerank(question, candidates)[:k]
+            hits = keyword_rerank(search_query, candidates)[:k]
             packet = build_packet(question, hits)
+            packet["search_query"] = search_query
+            packet["follow_up_applied"] = follow_up_applied
             packet["scope_filters_applied"] = school_level != "all"
             packet["school_level_filter"] = school_level
             self.add_source_links(packet)
@@ -247,10 +306,11 @@ class SearchService:
             self.lock.release()
         return {"status": "retrieved_only", "answer": None, "generation_called": False,
                 "top_k": k, "retrieved_count": len(hits), "context": packet,
+                "search_query": search_query, "follow_up_applied": follow_up_applied,
                 "school_level": school_level,
                 "missing_date_conditions": missing_dates(packet),
                 "condition_audit": condition_audit(packet),
-                "result_assessment": assess_results(question, hits),
+                "result_assessment": assess_results(search_query, hits),
                 "elapsed_ms": round((time.perf_counter()-started)*1000),
                 "retriever": self.info()}
 
