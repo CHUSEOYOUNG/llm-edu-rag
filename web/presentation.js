@@ -105,6 +105,29 @@ const schoolGuide = (() => {
     return Number.isInteger(end) && end > start ? `${start}~${end}쪽` : `${start}쪽`;
   }
 
+  function normalizeHistory(value, limit = 8) {
+    if (!Array.isArray(value) || !Number.isInteger(limit) || limit < 1) return [];
+    const levels = new Set(["all", "elementary", "middle", "high"]);
+    const valid = [];
+    for (const item of value) {
+      if (!item || typeof item !== "object") continue;
+      const question = typeof item.question === "string" ? item.question.trim() : "";
+      const searchQuery = typeof item.searchQuery === "string" ? item.searchQuery.trim() : "";
+      if (!question || !searchQuery || question.length > 4000 || searchQuery.length > 4000) continue;
+      valid.push({question, searchQuery, schoolLevel: levels.has(item.schoolLevel) ? item.schoolLevel : "all"});
+      if (valid.length === limit) break;
+    }
+    return valid;
+  }
+
+  function addHistory(history, item, limit = 8) {
+    const candidate = normalizeHistory([item], 1)[0];
+    if (!candidate) return normalizeHistory(history, limit);
+    const existing = normalizeHistory(history, limit).filter((entry) =>
+      entry.searchQuery !== candidate.searchQuery || entry.schoolLevel !== candidate.schoolLevel);
+    return [candidate, ...existing].slice(0, limit);
+  }
+
   function cleanMarkup(value, lineBreak) {
     const entities = {nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'"};
     return String(value || "")
@@ -208,7 +231,7 @@ const schoolGuide = (() => {
   }
 
   return {examplesFor, displayTitle, topicFor, sectionTitle, schoolLevelFor, detectedSchoolLevel, highlightTerms, groupSources,
-    conditionLabel, pageLabel, readableText, readableBlocks, readablePreview, readableDocument, sourceText, saveText};
+    conditionLabel, pageLabel, normalizeHistory, addHistory, readableText, readableBlocks, readablePreview, readableDocument, sourceText, saveText};
 })();
 
 if (typeof module !== "undefined") module.exports = schoolGuide;

@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>학교생활 안내 · 학교가 궁금할 때</title>
-  <link rel="stylesheet" href="/app.css?v=20260908-2">
-  <script src="/presentation.js?v=20260908-2" defer></script>
-  <script src="/app.js?v=20260908-2" defer></script>
+  <link rel="stylesheet" href="/app.css?v=20260908-3">
+  <script src="/presentation.js?v=20260908-3" defer></script>
+  <script src="/app.js?v=20260908-3" defer></script>
 </head>
 <body>
   <a class="skip" href="#question">궁금한 점 입력하기</a>
@@ -69,6 +69,12 @@
       <p class="search-hint">학교급과 학년, 궁금한 연도를 함께 적으면 더 구체적으로 찾아볼 수 있어요.</p>
     </section>
 
+    <section id="recent-searches" class="recent-searches" hidden aria-labelledby="recent-searches-title">
+      <div class="recent-heading"><div><p class="section-kicker">다시 찾아보기</p><h2 id="recent-searches-title">최근 찾아본 질문</h2></div><button id="clear-history" type="button" class="text-button">모두 지우기</button></div>
+      <p class="recent-help">최근 질문은 이 브라우저에만 저장돼요. 다른 기기나 서버에는 남지 않아요.</p>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
     <section class="recommendations" aria-labelledby="recommendation-title">
       <div class="recommendation-heading"><h2 id="recommendation-title">이런 내용이 궁금하신가요?</h2><div class="audience-options" role="group" aria-label="추천 질문 고르기"><button type="button" data-audience="all" aria-pressed="true">전체</button><button type="button" data-audience="teacher" aria-pressed="false">선생님</button><button type="button" data-audience="student" aria-pressed="false">학생</button><button type="button" data-audience="parent" aria-pressed="false">학부모</button></div></div>
       <p class="audience-help" id="audience-help">선택한 대상에 맞춰 추천 질문만 달라져요. 검색하는 자료는 같아요.</p>
@@ -111,6 +117,7 @@
   </main>
 
   <template id="example-template"><button type="button" class="example-card"><span class="example-topic"></span><span class="example-question"></span><span class="example-arrow" aria-hidden="true">↗</span></button></template>
+  <template id="history-template"><button type="button" class="history-card"><span class="history-question"></span><span class="history-meta"><span class="history-level"></span><span>다시 찾기 →</span></span></button></template>
   <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-document"></span><span class="card-page"></span><span class="card-preview"></span><span class="card-bottom"><span class="card-related">내용 살펴보기</span><span aria-hidden="true">→</span></span></button></template>
 </body>
 </html>

@@ -62,6 +62,20 @@ test('PDF pages use reader-friendly labels in cards and saved notes', () => {
   assert.match(guide.sourceText({doc_id: '문서', path: '위치', body: '본문', page_start: 3, page_end: 4}, 1), /원문 페이지: 3~4쪽/);
 });
 
+test('recent searches are validated, deduplicated, and kept newest first', () => {
+  const previous = [
+    {question: '출결', searchQuery: '중학교 출결', schoolLevel: 'middle'},
+    {question: '잘못된 항목', searchQuery: '', schoolLevel: 'middle'},
+  ];
+  assert.deepEqual(guide.normalizeHistory(previous), [previous[0]]);
+  const next = guide.addHistory(previous, {
+    question: '그럼 중학교는?', searchQuery: '중학교 출결', schoolLevel: 'middle'
+  });
+  assert.deepEqual(next, [{question: '그럼 중학교는?', searchQuery: '중학교 출결', schoolLevel: 'middle'}]);
+  assert.deepEqual(guide.normalizeHistory([{question: ' 질문 ', searchQuery: ' 검색 ', schoolLevel: 'unknown'}]),
+    [{question: '질문', searchQuery: '검색', schoolLevel: 'all'}]);
+});
+
 test('HTML markers are removed and markdown tables become readable blocks', () => {
   const raw = '<!-- Start of picture text -->\n|항목|내용|\n|---|---|\n|글자|한글<br>3Byte<sup>1</sup>|\n<!-- End of picture text -->';
   assert.equal(guide.readableText(raw), '|항목|내용|\n|---|---|\n|글자|한글\n3Byte1|');

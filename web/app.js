@@ -3,6 +3,7 @@
 const $ = (id) => document.getElementById(id);
 const form = $("search-form");
 const question = $("question");
+const HISTORY_KEY = "school-life-guide.search-history.v1";
 let result = null;
 let selected = null;
 let loading = false;
@@ -12,6 +13,7 @@ let schoolLevelManuallySet = false;
 let sourceGroups = [];
 let searchTerms = [];
 let previousQuestion = null;
+let searchHistory = [];
 
 const schoolLabels = {all: "전체", elementary: "초등학교", middle: "중학교", high: "고등학교"};
 
@@ -73,6 +75,52 @@ function renderExamples() {
     });
     $("examples").append(fragment);
   }
+}
+
+function renderHistory() {
+  const section = $("recent-searches");
+  const list = $("history-list");
+  list.replaceChildren();
+  section.hidden = searchHistory.length === 0;
+  for (const item of searchHistory) {
+    const fragment = $("history-template").content.cloneNode(true);
+    const button = fragment.querySelector("button");
+    button.querySelector(".history-question").textContent = item.question;
+    button.querySelector(".history-level").textContent = schoolLabels[item.schoolLevel];
+    button.addEventListener("click", () => {
+      question.value = item.searchQuery;
+      schoolLevel = item.schoolLevel;
+      schoolLevelManuallySet = true;
+      previousQuestion = null;
+      renderSchoolFilter();
+      form.requestSubmit();
+      $("search-area").scrollIntoView({behavior: "smooth", block: "start"});
+    });
+    list.append(fragment);
+  }
+}
+
+function loadHistory() {
+  try {
+    searchHistory = schoolGuide.normalizeHistory(JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"));
+  } catch {
+    searchHistory = [];
+  }
+  renderHistory();
+}
+
+function rememberSearch(data) {
+  searchHistory = schoolGuide.addHistory(searchHistory, {
+    question: data.context.original_question,
+    searchQuery: data.search_query,
+    schoolLevel: data.school_level
+  });
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(searchHistory));
+  } catch {
+    // The list still works for this page when browser storage is unavailable.
+  }
+  renderHistory();
 }
 
 function setLoading(value) {
@@ -251,6 +299,7 @@ form.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(data.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
     renderResults(data);
     previousQuestion = data.search_query;
+    rememberSearch(data);
   } catch (error) {
     $("status").textContent = "";
     $("error").textContent = error instanceof TypeError ? "지금은 자료를 불러올 수 없어요. 화면을 새로고침하거나 잠시 후 다시 시도해 주세요." : error.message;
@@ -306,8 +355,20 @@ $("export-button").addEventListener("click", () => {
   $("status").textContent = "찾은 내용을 저장하도록 요청했어요. 내려받은 파일에 질문과 자료 내용이 들어 있으니 공유 전에 확인해 주세요.";
 });
 
+$("clear-history").addEventListener("click", () => {
+  searchHistory = [];
+  try {
+    localStorage.removeItem(HISTORY_KEY);
+  } catch {
+    // Nothing else is required when browser storage is unavailable.
+  }
+  renderHistory();
+  $("status").textContent = "최근 찾아본 질문을 모두 지웠어요.";
+});
+
 renderExamples();
 renderSchoolFilter();
+loadHistory();
 fetch("/api/info").then((response) => {
   if (!response.ok) throw new Error("service unavailable");
   return response.json();
