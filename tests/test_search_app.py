@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
                         assess_results, keyword_rerank, keyword_terms,
-                        matches_school_level, run_server)
+                        local_information_request, matches_school_level, run_server)
 from rag import build_packet
 from test_rag import hit
 
@@ -27,12 +27,24 @@ def service():
 
 class SearchServiceTests(unittest.TestCase):
     def test_result_assessment_never_claims_answerability(self):
-        self.assertEqual(assess_results([]), {
-            "level": "no_results", "answerability_verified": False})
-        self.assertEqual(assess_results([{**hit(), "score": .7}]), {
-            "level": "strong_candidate", "answerability_verified": False})
-        self.assertEqual(assess_results([{**hit(), "score": .59}]), {
-            "level": "review_recommended", "answerability_verified": False})
+        self.assertEqual(assess_results("질문", []), {
+            "level": "no_results", "answerability_verified": False,
+            "reason": "no_results"})
+        self.assertEqual(assess_results("질문", [{**hit(), "score": .7}]), {
+            "level": "strong_candidate", "answerability_verified": False,
+            "reason": "strong_similarity"})
+        self.assertEqual(assess_results("질문", [{**hit(), "score": .59}]), {
+            "level": "review_recommended", "answerability_verified": False,
+            "reason": "low_similarity"})
+
+    def test_local_school_information_is_reviewed_even_with_a_high_score(self):
+        self.assertTrue(local_information_request("우리 학교 전학 신청 마감일은 언제인가요?"))
+        self.assertTrue(local_information_request("이번 학기 학부모 상담 일정은 언제인가요?"))
+        self.assertFalse(local_information_request("중학교 수업 시간은 몇 분인가요?"))
+        self.assertEqual(
+            assess_results("우리 학교 급식 메뉴", [{**hit(), "score": .9}]),
+            {"level": "review_recommended", "answerability_verified": False,
+             "reason": "local_information"})
 
     def test_short_keywords_prefer_matching_section_titles_over_dense_mentions(self):
         dense_first = hit("dense", body="정정 사례의 출결상황 입력 누락", path="자료의 정정")
@@ -184,7 +196,8 @@ class SearchHttpTests(unittest.TestCase):
         self.assertEqual(result["status"], "retrieved_only")
         self.assertEqual(result["context"]["sources"][0]["body"], hit()["body"])
         self.assertEqual(result["result_assessment"], {
-            "level": "strong_candidate", "answerability_verified": False})
+            "level": "strong_candidate", "answerability_verified": False,
+            "reason": "strong_similarity"})
 
     def test_filesystem_paths_and_generation_routes_are_not_exposed(self):
         for method, path in (("GET", "/.env"), ("GET", "/../README.md"), ("GET", "/src/rag.py"),

@@ -1,0 +1,32 @@
+{"qid":"a001","split":"development","answerable":true,"difficulty":"in_domain","question":"학교폭력으로 4호나 5호 조치를 받으면 생기부에서 언제 지워지나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s153::16조의2::5"]}
+{"qid":"a002","split":"development","answerable":true,"difficulty":"in_domain","question":"작년 생기부에 잘못 쓴 내용이 있는데 지금 고칠 수 있나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s092::19조::0"]}
+{"qid":"a003","split":"development","answerable":true,"difficulty":"in_domain","question":"초등학교에서 교과 수업시수를 학교 재량으로 줄일 수 있나요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::1"]}
+{"qid":"a004","split":"development","answerable":true,"difficulty":"in_domain","question":"2022 개정 교육과정에서 초등학교와 중학교 수업 한 시간은 각각 몇 분인가요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0","(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"]}
+{"qid":"a005","split":"development","answerable":true,"difficulty":"in_domain","question":"초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s019::1::0","(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"]}
+{"qid":"a006","split":"development","answerable":true,"difficulty":"in_domain","question":"질병으로 결석하면 결석 신고서와 진단서는 며칠 안에 제출해야 하나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s138::다::0"]}
+{"qid":"a007","split":"development","answerable":true,"difficulty":"in_domain","question":"학교생활기록부 출결에서 지각은 어떤 경우를 말하나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s145::가::0"]}
+{"qid":"a008","split":"development","answerable":true,"difficulty":"in_domain","question":"재학 중 주소가 바뀌면 학교생활기록부 학생정보에는 어떻게 기록하나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s070::7조::0"]}
+{"qid":"u001","split":"development","answerable":false,"difficulty":"hard_negative","question":"대학 입시에서 학생부종합전형 반영 비율은 어떻게 되나요?","evidence_chunk_ids":[]}
+{"qid":"u002","split":"development","answerable":false,"difficulty":"hard_negative","question":"우리 학교 오늘 점심 급식 메뉴는 무엇인가요?","evidence_chunk_ids":[]}
+{"qid":"u003","split":"development","answerable":false,"difficulty":"hard_negative","question":"고등학교 교복 한 벌의 가격은 얼마인가요?","evidence_chunk_ids":[]}
+{"qid":"u004","split":"development","answerable":false,"difficulty":"hard_negative","question":"우리 학교 축제는 올해 몇 월 며칠에 열리나요?","evidence_chunk_ids":[]}
+{"qid":"u005","split":"development","answerable":false,"difficulty":"hard_negative","question":"대학교 한 학기 등록금은 얼마인가요?","evidence_chunk_ids":[]}
+{"qid":"u006","split":"development","answerable":false,"difficulty":"out_of_domain","question":"오늘 서울 날씨는 어떤가요?","evidence_chunk_ids":[]}
+{"qid":"u007","split":"development","answerable":false,"difficulty":"out_of_domain","question":"김치찌개를 맛있게 끓이는 방법을 알려주세요.","evidence_chunk_ids":[]}
+{"qid":"u008","split":"development","answerable":false,"difficulty":"out_of_domain","question":"집으로 가는 마지막 버스는 몇 시에 출발하나요?","evidence_chunk_ids":[]}
+{"qid":"a009","split":"test","answerable":true,"difficulty":"in_domain","question":"생기부 글자 수를 셀 때 한글 한 글자는 몇 바이트인가요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s250::7::5"]}
+{"qid":"a010","split":"test","answerable":true,"difficulty":"in_domain","question":"중학교 선택 교과에는 어떤 과목들이 있나요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"]}
+{"qid":"a011","split":"test","answerable":true,"difficulty":"in_domain","question":"초등학교와 중학교 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0","(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"]}
+{"qid":"a012","split":"test","answerable":true,"difficulty":"in_domain","question":"2028년 3월 1일부터 초등학교 1·2학년이 배우는 교과는 무엇인가요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s019::1::0"]}
+{"qid":"a013","split":"test","answerable":true,"difficulty":"in_domain","question":"중학교 국어 수업 시수는 3년 동안 몇 시간인가요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"]}
+{"qid":"a014","split":"test","answerable":true,"difficulty":"in_domain","question":"초등학교 3~4학년군 국어의 기준 수업 시수는 몇 시간인가요?","evidence_chunk_ids":["(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0"]}
+{"qid":"a015","split":"test","answerable":true,"difficulty":"in_domain","question":"출결에서 결과는 어떤 경우를 뜻하나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s146::다::0"]}
+{"qid":"a016","split":"test","answerable":true,"difficulty":"in_domain","question":"형제나 자매가 결혼하면 며칠을 출석 인정 결석으로 처리하나요?","evidence_chunk_ids":["2026 학교생활기록부 기재요령(고)_F_260219::s137::6::0"]}
+{"qid":"u009","split":"test","answerable":false,"difficulty":"hard_negative","question":"중등교사 임용시험 원서접수는 언제인가요?","evidence_chunk_ids":[]}
+{"qid":"u010","split":"test","answerable":false,"difficulty":"hard_negative","question":"우리 학교 전학 신청 마감일은 언제인가요?","evidence_chunk_ids":[]}
+{"qid":"u011","split":"test","answerable":false,"difficulty":"hard_negative","question":"교육청 장학금 대상자 발표일은 언제인가요?","evidence_chunk_ids":[]}
+{"qid":"u012","split":"test","answerable":false,"difficulty":"hard_negative","question":"이번 학기 학부모 상담 주간 일정은 어떻게 되나요?","evidence_chunk_ids":[]}
+{"qid":"u013","split":"test","answerable":false,"difficulty":"hard_negative","question":"올해 대학교 정시 합격선은 몇 점인가요?","evidence_chunk_ids":[]}
+{"qid":"u014","split":"test","answerable":false,"difficulty":"out_of_domain","question":"허리가 아픈데 어떤 약을 먹어야 하나요?","evidence_chunk_ids":[]}
+{"qid":"u015","split":"test","answerable":false,"difficulty":"out_of_domain","question":"중학생 수학 학원을 추천해 주세요.","evidence_chunk_ids":[]}
+{"qid":"u016","split":"test","answerable":false,"difficulty":"hard_negative","question":"중학교 교사의 월급은 얼마인가요?","evidence_chunk_ids":[]}

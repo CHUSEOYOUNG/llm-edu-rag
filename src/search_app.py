@@ -34,6 +34,12 @@ SCHOOL_LEVELS = {
 }
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "testserver"}
 STRONG_CANDIDATE_THRESHOLD = 0.61
+LOCAL_INFORMATION = re.compile(
+    r"(?:우리\s*학교|이\s*학교|재학\s*중인\s*학교).{0,30}"
+    r"(?:급식|메뉴|축제|상담|일정|마감|교복|가격|시간표)"
+    r"|(?:오늘|이번\s*(?:학기|주|달)|올해).{0,30}"
+    r"(?:급식|메뉴|축제|상담|행사|일정|마감|발표)"
+)
 CONTENT_SECURITY_POLICY = (
     "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
     "img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
@@ -78,6 +84,7 @@ class HealthResponse(BaseModel):
 class ResultAssessment(BaseModel):
     level: Literal["strong_candidate", "review_recommended", "no_results"]
     answerability_verified: Literal[False]
+    reason: Literal["strong_similarity", "low_similarity", "local_information", "no_results"]
 
 
 class SearchResponse(BaseModel):
@@ -166,15 +173,21 @@ def condition_audit(packet):
     ]} for condition in packet["scope_conditions"]]
 
 
-def assess_results(hits, threshold=STRONG_CANDIDATE_THRESHOLD):
+def local_information_request(question):
+    return bool(LOCAL_INFORMATION.search(compact(question)))
+
+
+def assess_results(question, hits, threshold=STRONG_CANDIDATE_THRESHOLD):
     """Flag weak candidates without claiming that a question is unanswerable."""
     if not hits:
-        level = "no_results"
+        level, reason = "no_results", "no_results"
+    elif local_information_request(question):
+        level, reason = "review_recommended", "local_information"
     elif max(float(hit["score"]) for hit in hits) >= threshold:
-        level = "strong_candidate"
+        level, reason = "strong_candidate", "strong_similarity"
     else:
-        level = "review_recommended"
-    return {"level": level, "answerability_verified": False}
+        level, reason = "review_recommended", "low_similarity"
+    return {"level": level, "answerability_verified": False, "reason": reason}
 
 
 class SearchService:
@@ -237,7 +250,7 @@ class SearchService:
                 "school_level": school_level,
                 "missing_date_conditions": missing_dates(packet),
                 "condition_audit": condition_audit(packet),
-                "result_assessment": assess_results(hits),
+                "result_assessment": assess_results(question, hits),
                 "elapsed_ms": round((time.perf_counter()-started)*1000),
                 "retriever": self.info()}
 

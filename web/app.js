@@ -184,9 +184,10 @@ function renderResults(data) {
   $("active-filter").textContent = data.school_level === "all" ? "" : `${schoolLabels[data.school_level]} 자료만 모아봤어요. ‘전체’를 누르면 다른 학교급 자료도 함께 볼 수 있어요.`;
   const reviewRecommended = data.result_assessment.level === "review_recommended";
   $("match-warning").hidden = !reviewRecommended;
-  $("match-warning").textContent = reviewRecommended
-    ? "가까운 자료를 보여드리지만 질문에 바로 답하는 내용인지는 확실하지 않아요. 학교급, 학년, 연도를 더해 다시 찾아보거나 원문을 직접 확인해 주세요."
-    : "";
+  $("match-warning").textContent = !reviewRecommended ? ""
+    : data.result_assessment.reason === "local_information"
+      ? "현재 자료에는 학교별 급식, 행사, 신청 마감일 같은 최신 정보가 없어요. 아래 일반 자료와 함께 학교 홈페이지나 가정통신문을 확인해 주세요."
+      : "가까운 자료를 보여드리지만 질문에 바로 답하는 내용인지는 확실하지 않아요. 학교급, 학년, 연도를 더해 다시 찾아보거나 원문을 직접 확인해 주세요.";
   $("date-warning").hidden = data.missing_date_conditions.length === 0;
   $("date-warning").textContent = `${data.missing_date_conditions.join(", ")}에 적용되는 내용인지 확인이 필요해요. 찾은 내용과 항목 이름에 이 날짜가 적혀 있지 않아요. 다른 방식으로 날짜가 쓰여 있거나 별도의 안내가 있을 수 있어요.`;
   $("budget-warning").hidden = packet.omitted_chunk_ids.length === 0;

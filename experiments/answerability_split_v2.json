@@ -1,0 +1,468 @@
+{
+  "experiment": "answerability_development_test_split",
+  "status": "development_split_not_independent_external_test",
+  "model": "BAAI/bge-m3",
+  "index_text": "body",
+  "benchmark_sha256": "a7612b59492282f5568f40efb9d2537e60583517a91748ab1c0381c0a1ef0d91",
+  "chunks_sha256": "0f5e633df4db1470f40e4d7b3650168897f8fa348082b26ef61b4c681d57efec",
+  "selection": "maximize development balanced accuracy; ties prefer accuracy then higher threshold",
+  "selected_threshold": 0.6169381141662598,
+  "development": {
+    "n": 16,
+    "roc_auc": 0.984375,
+    "metrics": {
+      "tp": 7,
+      "fp": 0,
+      "tn": 8,
+      "fn": 1,
+      "precision": 1.0,
+      "recall": 0.875,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.9375,
+      "accuracy": 0.9375
+    },
+    "by_difficulty": {
+      "in_domain": {
+        "n": 8,
+        "strong_candidate": 7,
+        "review_recommended": 1
+      },
+      "hard_negative": {
+        "n": 5,
+        "strong_candidate": 0,
+        "review_recommended": 5
+      },
+      "out_of_domain": {
+        "n": 3,
+        "strong_candidate": 0,
+        "review_recommended": 3
+      }
+    }
+  },
+  "test": {
+    "n": 16,
+    "roc_auc": 0.890625,
+    "metrics": {
+      "tp": 6,
+      "fp": 1,
+      "tn": 7,
+      "fn": 2,
+      "precision": 0.8571428571428571,
+      "recall": 0.75,
+      "specificity": 0.875,
+      "balanced_accuracy": 0.8125,
+      "accuracy": 0.8125
+    },
+    "by_difficulty": {
+      "in_domain": {
+        "n": 8,
+        "strong_candidate": 6,
+        "review_recommended": 2
+      },
+      "hard_negative": {
+        "n": 6,
+        "strong_candidate": 1,
+        "review_recommended": 5
+      },
+      "out_of_domain": {
+        "n": 2,
+        "strong_candidate": 0,
+        "review_recommended": 2
+      }
+    }
+  },
+  "current_service_threshold": {
+    "value": 0.61,
+    "test_metrics": {
+      "tp": 6,
+      "fp": 1,
+      "tn": 7,
+      "fn": 2,
+      "precision": 0.8571428571428571,
+      "recall": 0.75,
+      "specificity": 0.875,
+      "balanced_accuracy": 0.8125,
+      "accuracy": 0.8125
+    }
+  },
+  "scope_aware_service_policy": {
+    "signals": [
+      "dense_top_score",
+      "local_information_expression"
+    ],
+    "test_metrics": {
+      "tp": 6,
+      "fp": 0,
+      "tn": 8,
+      "fn": 2,
+      "precision": 1.0,
+      "recall": 0.75,
+      "specificity": 1.0,
+      "balanced_accuracy": 0.875,
+      "accuracy": 0.875
+    }
+  },
+  "per_question": [
+    {
+      "qid": "a001",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "학교폭력으로 4호나 5호 조치를 받으면 생기부에서 언제 지워지나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s153::16조의2::5"
+      ],
+      "top_score": 0.7288641929626465,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s153::16조의2::5"
+    },
+    {
+      "qid": "a002",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "작년 생기부에 잘못 쓴 내용이 있는데 지금 고칠 수 있나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s092::19조::0"
+      ],
+      "top_score": 0.5659054517745972,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s553::2::3"
+    },
+    {
+      "qid": "a003",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "초등학교에서 교과 수업시수를 학교 재량으로 줄일 수 있나요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::1"
+      ],
+      "top_score": 0.6255537271499634,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0"
+    },
+    {
+      "qid": "a004",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "2022 개정 교육과정에서 초등학교와 중학교 수업 한 시간은 각각 몇 분인가요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"
+      ],
+      "top_score": 0.6327695250511169,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s002::다::0"
+    },
+    {
+      "qid": "a005",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "초등학교와 중학교의 창의적 체험활동은 어떤 영역으로 구성되나요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s019::1::0",
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"
+      ],
+      "top_score": 0.6823039054870605,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s077::13조::0"
+    },
+    {
+      "qid": "a006",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "질병으로 결석하면 결석 신고서와 진단서는 며칠 안에 제출해야 하나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s138::다::0"
+      ],
+      "top_score": 0.7200197577476501,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s511::다::0"
+    },
+    {
+      "qid": "a007",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "학교생활기록부 출결에서 지각은 어떤 경우를 말하나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s145::가::0"
+      ],
+      "top_score": 0.7060661315917969,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::1"
+    },
+    {
+      "qid": "a008",
+      "split": "development",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "재학 중 주소가 바뀌면 학교생활기록부 학생정보에는 어떻게 기록하나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s070::7조::0"
+      ],
+      "top_score": 0.7516911625862122,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s121::5조::2"
+    },
+    {
+      "qid": "u001",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "대학 입시에서 학생부종합전형 반영 비율은 어떻게 되나요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.6083225011825562,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s250::7::6"
+    },
+    {
+      "qid": "u002",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "우리 학교 오늘 점심 급식 메뉴는 무엇인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5257969498634338,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s220::바::4"
+    },
+    {
+      "qid": "u003",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "고등학교 교복 한 벌의 가격은 얼마인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5239813327789307,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s220::바::4"
+    },
+    {
+      "qid": "u004",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "우리 학교 축제는 올해 몇 월 며칠에 열리나요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5242003798484802,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0"
+    },
+    {
+      "qid": "u005",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "대학교 한 학기 등록금은 얼마인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5540239810943604,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s250::7::4"
+    },
+    {
+      "qid": "u006",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "out_of_domain",
+      "question": "오늘 서울 날씨는 어떤가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.4838624596595764,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s220::바::4"
+    },
+    {
+      "qid": "u007",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "out_of_domain",
+      "question": "김치찌개를 맛있게 끓이는 방법을 알려주세요.",
+      "evidence_chunk_ids": [],
+      "top_score": 0.436097651720047,
+      "top_chunk_id": "[별책41] 한국어 교육과정(제2017-131호)::s595::나::4"
+    },
+    {
+      "qid": "u008",
+      "split": "development",
+      "answerable": false,
+      "difficulty": "out_of_domain",
+      "question": "집으로 가는 마지막 버스는 몇 시에 출발하나요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.4429287016391754,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(중)_F_260227::s330::20::4"
+    },
+    {
+      "qid": "a009",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "생기부 글자 수를 셀 때 한글 한 글자는 몇 바이트인가요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s250::7::5"
+      ],
+      "top_score": 0.6313847303390503,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(중)_F_260227::s416::7::7"
+    },
+    {
+      "qid": "a010",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "중학교 선택 교과에는 어떤 과목들이 있나요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"
+      ],
+      "top_score": 0.7472713589668274,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s022::1::0"
+    },
+    {
+      "qid": "a011",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "초등학교와 중학교 정보 교육은 각각 최소 몇 시간을 편성해야 하나요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"
+      ],
+      "top_score": 0.6404260396957397,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0"
+    },
+    {
+      "qid": "a012",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "2028년 3월 1일부터 초등학교 1·2학년이 배우는 교과는 무엇인가요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s019::1::0"
+      ],
+      "top_score": 0.6074112057685852,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s557::22조::1"
+    },
+    {
+      "qid": "a013",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "중학교 국어 수업 시수는 3년 동안 몇 시간인가요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"
+      ],
+      "top_score": 0.6410422325134277,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0"
+    },
+    {
+      "qid": "a014",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "초등학교 3~4학년군 국어의 기준 수업 시수는 몇 시간인가요?",
+      "evidence_chunk_ids": [
+        "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0"
+      ],
+      "top_score": 0.7002094388008118,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0"
+    },
+    {
+      "qid": "a015",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "출결에서 결과는 어떤 경우를 뜻하나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s146::다::0"
+      ],
+      "top_score": 0.5724122524261475,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(중)_F_260227::s416::7::3"
+    },
+    {
+      "qid": "a016",
+      "split": "test",
+      "answerable": true,
+      "difficulty": "in_domain",
+      "question": "형제나 자매가 결혼하면 며칠을 출석 인정 결석으로 처리하나요?",
+      "evidence_chunk_ids": [
+        "2026 학교생활기록부 기재요령(고)_F_260219::s137::6::0"
+      ],
+      "top_score": 0.679643452167511,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s510::6::0"
+    },
+    {
+      "qid": "u009",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "중등교사 임용시험 원서접수는 언제인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5989654660224915,
+      "top_chunk_id": "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s002::다::0"
+    },
+    {
+      "qid": "u010",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "우리 학교 전학 신청 마감일은 언제인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.625533401966095,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s521::16조의2::1"
+    },
+    {
+      "qid": "u011",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "교육청 장학금 대상자 발표일은 언제인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5621465444564819,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s148::9조::3"
+    },
+    {
+      "qid": "u012",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "이번 학기 학부모 상담 주간 일정은 어떻게 되나요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.6094620227813721,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s546::5::1"
+    },
+    {
+      "qid": "u013",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "올해 대학교 정시 합격선은 몇 점인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5825110077857971,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s191::5::5"
+    },
+    {
+      "qid": "u014",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "out_of_domain",
+      "question": "허리가 아픈데 어떤 약을 먹어야 하나요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.4253217875957489,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s170::2::1"
+    },
+    {
+      "qid": "u015",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "out_of_domain",
+      "question": "중학생 수학 학원을 추천해 주세요.",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5886982083320618,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(초)_F_260219::s560::07::20"
+    },
+    {
+      "qid": "u016",
+      "split": "test",
+      "answerable": false,
+      "difficulty": "hard_negative",
+      "question": "중학교 교사의 월급은 얼마인가요?",
+      "evidence_chunk_ids": [],
+      "top_score": 0.5169268846511841,
+      "top_chunk_id": "2026 학교생활기록부 기재요령(고)_F_260219::s191::5::5"
+    }
+  ],
+  "limitations": [
+    "The benchmark was authored from the same six-document corpus and has no expert review.",
+    "The test split was not used to select this threshold, but the retriever was developed before this split existed.",
+    "Unanswerable labels mean the requested fact is absent from this fixed local corpus, not universally unknowable.",
+    "Similarity is only a review signal and must not be presented as verified answerability."
+  ]
+}
