@@ -93,6 +93,12 @@ test('uneven extracted table rows are padded to a stable column count', () => {
   assert(block.rows.every((row) => row.length === 4));
 });
 
+test('one-column and partial PDF tables do not expose markdown pipe markers', () => {
+  const raw = '차례\n|항목|\n|---|\n|자료의 정정 121|\n\n|---|';
+  assert.equal(guide.readableDocument(raw), '차례\n항목\n자료의 정정 121');
+  assert(!guide.readablePreview(raw).includes('|'));
+});
+
 test('saved notes use readable content and exclude developer identifiers and scores', () => {
   const source = {doc_id: '2026 학교생활기록부 기재요령(중)_F_260227', path: '입력 안내',
     body: '한글 1자는 3Byte\n<img src=x onerror=alert(1)>', chunk_id: 'internal_chunk_id', score: 0.123456};

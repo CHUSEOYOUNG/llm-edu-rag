@@ -161,6 +161,15 @@ const schoolGuide = (() => {
           index = end;
           continue;
         }
+        // A one-column or partial PDF table is not useful as a table, but its
+        // pipe markers should not leak into the reader as raw Markdown.
+        for (const row of rows) {
+          if (row.every((cell) => /^:?-{3,}:?$/.test(cell))) continue;
+          const readableRow = row.filter(Boolean).join(" · ");
+          if (readableRow) textLines.push(readableRow);
+        }
+        index = end;
+        continue;
       }
       textLines.push(lines[index]);
       index += 1;

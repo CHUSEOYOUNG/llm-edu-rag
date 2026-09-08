@@ -126,7 +126,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 91개와 JavaScript 테스트 10개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, PDF 페이지 연결, 깨진 표 표시, 답변 가능 여부 평가셋 분리, 학교별 최신 정보 범위 안내, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 91개와 JavaScript 테스트 11개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, PDF 페이지 연결, 깨진 표 표시, 답변 가능 여부 평가셋 분리, 학교별 최신 정보 범위 안내, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 
