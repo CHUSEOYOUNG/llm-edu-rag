@@ -182,7 +182,7 @@ function refreshBusyState() {
   $("search-button").disabled = busy;
   $("top-k").disabled = busy;
   question.disabled = busy;
-  $("search-label").textContent = loading ? "찾고 있어요…" : "찾아보기";
+  $("search-label").textContent = loading ? "찾고 있어요…" : "질문하기";
   form.setAttribute("aria-busy", String(busy));
   document.querySelectorAll("[data-example], [data-audience], [data-school-level]").forEach((button) => { button.disabled = busy; });
   $("answer-button").disabled = busy || !result?.context?.sources?.length;
@@ -303,6 +303,7 @@ function openAnswerSource(answerSource, label) {
   if (!source) return;
   const group = sourceGroups.find((item) => item.sources.some((choice) => choice.chunk_id === source.chunk_id));
   if (!group) return;
+  $("sources-panel").open = true;
   selectSource(source, group);
   $("reader").scrollIntoView({behavior: "smooth", block: "start"});
   $("status").textContent = `${label}에 사용한 자료를 열었어요.`;
@@ -319,7 +320,7 @@ function renderAnswer(data) {
   reason.textContent = "";
 
   if (data.status === "draft_answer") {
-    $("answer-result-title").textContent = "이렇게 확인했어요";
+    $("answer-result-title").textContent = "답변";
     $("answer-result-title").classList.remove("answer-result-title-muted");
     const sources = Object.fromEntries(data.context.sources.map((source) => [source.source_id, source]));
     for (const claim of data.claims) {
@@ -340,7 +341,7 @@ function renderAnswer(data) {
       }
       container.append(paragraph);
     }
-    $("status").textContent = "찾은 자료의 원문 인용을 확인한 뒤 답변을 표시했어요.";
+    $("status").textContent = "";
   } else {
     $("answer-result-title").textContent = "자료만으로는 답하기 어려워요";
     $("answer-result-title").classList.add("answer-result-title-muted");
@@ -353,22 +354,21 @@ function renderAnswer(data) {
 
 function renderResults(data) {
   result = data;
+  document.body.classList.add("has-results");
   selected = null;
   const packet = data.context;
   searchTerms = schoolGuide.highlightTerms(data.search_query || packet.original_question);
   sourceGroups = schoolGuide.groupSources(packet.sources);
   $("empty-state").hidden = true;
   $("results-section").hidden = false;
-  $("result-count").textContent = sourceGroups.length === packet.sources.length
-    ? `${sourceGroups.length}개`
-    : `${sourceGroups.length}개 항목 · 내용 ${packet.sources.length}개`;
-  $("result-question").textContent = `궁금한 점: ${packet.original_question}`;
+  $("result-count").textContent = `${packet.sources.length}개`;
+  $("result-question").textContent = packet.original_question;
   $("follow-up-notice").hidden = !data.follow_up_applied;
   $("follow-up-notice").textContent = data.follow_up_applied
     ? `이전 질문과 이어서 “${data.search_query}”로 찾아봤어요.`
     : "";
   $("active-filter").hidden = data.school_level === "all";
-  $("active-filter").textContent = data.school_level === "all" ? "" : `${schoolLabels[data.school_level]} 자료만 모아봤어요. ‘전체’를 누르면 다른 학교급 자료도 함께 볼 수 있어요.`;
+  $("active-filter").textContent = data.school_level === "all" ? "" : `${schoolLabels[data.school_level]} 자료를 기준으로 찾았어요.`;
   const reviewRecommended = data.result_assessment.level === "review_recommended";
   $("match-warning").hidden = !reviewRecommended;
   $("match-warning").textContent = !reviewRecommended ? ""
@@ -408,7 +408,7 @@ async function generateAnswer() {
   setGenerating(true);
   $("answer-result").hidden = true;
   $("answer-error").hidden = true;
-  $("status").textContent = "내 Mac에서 찾은 자료를 읽고 답변을 정리하고 있어요.";
+  $("status").textContent = "";
   try {
     const payload = {...lastSearchPayload, top_k: Math.min(Number(lastSearchPayload.top_k || 5), 3)};
     const response = await postApplication("answer", payload);
@@ -464,6 +464,7 @@ form.addEventListener("submit", async (event) => {
     renderResults(data);
     previousQuestion = data.search_query;
     rememberSearch(data);
+    question.value = "";
     await generationInfoReady;
     shouldGenerateAnswer = generationEnabled && data.context.sources.length > 0;
   } catch (error) {
