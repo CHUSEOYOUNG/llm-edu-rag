@@ -39,4 +39,12 @@ public class SearchService {
 
         return new SearchResponse(saved.getId(), saved.getCreatedAt(), result);
     }
+
+    public JsonNode answer(SearchRequest request) {
+        JsonNode result = aiSearchClient.answer(request);
+        if (result == null) {
+            throw new IllegalStateException("AI 답변 서비스가 빈 응답을 반환했습니다.");
+        }
+        return result;
+    }
 }

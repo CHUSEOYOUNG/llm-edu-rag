@@ -4,6 +4,9 @@ const $ = (id) => document.getElementById(id);
 const form = $("search-form");
 const question = $("question");
 const HISTORY_KEY = "school-life-guide.search-history.v1";
+const CLIENT_ID_KEY = "school-life-guide.client-id.v1";
+const BACKEND_ORIGIN = location.hostname === "localhost" ? "http://localhost:8080" : "http://127.0.0.1:8080";
+const BACKEND_API = `${BACKEND_ORIGIN}/api/v1`;
 let result = null;
 let selected = null;
 let loading = false;
@@ -17,6 +20,36 @@ let sourceGroups = [];
 let searchTerms = [];
 let previousQuestion = null;
 let searchHistory = [];
+
+function clientId() {
+  try {
+    const saved = localStorage.getItem(CLIENT_ID_KEY);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(saved || "")) return saved;
+    const created = crypto.randomUUID();
+    localStorage.setItem(CLIENT_ID_KEY, created);
+    return created;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
+
+const browserClientId = clientId();
+
+async function postApplication(path, payload) {
+  const options = {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  };
+  try {
+    return await fetch(`${BACKEND_API}/${path}`, options);
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    const directPayload = {...payload};
+    delete directPayload.client_id;
+    return fetch(`/api/${path}`, {...options, body: JSON.stringify(directPayload)});
+  }
+}
 
 const schoolLabels = {all: "전체", elementary: "초등학교", middle: "중학교", high: "고등학교"};
 
@@ -110,6 +143,23 @@ function loadHistory() {
     searchHistory = [];
   }
   renderHistory();
+  fetch(`${BACKEND_API}/search-history?clientId=${encodeURIComponent(browserClientId)}`)
+    .then((response) => {
+      if (!response.ok) throw new Error("history unavailable");
+      return response.json();
+    })
+    .then((items) => {
+      searchHistory = schoolGuide.normalizeHistory(items);
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(searchHistory));
+      } catch {
+        // The server copy is still available when browser storage is unavailable.
+      }
+      renderHistory();
+    })
+    .catch(() => {
+      // Keep the browser copy when the application backend is not running.
+    });
 }
 
 function rememberSearch(data) {
@@ -372,15 +422,14 @@ form.addEventListener("submit", async (event) => {
   $("empty-state").hidden = true;
   $("status").textContent = "궁금한 내용과 관련된 교육 자료를 찾고 있어요. 잠시만 기다려 주세요.";
   try {
-    const payload = {question: currentQuestion, top_k: Number($("top-k").value), school_level: schoolLevel};
+    const payload = {client_id: browserClientId, question: currentQuestion, top_k: Number($("top-k").value), school_level: schoolLevel};
     if (previousQuestion) payload.previous_question = previousQuestion;
-    const response = await fetch("/api/search", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      // Audience selection changes suggestions only. School level is an explicit, visible filter.
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
+    // Audience selection changes suggestions only. School level is an explicit, visible filter.
+    const response = await postApplication("search", payload);
+    const envelope = await response.json();
+    if (!response.ok) throw new Error(envelope.message || envelope.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
+    const data = envelope.search || envelope;
+    if (!data?.context) throw new Error("검색 결과 형식을 확인하지 못했어요.");
     lastSearchPayload = payload;
     renderResults(data);
     previousQuestion = data.search_query;
@@ -403,13 +452,9 @@ $("answer-button").addEventListener("click", async () => {
   $("status").textContent = "내 Mac에서 찾은 자료를 읽고 답변을 정리하고 있어요.";
   try {
     const payload = {...lastSearchPayload, top_k: Math.min(Number(lastSearchPayload.top_k || 5), 3)};
-    const response = await fetch("/api/answer", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
-    });
+    const response = await postApplication("answer", payload);
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+    if (!response.ok) throw new Error(data.message || data.error || "답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
     if (data.status === "generation_error" || data.status === "validation_failed") {
       throw new Error(data.reason || "답변을 안전하게 확인하지 못해 표시하지 않았어요.");
     }
@@ -472,7 +517,7 @@ $("export-button").addEventListener("click", () => {
   $("status").textContent = "찾은 내용을 저장하도록 요청했어요. 내려받은 파일에 질문과 자료 내용이 들어 있으니 공유 전에 확인해 주세요.";
 });
 
-$("clear-history").addEventListener("click", () => {
+$("clear-history").addEventListener("click", async () => {
   searchHistory = [];
   try {
     localStorage.removeItem(HISTORY_KEY);
@@ -481,6 +526,12 @@ $("clear-history").addEventListener("click", () => {
   }
   renderHistory();
   $("status").textContent = "최근 찾아본 질문을 모두 지웠어요.";
+  try {
+    const response = await fetch(`${BACKEND_API}/search-history?clientId=${encodeURIComponent(browserClientId)}`, {method: "DELETE"});
+    if (!response.ok) throw new Error("history delete failed");
+  } catch {
+    $("status").textContent = "이 화면의 기록은 지웠어요. 서버 기록은 연결될 때 다시 지워주세요.";
+  }
 });
 
 renderExamples();

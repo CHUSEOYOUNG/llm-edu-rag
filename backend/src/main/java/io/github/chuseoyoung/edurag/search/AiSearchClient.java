@@ -17,6 +17,14 @@ public class AiSearchClient {
     }
 
     public JsonNode search(SearchRequest request) {
+        return post("/api/search", request);
+    }
+
+    public JsonNode answer(SearchRequest request) {
+        return post("/api/answer", request);
+    }
+
+    private JsonNode post(String path, SearchRequest request) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("question", request.question());
         body.put("top_k", request.topK());
@@ -26,7 +34,7 @@ public class AiSearchClient {
         }
 
         return restClient.post()
-                .uri("/api/search")
+                .uri(path)
                 .body(body)
                 .retrieve()
                 .body(JsonNode.class);

@@ -47,6 +47,10 @@ curl -X POST http://127.0.0.1:8080/api/v1/search \
   -H 'Content-Type: application/json' \
   -d "{\"client_id\":\"$CLIENT_ID\",\"question\":\"중학교 출결\",\"top_k\":3,\"school_level\":\"middle\"}"
 
+curl -X POST http://127.0.0.1:8080/api/v1/answer \
+  -H 'Content-Type: application/json' \
+  -d "{\"client_id\":\"$CLIENT_ID\",\"question\":\"중학교 수업은 몇 분인가요?\",\"top_k\":2,\"school_level\":\"middle\"}"
+
 curl "http://127.0.0.1:8080/api/v1/search-history?clientId=$CLIENT_ID"
 
 curl -X DELETE "http://127.0.0.1:8080/api/v1/search-history?clientId=$CLIENT_ID"

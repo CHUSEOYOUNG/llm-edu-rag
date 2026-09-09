@@ -44,4 +44,25 @@ class AiSearchClientTests {
         assertThat(response.path("retrieved_count").asInt()).isEqualTo(2);
         server.verify();
     }
+
+    @Test
+    void sendsAnswerRequestsToTheExplicitGenerationEndpoint() {
+        RestClient.Builder builder = RestClient.builder()
+                .baseUrl("http://127.0.0.1:8765");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        AiSearchClient client = new AiSearchClient(builder.build());
+        var request = new SearchRequest(UUID.randomUUID(), "중학교 수업은 몇 분인가요?",
+                2, "middle", null);
+
+        server.expect(requestTo("http://127.0.0.1:8765/api/answer"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("""
+                        {"status":"draft_answer","answer":"45분입니다.","search_query":"중학교 수업"}
+                        """, MediaType.APPLICATION_JSON));
+
+        var response = client.answer(request);
+
+        assertThat(response.path("status").asString()).isEqualTo("draft_answer");
+        server.verify();
+    }
 }

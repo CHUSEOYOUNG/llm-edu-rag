@@ -53,7 +53,8 @@ FOLLOW_UP_CUE = re.compile(
     r"^\s*(?:그럼|그러면|그렇다면|그건|그때|그\s*경우|그중(?:에)?|그것도)\s*"
 )
 CONTENT_SECURITY_POLICY = (
-    "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; "
+    "default-src 'none'; script-src 'self'; style-src 'self'; "
+    "connect-src 'self' http://127.0.0.1:8080 http://localhost:8080; "
     "img-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
 )
 DOCS_CONTENT_SECURITY_POLICY = (
