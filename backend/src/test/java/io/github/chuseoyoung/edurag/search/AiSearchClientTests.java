@@ -21,7 +21,7 @@ class AiSearchClientTests {
         RestClient.Builder builder = RestClient.builder()
                 .baseUrl("http://127.0.0.1:8765");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        AiSearchClient client = new AiSearchClient(builder.build());
+        AiSearchClient client = new AiSearchClient(builder.build(), new tools.jackson.databind.ObjectMapper());
         var request = new SearchRequest(UUID.randomUUID(), "그럼 중학교는?", 3,
                 "middle", "초등학교 수업은 몇 분인가요?");
 
@@ -50,7 +50,7 @@ class AiSearchClientTests {
         RestClient.Builder builder = RestClient.builder()
                 .baseUrl("http://127.0.0.1:8765");
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        AiSearchClient client = new AiSearchClient(builder.build());
+        AiSearchClient client = new AiSearchClient(builder.build(), new tools.jackson.databind.ObjectMapper());
         var request = new SearchRequest(UUID.randomUUID(), "중학교 수업은 몇 분인가요?",
                 2, "middle", null);
 

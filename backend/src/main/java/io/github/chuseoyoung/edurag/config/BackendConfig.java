@@ -1,11 +1,10 @@
 package io.github.chuseoyoung.edurag.config;
 
-import java.net.http.HttpClient;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -15,10 +14,8 @@ public class BackendConfig {
 
     @Bean
     RestClient aiRestClient(AiServiceProperties properties) {
-        var httpClient = HttpClient.newBuilder()
-                .connectTimeout(properties.connectTimeout())
-                .build();
-        var requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(properties.connectTimeout());
         requestFactory.setReadTimeout(properties.readTimeout());
 
         return RestClient.builder()
