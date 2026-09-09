@@ -31,6 +31,20 @@ jobs:
       - name: Run Python tests
         run: uv run --no-sync python -m unittest discover -s tests -v
 
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            backend/*.gradle
+            backend/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Run Spring Boot tests
+        working-directory: backend
+        run: ./gradlew test --no-daemon
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:

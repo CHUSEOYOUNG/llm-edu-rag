@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: edu-rag-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/edu_rag}
+    username: ${DB_USERNAME:edu_rag}
+    password: ${DB_PASSWORD:edu_rag_local}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+edu-rag:
+  ai-service:
+    base-url: ${AI_SERVICE_URL:http://127.0.0.1:8765}
+    connect-timeout: 3s
+    read-timeout: 120s

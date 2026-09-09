@@ -1,0 +1,22 @@
+name: llm-edu-rag-dev
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_DB: edu_rag
+      POSTGRES_USER: edu_rag
+      POSTGRES_PASSWORD: edu_rag_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edu_rag -d edu_rag"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - edu-rag-postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  edu-rag-postgres-data:

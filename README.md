@@ -34,6 +34,7 @@
 - 선택한 내용 복사와 텍스트 파일 저장
 - 출처 ID와 원문 인용을 검사하는 RAG 파이프라인
 - FastAPI 검색 API, OpenAPI 문서, 상태 확인 경로
+- Spring Boot 애플리케이션 백엔드와 PostgreSQL 검색 이력 저장
 - 비루트 사용자와 읽기 전용 마운트를 적용한 Docker/Compose 구성
 - 구조 기반·overlap·고정 길이 청킹 비교 실험
 - multilingual CrossEncoder reranker 비교 실험
@@ -140,9 +141,10 @@ uv run python src/rag.py \
 ```sh
 uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
+cd backend && ./gradlew test
 ```
 
-현재 Python 테스트 98개와 JavaScript 테스트 12개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 98개, JavaScript 테스트 12개, Spring Boot 테스트 3개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 
@@ -208,6 +210,12 @@ uv run --env-file .env python src/rag.py \
 
 이 명령은 질문과 검색된 문서 내용을 외부 API로 보내며 비용이 발생할 수 있다.
 
+## Spring Boot와 PostgreSQL
+
+IntelliJ에서 애플리케이션 백엔드를 개발하고 PostgreSQL을 DBeaver로 확인할 수 있는 구성을 `backend/`에 분리했다. Spring Boot는 사용자 요청과 검색 기록을 담당하고, 모델 로딩과 검색·답변 생성은 기존 FastAPI가 계속 담당한다. Java에서 임베딩과 PyTorch 코드를 다시 구현하지 않으면서 일반적인 서비스 백엔드 구조를 보여주기 위한 분리다.
+
+실행 순서와 DBeaver 연결 정보는 [백엔드 개발 안내](backend/README.md)에 정리했다.
+
 ## 폴더 구성
 
 ```text
@@ -218,8 +226,10 @@ eval/         평가 질문, 근거 주석, 고정 스냅샷
 experiments/  실험 결과 JSON
 notes/        실험 과정과 실패 분석
 config/       현재 Dense 색인의 설정과 파일 지문
+backend/      Spring Boot API, JPA, Flyway
 Dockerfile    FastAPI 검색 서비스 이미지
 compose.yaml  로컬 데이터와 모델 캐시를 연결하는 실행 구성
+compose.dev.yaml  로컬 PostgreSQL 개발 환경
 ```
 
 ## 남은 작업
@@ -228,6 +238,7 @@ compose.yaml  로컬 데이터와 모델 캐시를 연결하는 실행 구성
 - 문서 연도와 개정 이력을 이용한 적용 시점 확인
 - 답변 가능 여부 평가셋 독립 검토와 학교별 일정 질문의 범위 판별
 - 생성 답변 평가셋 구축과 정확성·보류율 측정
+- 웹 화면 요청을 Spring Boot API로 전환하고 브라우저 검색 기록을 PostgreSQL과 동기화
 - Docker 설치 환경에서 이미지 빌드·상태 확인 실제 검증
 - 배포용 Qdrant 서버 구성
 
