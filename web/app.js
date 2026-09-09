@@ -7,6 +7,9 @@ const HISTORY_KEY = "school-life-guide.search-history.v1";
 let result = null;
 let selected = null;
 let loading = false;
+let generating = false;
+let generationEnabled = false;
+let lastSearchPayload = null;
 let audience = "all";
 let schoolLevel = "all";
 let schoolLevelManuallySet = false;
@@ -123,13 +126,40 @@ function rememberSearch(data) {
   renderHistory();
 }
 
+function refreshBusyState() {
+  const busy = loading || generating;
+  $("search-button").disabled = busy;
+  $("top-k").disabled = busy;
+  question.disabled = busy;
+  $("search-label").textContent = loading ? "찾고 있어요…" : "찾아보기";
+  form.setAttribute("aria-busy", String(busy));
+  document.querySelectorAll("[data-example], [data-audience], [data-school-level]").forEach((button) => { button.disabled = busy; });
+  $("answer-button").disabled = busy || !result?.context?.sources?.length;
+}
+
 function setLoading(value) {
   loading = value;
-  $("search-button").disabled = value;
-  $("top-k").disabled = value;
-  $("search-label").textContent = value ? "찾고 있어요…" : "찾아보기";
-  form.setAttribute("aria-busy", String(value));
-  document.querySelectorAll("[data-example], [data-audience], [data-school-level]").forEach((button) => { button.disabled = value; });
+  refreshBusyState();
+}
+
+function setGenerating(value) {
+  generating = value;
+  $("answer-loading").hidden = !value;
+  if (value) $("answer-offer").hidden = true;
+  refreshBusyState();
+}
+
+function resetAnswerPanel(hasSources) {
+  $("answer-panel").hidden = !generationEnabled || !hasSources;
+  $("answer-offer").hidden = false;
+  $("answer-loading").hidden = true;
+  $("answer-result").hidden = true;
+  $("answer-error").hidden = true;
+  $("answer-claims").replaceChildren();
+  $("answer-reason").hidden = true;
+  $("answer-reason").textContent = "";
+  $("answer-button-label").textContent = "자료로 답변 만들기";
+  refreshBusyState();
 }
 
 function renderReaderBody(raw) {
@@ -217,6 +247,59 @@ function selectSource(source, group) {
   }
 }
 
+function openAnswerSource(answerSource, label) {
+  const source = result.context.sources.find((item) => item.chunk_id === answerSource.chunk_id);
+  if (!source) return;
+  const group = sourceGroups.find((item) => item.sources.some((choice) => choice.chunk_id === source.chunk_id));
+  if (!group) return;
+  selectSource(source, group);
+  $("reader").scrollIntoView({behavior: "smooth", block: "start"});
+  $("status").textContent = `${label}에 사용한 자료를 열었어요.`;
+}
+
+function renderAnswer(data) {
+  $("answer-offer").hidden = true;
+  $("answer-loading").hidden = true;
+  $("answer-error").hidden = true;
+  const container = $("answer-claims");
+  const reason = $("answer-reason");
+  container.replaceChildren();
+  reason.hidden = true;
+  reason.textContent = "";
+
+  if (data.status === "draft_answer") {
+    $("answer-result-title").textContent = "이렇게 확인했어요";
+    $("answer-result-title").classList.remove("answer-result-title-muted");
+    const sources = Object.fromEntries(data.context.sources.map((source) => [source.source_id, source]));
+    for (const claim of data.claims) {
+      const paragraph = document.createElement("p");
+      paragraph.className = "answer-claim";
+      paragraph.append(document.createTextNode(claim.text));
+      const ids = [...new Set(claim.evidence.map((item) => item.source_id))];
+      for (const id of ids) {
+        const source = sources[id];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "answer-citation";
+        button.textContent = id.replace(/^S/, "자료 ");
+        button.setAttribute("aria-label", `${id.replace(/^S/, "자료 ")} 확인하기`);
+        if (source) button.addEventListener("click", () => openAnswerSource(source, id.replace(/^S/, "자료 ")));
+        else button.disabled = true;
+        paragraph.append(button);
+      }
+      container.append(paragraph);
+    }
+    $("status").textContent = "찾은 자료의 원문 인용을 확인한 뒤 답변을 표시했어요.";
+  } else {
+    $("answer-result-title").textContent = "자료만으로는 답하기 어려워요";
+    $("answer-result-title").classList.add("answer-result-title-muted");
+    reason.textContent = data.reason || "질문을 조금 더 구체적으로 적거나 아래 원문을 직접 확인해 주세요.";
+    reason.hidden = false;
+    $("status").textContent = "확인할 수 있는 내용만 보여드렸어요. 아래 관련 자료도 살펴보세요.";
+  }
+  $("answer-result").hidden = false;
+}
+
 function renderResults(data) {
   result = data;
   selected = null;
@@ -264,13 +347,14 @@ function renderResults(data) {
   }
   $("reader").hidden = packet.sources.length === 0;
   $("export-button").disabled = packet.sources.length === 0;
+  resetAnswerPanel(packet.sources.length > 0);
   $("status").textContent = packet.sources.length ? `관련 내용 ${packet.sources.length}개를 ${sourceGroups.length}개 항목으로 정리했어요.` : `${schoolLabels[data.school_level]} 자료에서는 관련 내용을 찾지 못했어요. 학교급을 ‘전체’로 바꾸거나 다른 말로 찾아보세요.`;
   if (packet.sources.length) selectSource(sourceGroups[0].sources[0], sourceGroups[0]);
 }
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (loading) return;
+  if (loading || generating) return;
   if (!question.value.trim()) {
     $("error").textContent = "궁금한 내용을 먼저 적어주세요.";
     $("error").hidden = false;
@@ -297,6 +381,7 @@ form.addEventListener("submit", async (event) => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "자료를 찾지 못했어요. 잠시 후 다시 시도해 주세요.");
+    lastSearchPayload = payload;
     renderResults(data);
     previousQuestion = data.search_query;
     rememberSearch(data);
@@ -307,6 +392,38 @@ form.addEventListener("submit", async (event) => {
     $("empty-state").hidden = false;
   } finally {
     setLoading(false);
+  }
+});
+
+$("answer-button").addEventListener("click", async () => {
+  if (loading || generating || !lastSearchPayload || !result?.context?.sources?.length) return;
+  setGenerating(true);
+  $("answer-result").hidden = true;
+  $("answer-error").hidden = true;
+  $("status").textContent = "내 Mac에서 찾은 자료를 읽고 답변을 정리하고 있어요.";
+  try {
+    const payload = {...lastSearchPayload, top_k: Math.min(Number(lastSearchPayload.top_k || 5), 3)};
+    const response = await fetch("/api/answer", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+    if (data.status === "generation_error" || data.status === "validation_failed") {
+      throw new Error(data.reason || "답변을 안전하게 확인하지 못해 표시하지 않았어요.");
+    }
+    renderAnswer(data);
+  } catch (error) {
+    $("answer-offer").hidden = false;
+    $("answer-button-label").textContent = "다시 만들어 보기";
+    $("answer-error").textContent = error instanceof TypeError
+      ? "로컬 답변 기능에 연결할 수 없어요. Ollama가 실행 중인지 확인해 주세요."
+      : error.message;
+    $("answer-error").hidden = false;
+    $("status").textContent = "관련 자료는 그대로 볼 수 있어요.";
+  } finally {
+    setGenerating(false);
   }
 });
 
@@ -373,6 +490,8 @@ fetch("/api/info").then((response) => {
   if (!response.ok) throw new Error("service unavailable");
   return response.json();
 }).then((info) => {
+  generationEnabled = Boolean(info.generation_enabled);
+  if (result) resetAnswerPanel(result.context.sources.length > 0);
   $("index-info").textContent = `현재 ${info.document_count}개의 교육 자료에서 학교생활기록부와 교육과정 내용을 찾아드려요.`;
 }).catch(() => {
   $("index-info").textContent = "지금은 자료를 불러올 수 없어요. 잠시 후 다시 방문해 주세요.";

@@ -37,6 +37,7 @@ class ContainerConfigTests(unittest.TestCase):
                        "/home/app/.cache/huggingface"):
             self.assertTrue(mounts[target]["read_only"])
         self.assertTrue(search["read_only"])
+        self.assertEqual(search["environment"]["OLLAMA_ENABLED"], "0")
         self.assertEqual(search["cap_drop"], ["ALL"])
         self.assertEqual(search["security_opt"], ["no-new-privileges:true"])
 

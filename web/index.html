@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>학교생활 안내 · 학교가 궁금할 때</title>
-  <link rel="stylesheet" href="/app.css?v=20260908-3">
-  <script src="/presentation.js?v=20260908-3" defer></script>
-  <script src="/app.js?v=20260908-3" defer></script>
+  <link rel="stylesheet" href="/app.css?v=20260909-1">
+  <script src="/presentation.js?v=20260909-1" defer></script>
+  <script src="/app.js?v=20260909-1" defer></script>
 </head>
 <body>
   <a class="skip" href="#question">궁금한 점 입력하기</a>
@@ -94,6 +94,21 @@
       <div id="match-warning" class="notice warning" hidden></div>
       <div id="date-warning" class="notice warning" hidden></div>
       <div id="budget-warning" class="notice warning" hidden></div>
+      <section id="answer-panel" class="answer-panel" hidden aria-labelledby="answer-title">
+        <div id="answer-offer" class="answer-offer">
+          <div><p class="answer-kicker">찾은 자료를 한눈에</p><h3 id="answer-title">자료 안에서 답을 정리해 볼까요?</h3><p>내 Mac에서 찾은 자료를 읽고 짧은 답변을 만들어요. 실행 환경에 따라 10초에서 1분 정도 걸릴 수 있어요.</p></div>
+          <button id="answer-button" class="answer-button" type="button"><span id="answer-button-label">자료로 답변 만들기</span><span aria-hidden="true">✦</span></button>
+        </div>
+        <div id="answer-loading" class="answer-loading" role="status" hidden><span class="answer-spinner" aria-hidden="true"></span><div><strong>자료를 읽고 답변을 정리하고 있어요.</strong><p>이 화면을 열어 둔 채 잠시만 기다려 주세요. 검색은 내 Mac 안에서 처리돼요.</p></div></div>
+        <div id="answer-result" class="answer-result" hidden>
+          <p class="answer-kicker">자료를 바탕으로 정리한 답변</p>
+          <h3 id="answer-result-title">이렇게 확인했어요</h3>
+          <div id="answer-claims" class="answer-claims"></div>
+          <p id="answer-reason" class="answer-reason" hidden></p>
+          <p class="answer-caution"><span aria-hidden="true">ⓘ</span> 자동으로 정리한 내용이에요. 번호를 누르면 사용한 자료를 확인할 수 있어요.</p>
+        </div>
+        <div id="answer-error" class="notice warning" role="alert" hidden></div>
+      </section>
       <div class="workspace">
         <aside class="result-list-panel" aria-label="관련 자료 목록"><div class="list-caption">자료를 선택해 내용을 살펴보세요.</div><div id="result-list"></div></aside>
         <article class="reader" id="reader" aria-labelledby="reader-title">
@@ -106,12 +121,12 @@
           <details class="source-details"><summary>어떤 자료에서 찾았나요?</summary><dl><dt>자료 이름</dt><dd id="reader-original-title"></dd><dt>원문 페이지</dt><dd id="reader-page"></dd><dt>자료 안의 위치</dt><dd id="reader-path"></dd></dl></details>
         </article>
       </div>
-      <p class="review-note"><span aria-hidden="true">ⓘ</span> 찾은 내용은 자료의 일부이며, 자동으로 작성한 답변이 아니에요. 학교별 운영이나 개인 상황에 대한 확인이 필요하면 학교의 안내도 함께 살펴봐 주세요.</p>
+      <p class="review-note"><span aria-hidden="true">ⓘ</span> 아래 자료 목록은 자동으로 작성한 답변이 아니에요. 학교별 운영이나 개인 상황에 대한 확인이 필요하면 학교의 안내도 함께 살펴봐 주세요.</p>
     </section>
 
     <section id="help" class="help-section" aria-labelledby="help-title">
       <div class="help-heading"><p class="section-kicker">처음 오셨나요?</p><h2 id="help-title">이렇게 이용해 보세요</h2><p id="index-info">학교생활기록부와 교육과정 자료를 함께 찾아볼 수 있어요.</p></div>
-      <div class="help-steps"><div><span class="step-number">1</span><h3>평소 쓰는 말로 물어보세요</h3><p>학교급·학년·연도를 함께 적어주세요.<br>이름이나 연락처는 적지 않아도 돼요.</p></div><div><span class="step-number">2</span><h3>관련 내용을 살펴보세요</h3><p>새 답변을 만드는 대신,<br>준비된 교육 자료의 내용을 보여드려요.</p></div><div><span class="step-number">3</span><h3>내 상황과 맞는지 확인하세요</h3><p>적용 대상과 날짜를 살펴보고,<br>필요한 내용은 복사하거나 저장하세요.</p></div></div>
+      <div class="help-steps"><div><span class="step-number">1</span><h3>평소 쓰는 말로 물어보세요</h3><p>학교급·학년·연도를 함께 적어주세요.<br>이름이나 연락처는 적지 않아도 돼요.</p></div><div><span class="step-number">2</span><h3>자료나 정리된 답변을 보세요</h3><p>관련 원문을 먼저 보여드리고,<br>원하면 자료 안에서 답을 정리해요.</p></div><div><span class="step-number">3</span><h3>내 상황과 맞는지 확인하세요</h3><p>적용 대상과 날짜를 살펴보고,<br>필요한 내용은 복사하거나 저장하세요.</p></div></div>
     </section>
     <footer><div><strong>학교생활 안내</strong><p>학교와 가정이 함께 알아가는 교육 정보</p></div><p>현재는 준비된 자료 안에서 찾아드려요.<br>모든 학교의 개별 운영 사항을 담고 있지는 않아요.</p></footer>
   </main>

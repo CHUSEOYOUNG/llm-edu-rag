@@ -1,10 +1,11 @@
-"""Loopback-only FastAPI evidence browser with no paid generation routes.
+"""Loopback-only FastAPI education search with optional local answer generation.
 
 Run: python src/search_app.py, then open http://127.0.0.1:8765.
 """
 
 import argparse
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 import re
 import threading
@@ -18,7 +19,9 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from rag import ROOT, DenseRetriever, build_packet, compact, missing_dates
+from ollama_generate import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
+from ollama_generate import generate as generate_local
+from rag import ROOT, DenseRetriever, answer_packet, build_packet, compact, missing_dates
 
 WEB = ROOT / "web"
 MAX_REQUEST_BYTES = 16384
@@ -80,6 +83,7 @@ class SearchRequest(BaseModel):
 class RetrieverInfo(BaseModel):
     mode: str
     generation_enabled: bool
+    generation_model: str | None
     model: str
     index_text: str
     short_keyword_rerank: bool
@@ -90,7 +94,7 @@ class RetrieverInfo(BaseModel):
 class HealthResponse(BaseModel):
     status: Literal["ok"]
     ready: Literal[True]
-    mode: Literal["local_retrieval_only"]
+    mode: Literal["local_retrieval_only", "local_retrieval_and_generation"]
 
 
 class ResultAssessment(BaseModel):
@@ -118,6 +122,23 @@ class SearchResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
+
+
+class AnswerResponse(BaseModel):
+    status: Literal[
+        "draft_answer", "insufficient_evidence", "validation_failed", "generation_error"
+    ]
+    answer: str | None
+    reason: str
+    generation_called: bool
+    claims: list[dict[str, Any]]
+    scope_checks: list[dict[str, Any]]
+    context: dict[str, Any]
+    search_query: str
+    follow_up_applied: bool
+    school_level: str
+    elapsed_ms: int
+    generation: dict[str, Any] | None = None
 
 
 def keyword_terms(question):
@@ -243,9 +264,13 @@ def assess_results(question, hits, threshold=STRONG_CANDIDATE_THRESHOLD):
 
 
 class SearchService:
-    def __init__(self, retriever, source_root=ROOT / "data/raw"):
+    def __init__(self, retriever, source_root=ROOT / "data/raw", generator=None,
+                 generation_model=None):
         self.retriever = retriever
         self.lock = threading.Lock()
+        self.generation_lock = threading.Lock()
+        self.generator = generator
+        self.generation_model = generation_model if generator else None
         source_root = source_root.resolve()
         self.source_files = {}
         for doc_id in {chunk["doc_id"] for chunk in retriever.chunks}:
@@ -263,7 +288,9 @@ class SearchService:
                 source["source_url"] = f"/source/{quote(source['doc_id'], safe='')}.pdf#page={page}"
 
     def info(self):
-        return {"mode": "local_retrieval_only", "generation_enabled": False,
+        mode = "local_retrieval_and_generation" if self.generator else "local_retrieval_only"
+        return {"mode": mode, "generation_enabled": bool(self.generator),
+                "generation_model": self.generation_model,
                 "model": self.retriever.config["model"], "index_text": "body",
                 "short_keyword_rerank": True,
                 "chunk_count": len(self.retriever.chunks),
@@ -314,6 +341,43 @@ class SearchService:
                 "elapsed_ms": round((time.perf_counter()-started)*1000),
                 "retriever": self.info()}
 
+    def answer(self, payload):
+        if self.generator is None:
+            raise BusyError("이 실행에서는 답변 만들기 기능이 준비되지 않았어요.")
+        if not self.generation_lock.acquire(blocking=False):
+            raise BusyError("다른 답변을 만들고 있어요. 잠시 후 다시 시도해 주세요.")
+        started = time.perf_counter()
+        try:
+            found = self.search(payload)
+            # Two complete source sections keep local CPU generation responsive.
+            # Never cut a section midway because a missing table note can change meaning.
+            sources = found["context"]["sources"][:2]
+            packet = build_packet(
+                found["search_query"], sources, max_context_chars=5000
+            )
+            packet["display_question"] = found["context"]["original_question"]
+            packet["search_query"] = found["search_query"]
+            packet["follow_up_applied"] = found["follow_up_applied"]
+            packet["scope_filters_applied"] = found["school_level"] != "all"
+            packet["school_level_filter"] = found["school_level"]
+            generated = answer_packet(packet, self.generator)
+            self.add_source_links(packet)
+        finally:
+            self.generation_lock.release()
+        return {
+            **generated,
+            "answer": generated.get("answer"),
+            "reason": generated.get("reason", ""),
+            "claims": generated.get("claims", []),
+            "scope_checks": generated.get("scope_checks", []),
+            "generation": generated.get("generation"),
+            "context": packet,
+            "search_query": found["search_query"],
+            "follow_up_applied": found["follow_up_applied"],
+            "school_level": found["school_level"],
+            "elapsed_ms": round((time.perf_counter() - started) * 1000),
+        }
+
 
 def request_host(request):
     return request.headers.get("host", "").split(":", 1)[0].lower()
@@ -331,7 +395,20 @@ def add_security_headers(response, docs=False):
 def create_app(service=None):
     @asynccontextmanager
     async def lifespan(app):
-        app.state.search_service = service or SearchService(DenseRetriever())
+        model = os.environ.get("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
+        local_generation = os.environ.get("OLLAMA_ENABLED", "1").lower() not in {
+            "0", "false", "no"
+        }
+        if service is not None:
+            app.state.search_service = service
+        elif local_generation:
+            app.state.search_service = SearchService(
+                DenseRetriever(),
+                generator=lambda packet: generate_local(packet, model=model),
+                generation_model=model,
+            )
+        else:
+            app.state.search_service = SearchService(DenseRetriever())
         yield
         app.state.search_service = None
 
@@ -355,7 +432,7 @@ def create_app(service=None):
             response = JSONResponse(
                 status_code=403, content={"error": "다른 사이트에서의 요청은 허용하지 않습니다."})
             return add_security_headers(response)
-        if request.method == "POST" and request.url.path == "/api/search":
+        if request.method == "POST" and request.url.path in ("/api/search", "/api/answer"):
             if request.headers.get("transfer-encoding"):
                 response = JSONResponse(
                     status_code=400, content={"error": "검색 요청을 읽지 못했어요. 다시 시도해 주세요."})
@@ -392,7 +469,8 @@ def create_app(service=None):
 
     @api.get("/health", response_model=HealthResponse, tags=["운영"])
     def health():
-        return {"status": "ok", "ready": True, "mode": "local_retrieval_only"}
+        mode = "local_retrieval_and_generation" if api.state.search_service.generator else "local_retrieval_only"
+        return {"status": "ok", "ready": True, "mode": mode}
 
     @api.get("/api/info", response_model=RetrieverInfo, tags=["검색"])
     def info(request: Request):
@@ -417,6 +495,26 @@ def create_app(service=None):
             return JSONResponse(
                 status_code=500,
                 content={"error": "자료를 찾는 중에 문제가 생겼어요. 잠시 후 다시 시도해 주세요."})
+
+    @api.post(
+        "/api/answer",
+        response_model=AnswerResponse,
+        responses={400: {"model": ErrorResponse}, 503: {"model": ErrorResponse}},
+        tags=["답변"],
+    )
+    def answer(payload: SearchRequest, request: Request):
+        try:
+            return request.app.state.search_service.answer(payload.model_dump())
+        except BusyError as exc:
+            return JSONResponse(status_code=503, content={"error": str(exc)})
+        except ValueError:
+            return JSONResponse(
+                status_code=400,
+                content={"error": "질문은 1~4000자, 검색 개수는 1~20으로 입력하세요."})
+        except Exception:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "답변을 만드는 중에 문제가 생겼어요. 잠시 후 다시 시도해 주세요."})
 
     @api.get("/source/{doc_id}.pdf", include_in_schema=False)
     def source_pdf(doc_id: str, request: Request):
@@ -455,7 +553,7 @@ def run_server(port=8765, host="127.0.0.1"):
         raise ValueError("포트는 1~65535여야 합니다.")
     import uvicorn
 
-    print("로컬 검색 모델을 준비합니다. API 호출·모델 다운로드는 하지 않습니다.", flush=True)
+    print("로컬 검색 모델을 준비합니다. Ollama가 실행 중이면 답변 만들기도 사용할 수 있습니다.", flush=True)
     print(f"검색 화면: http://{host}:{port}  | API 문서: http://{host}:{port}/docs", flush=True)
     uvicorn.run(app, host=host, port=port, access_log=False, log_level="warning")
 

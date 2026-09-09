@@ -22,6 +22,7 @@ services:
     environment:
       HF_HUB_OFFLINE: "1"
       TRANSFORMERS_OFFLINE: "1"
+      OLLAMA_ENABLED: "0"
     read_only: true
     tmpfs:
       - /tmp:size=256m,mode=1777

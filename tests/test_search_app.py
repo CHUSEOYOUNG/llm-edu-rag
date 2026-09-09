@@ -14,15 +14,18 @@ from search_app import (BusyError, SearchService, condition_audit, create_app,
                         assess_results, follow_up_query, keyword_rerank, keyword_terms,
                         local_information_request, matches_school_level, run_server)
 from rag import build_packet
-from test_rag import hit
+from test_rag import answer as generated_answer, hit
 
 
-def service():
+def service(generator=None):
     retriever = Mock()
     retriever.config = {"model": "test-model", "index_text": "body"}
     retriever.chunks = [hit()]
     retriever.search.return_value = [hit()]
-    return SearchService(retriever)
+    return SearchService(
+        retriever, generator=generator,
+        generation_model="test-local-model" if generator else None,
+    )
 
 
 class SearchServiceTests(unittest.TestCase):
@@ -127,7 +130,8 @@ class SearchServiceTests(unittest.TestCase):
         self.assertTrue(result["context"]["scope_filters_applied"])
 
     def test_search_preserves_original_question_and_never_generates(self):
-        search = service()
+        generator = Mock(side_effect=AssertionError("generation forbidden during search"))
+        search = service(generator)
         question = "한글 한 글자는 몇 바이트인가요?"
         with patch("rag_generate.generate", side_effect=AssertionError("API forbidden")):
             result = search.search({"question": question, "top_k": 5})
@@ -136,6 +140,28 @@ class SearchServiceTests(unittest.TestCase):
         self.assertFalse(result["generation_called"])
         self.assertIsNone(result["answer"])
         self.assertEqual(result["context"]["sources"][0]["body"], hit()["body"])
+        generator.assert_not_called()
+
+    def test_local_answer_reruns_retrieval_and_validates_literal_citations(self):
+        generator = Mock(return_value=(generated_answer(), {
+            "provider": "ollama_local", "model": "test-local-model"}))
+        search = service(generator)
+        result = search.answer({"question": "한글은 몇 바이트인가요?", "top_k": 5})
+        self.assertEqual(result["status"], "draft_answer")
+        self.assertEqual(result["answer"], "한글 한 글자는 3바이트입니다. [S1]")
+        self.assertEqual(result["generation"]["provider"], "ollama_local")
+        self.assertLessEqual(len(result["context"]["sources"]), 3)
+        generator.assert_called_once()
+
+    def test_local_answer_failure_does_not_change_retrieval_results(self):
+        invalid = generated_answer()
+        invalid["claims"][0]["evidence"][0]["quote"] = "원문에 없는 문장"
+        search = service(Mock(return_value=(invalid, {})))
+        generated = search.answer({"question": "한글은 몇 바이트인가요?"})
+        self.assertEqual(generated["status"], "validation_failed")
+        self.assertIsNone(generated["answer"])
+        self.assertEqual(search.search({"question": "한글은 몇 바이트인가요?"})["status"],
+                         "retrieved_only")
 
     def test_invalid_payloads_never_reach_retrieval(self):
         search = service()
@@ -218,6 +244,7 @@ class SearchHttpTests(unittest.TestCase):
             "status": "ok", "ready": True, "mode": "local_retrieval_only"})
         schema = self.client.get("/openapi.json").json()
         self.assertIn("/api/search", schema["paths"])
+        self.assertIn("/api/answer", schema["paths"])
         self.assertIn("SearchRequest", schema["components"]["schemas"])
         request_schema = schema["components"]["schemas"]["SearchRequest"]
         self.assertEqual(request_schema["additionalProperties"], False)
@@ -236,6 +263,18 @@ class SearchHttpTests(unittest.TestCase):
         self.assertEqual(result["result_assessment"], {
             "level": "strong_candidate", "answerability_verified": False,
             "reason": "strong_similarity"})
+
+    def test_answer_endpoint_is_explicit_and_returns_validated_answer(self):
+        generator = Mock(return_value=(generated_answer(), {
+            "provider": "ollama_local", "model": "test-local-model"}))
+        with TestClient(create_app(service(generator))) as client:
+            searched = client.post("/api/search", json={"question": "한글?"})
+            generator.assert_not_called()
+            answered = client.post("/api/answer", json={"question": "한글?"})
+        self.assertEqual(searched.status_code, 200)
+        self.assertEqual(answered.status_code, 200)
+        self.assertEqual(answered.json()["status"], "draft_answer")
+        generator.assert_called_once()
 
     def test_filesystem_paths_and_generation_routes_are_not_exposed(self):
         for method, path in (("GET", "/.env"), ("GET", "/../README.md"), ("GET", "/src/rag.py"),

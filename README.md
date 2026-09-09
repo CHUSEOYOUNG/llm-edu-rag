@@ -4,7 +4,7 @@
 
 교육부 PDF는 분량이 길고 비슷한 표현이 여러 학교급 문서에 반복된다. 필요한 내용을 찾을 때마다 PDF 전체를 넘겨보는 불편을 줄여보려고 만든 교육 문서 검색 프로젝트다.
 
-현재는 **로컬 검색과 원문 확인**까지 사용할 수 있다. BGE-m3로 관련 내용을 찾고, 결과가 나온 PDF 페이지를 바로 열어볼 수 있다. 답변 생성 코드는 별도로 두었지만 유료 API를 연결하지 않아 기본 실행에서는 검색만 한다.
+현재는 **로컬 검색, 원문 확인, 선택형 답변 생성**까지 사용할 수 있다. BGE-m3로 관련 내용을 찾고 PDF 페이지를 바로 열 수 있으며, 필요할 때만 Ollama의 Qwen3 4B 모델로 답변을 정리한다. 검색과 생성 모두 로컬에서 실행해 API 사용료가 들지 않는다.
 
 지금 색인에는 학교생활기록부 기재요령과 교육과정 자료 6개, 총 1,331개 청크가 들어 있다.
 
@@ -29,6 +29,8 @@
 - 관련성이 낮은 결과에 질문을 구체화하라는 검토 안내
 - 학교별 급식·행사·마감일 질문에 학교 안내를 함께 확인하라는 범위 안내
 - 원문 PDF 페이지 표시 및 해당 페이지 바로 열기
+- `자료로 답변 만들기`를 눌렀을 때만 실행되는 로컬 Qwen3 답변 생성
+- 답변 문장에 사용된 출처 ID와 인용문이 실제 검색 원문에 있는지 검사
 - 선택한 내용 복사와 텍스트 파일 저장
 - 출처 ID와 원문 인용을 검사하는 RAG 파이프라인
 - FastAPI 검색 API, OpenAPI 문서, 상태 확인 경로
@@ -48,7 +50,8 @@ PDF
          └─ BGE-m3 임베딩
              └─ Dense 검색
                  └─ 학교급 필터와 짧은 키워드 재정렬
-                     └─ 원문 내용과 PDF 페이지 표시
+                     ├─ 원문 내용과 PDF 페이지 표시
+                     └─ 선택 시 Ollama Qwen3 → 인용 검사 → 답변 표시
 ```
 
 기본 검색은 **질문 원문 → BGE-m3 Dense → body-only index** 순서다. 문서 경로는 검색 벡터에 섞지 않고 결과 설명과 출처 표시에만 쓴다.
@@ -63,6 +66,14 @@ Python 3.12 이상과 [uv](https://docs.astral.sh/uv/)가 필요하다. 화면 J
 
 ### 웹 화면
 
+답변 만들기를 사용하려면 [Ollama](https://ollama.com/download)를 설치하고 Instruct 모델을 한 번 받아 둔다. Thinking 태그는 사고 과정을 길게 출력하므로 이 화면에서는 사용하지 않는다.
+
+```sh
+ollama pull qwen3:4b-instruct
+```
+
+Ollama를 실행한 뒤 검색 서버를 시작한다.
+
 ```sh
 uv run python src/search_app.py
 ```
@@ -73,7 +84,7 @@ uv run python src/search_app.py
 uv run python src/search_app.py --port 8766
 ```
 
-화면과 검색 API는 FastAPI와 Uvicorn으로 실행된다. 현재는 `127.0.0.1`에만 바인딩하는 로컬 실행 구성이다.
+화면과 검색 API는 FastAPI와 Uvicorn으로 실행된다. 현재는 `127.0.0.1`에만 바인딩하며, Ollama도 같은 컴퓨터의 `127.0.0.1:11434`로만 호출한다. 모델을 바꾸려면 `OLLAMA_MODEL` 환경 변수를 설정할 수 있다.
 
 ### 검색 API
 
@@ -89,9 +100,13 @@ curl -X POST http://127.0.0.1:8765/api/search \
 curl -X POST http://127.0.0.1:8765/api/search \
   -H 'Content-Type: application/json' \
   -d '{"question":"그럼 중학교는?","previous_question":"초등학교 수업 한 시간은 몇 분인가요?","top_k":3,"school_level":"middle"}'
+
+curl -X POST http://127.0.0.1:8765/api/answer \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"중학교 수업 한 시간은 몇 분인가요?","top_k":2,"school_level":"middle"}'
 ```
 
-검색 요청은 `question`, `top_k`, `school_level`과 선택 항목인 `previous_question`을 받는다. `그럼`, `그러면`, `중학교는?`처럼 이어 묻는 표현일 때만 직전 질문의 주제를 검색문에 보충한다. 서버에는 대화 기록을 저장하지 않으며 응답의 `search_query`와 `follow_up_applied`에서 실제 검색문과 적용 여부를 확인할 수 있다. 응답에는 관련 원문과 문서명, 구조 경로, PDF 페이지가 들어가며 생성 답변은 포함하지 않는다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
+검색 요청은 `question`, `top_k`, `school_level`과 선택 항목인 `previous_question`을 받는다. `그럼`, `그러면`, `중학교는?`처럼 이어 묻는 표현일 때만 직전 질문의 주제를 검색문에 보충한다. 서버에는 대화 기록을 저장하지 않으며 응답의 `search_query`와 `follow_up_applied`에서 실제 검색문과 적용 여부를 확인할 수 있다. `/api/search`는 생성 모델을 호출하지 않는다. `/api/answer`를 따로 호출해야 검색을 다시 실행하고 상위 원문 두 개로 답변을 만든다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
 
 ### Docker
 
@@ -108,7 +123,7 @@ curl http://127.0.0.1:8765/health
 docker compose down
 ```
 
-Compose는 호스트의 `127.0.0.1`에만 포트를 공개한다. BGE-m3를 기본 위치가 아닌 다른 Hugging Face 캐시에 저장했다면 `compose.yaml`의 모델 캐시 마운트 경로를 그 위치에 맞춰야 한다. 첫 이미지 빌드는 PyTorch 등 실행 의존성을 설치하므로 시간과 디스크 공간이 필요하다.
+Compose는 호스트의 `127.0.0.1`에만 포트를 공개한다. 기본 컨테이너는 호스트 Ollama에 접근하지 않도록 `OLLAMA_ENABLED=0`으로 두어 검색만 제공한다. BGE-m3를 기본 위치가 아닌 다른 Hugging Face 캐시에 저장했다면 `compose.yaml`의 모델 캐시 마운트 경로를 그 위치에 맞춰야 한다. 첫 이미지 빌드는 PyTorch 등 실행 의존성을 설치하므로 시간과 디스크 공간이 필요하다.
 
 ### CLI 검색
 
@@ -127,7 +142,7 @@ uv run python -m unittest discover -s tests -v
 node --test tests/test_presentation.cjs
 ```
 
-현재 Python 테스트 91개와 JavaScript 테스트 12개를 통과한다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 답변 가능 여부 평가셋 분리, 학교별 최신 정보 범위 안내, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 98개와 JavaScript 테스트 12개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 
@@ -176,12 +191,13 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [답변 가능 여부 점수 기준 실험](notes/2026-09-07-answerability-baseline.md)
 - [답변 가능 여부 개발/테스트 분리 평가](notes/2026-09-08-answerability-split.md)
 - [직전 질문을 잇는 검색](notes/2026-09-08-follow-up-search.md)
+- [Ollama 로컬 답변 생성](notes/2026-09-09-local-generation.md)
 
 ## 답변 생성 코드
 
-`src/rag_generate.py`에는 OpenAI Responses API 연결부가 있다. 검색 결과를 출처 ID와 함께 넘기고, 생성된 문장에 사용된 인용이 실제 원문에 존재하는지 검사한다. 검사를 통과해도 의미상 정확한 답이라고 확정하지 않고 `draft_answer`로 다룬다.
+웹 화면은 `src/ollama_generate.py`를 통해 로컬 `qwen3:4b-instruct`를 호출한다. 검색 결과를 출처 ID와 함께 넘기고, 생성된 문장에 사용된 인용이 실제 원문에 존재하는지 검사한다. 검사를 통과해도 의미상 정확한 답이라고 확정하지 않고 `draft_answer`로 다룬다. 이 기능에는 API 키나 호출 요금이 없다.
 
-현재는 비용 문제로 실제 생성 응답을 검증하지 않았다. 로컬 검색에는 API 키가 필요하지 않다. 나중에 생성 실험을 진행할 때만 `.env.example`을 참고해 키와 모델을 설정하고 `--generate`를 붙인다.
+`src/rag_generate.py`의 OpenAI Responses API 연결부는 비교 실험용으로 남겨 두었다. 아래 CLI에서 `--generate`를 명시한 경우에만 외부 API를 호출한다.
 
 ```sh
 uv run --env-file .env python src/rag.py \
@@ -211,7 +227,7 @@ compose.yaml  로컬 데이터와 모델 캐시를 연결하는 실행 구성
 - 평가 질문을 늘리고 개발셋과 테스트셋 분리
 - 문서 연도와 개정 이력을 이용한 적용 시점 확인
 - 답변 가능 여부 평가셋 독립 검토와 학교별 일정 질문의 범위 판별
-- 생성 답변 품질 평가
+- 생성 답변 평가셋 구축과 정확성·보류율 측정
 - Docker 설치 환경에서 이미지 빌드·상태 확인 실제 검증
 - 배포용 Qdrant 서버 구성
 
