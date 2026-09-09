@@ -12,6 +12,7 @@ let selected = null;
 let loading = false;
 let generating = false;
 let generationEnabled = false;
+let generationInfoReady = Promise.resolve();
 let lastSearchPayload = null;
 let audience = "all";
 let schoolLevel = "all";
@@ -208,7 +209,7 @@ function resetAnswerPanel(hasSources) {
   $("answer-claims").replaceChildren();
   $("answer-reason").hidden = true;
   $("answer-reason").textContent = "";
-  $("answer-button-label").textContent = "자료로 답변 만들기";
+  $("answer-button-label").textContent = "답변 다시 만들기";
   refreshBusyState();
 }
 
@@ -402,6 +403,34 @@ function renderResults(data) {
   if (packet.sources.length) selectSource(sourceGroups[0].sources[0], sourceGroups[0]);
 }
 
+async function generateAnswer() {
+  if (loading || generating || !lastSearchPayload || !result?.context?.sources?.length) return;
+  setGenerating(true);
+  $("answer-result").hidden = true;
+  $("answer-error").hidden = true;
+  $("status").textContent = "내 Mac에서 찾은 자료를 읽고 답변을 정리하고 있어요.";
+  try {
+    const payload = {...lastSearchPayload, top_k: Math.min(Number(lastSearchPayload.top_k || 5), 3)};
+    const response = await postApplication("answer", payload);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || data.error || "답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
+    if (data.status === "generation_error" || data.status === "validation_failed") {
+      throw new Error(data.reason || "답변을 안전하게 확인하지 못해 표시하지 않았어요.");
+    }
+    renderAnswer(data);
+  } catch (error) {
+    $("answer-offer").hidden = false;
+    $("answer-button-label").textContent = "답변 다시 만들기";
+    $("answer-error").textContent = error instanceof TypeError
+      ? "로컬 답변 기능에 연결할 수 없어요. Ollama가 실행 중인지 확인해 주세요."
+      : error.message;
+    $("answer-error").hidden = false;
+    $("status").textContent = "관련 자료는 그대로 볼 수 있어요.";
+  } finally {
+    setGenerating(false);
+  }
+}
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (loading || generating) return;
@@ -421,6 +450,7 @@ form.addEventListener("submit", async (event) => {
   $("results-section").hidden = true;
   $("empty-state").hidden = true;
   $("status").textContent = "궁금한 내용과 관련된 교육 자료를 찾고 있어요. 잠시만 기다려 주세요.";
+  let shouldGenerateAnswer = false;
   try {
     const payload = {client_id: browserClientId, question: currentQuestion, top_k: Number($("top-k").value), school_level: schoolLevel};
     if (previousQuestion) payload.previous_question = previousQuestion;
@@ -434,6 +464,8 @@ form.addEventListener("submit", async (event) => {
     renderResults(data);
     previousQuestion = data.search_query;
     rememberSearch(data);
+    await generationInfoReady;
+    shouldGenerateAnswer = generationEnabled && data.context.sources.length > 0;
   } catch (error) {
     $("status").textContent = "";
     $("error").textContent = error instanceof TypeError ? "지금은 자료를 불러올 수 없어요. 화면을 새로고침하거나 잠시 후 다시 시도해 주세요." : error.message;
@@ -442,35 +474,10 @@ form.addEventListener("submit", async (event) => {
   } finally {
     setLoading(false);
   }
+  if (shouldGenerateAnswer) await generateAnswer();
 });
 
-$("answer-button").addEventListener("click", async () => {
-  if (loading || generating || !lastSearchPayload || !result?.context?.sources?.length) return;
-  setGenerating(true);
-  $("answer-result").hidden = true;
-  $("answer-error").hidden = true;
-  $("status").textContent = "내 Mac에서 찾은 자료를 읽고 답변을 정리하고 있어요.";
-  try {
-    const payload = {...lastSearchPayload, top_k: Math.min(Number(lastSearchPayload.top_k || 5), 3)};
-    const response = await postApplication("answer", payload);
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || data.error || "답변을 만들지 못했어요. 잠시 후 다시 시도해 주세요.");
-    if (data.status === "generation_error" || data.status === "validation_failed") {
-      throw new Error(data.reason || "답변을 안전하게 확인하지 못해 표시하지 않았어요.");
-    }
-    renderAnswer(data);
-  } catch (error) {
-    $("answer-offer").hidden = false;
-    $("answer-button-label").textContent = "다시 만들어 보기";
-    $("answer-error").textContent = error instanceof TypeError
-      ? "로컬 답변 기능에 연결할 수 없어요. Ollama가 실행 중인지 확인해 주세요."
-      : error.message;
-    $("answer-error").hidden = false;
-    $("status").textContent = "관련 자료는 그대로 볼 수 있어요.";
-  } finally {
-    setGenerating(false);
-  }
-});
+$("answer-button").addEventListener("click", generateAnswer);
 
 question.addEventListener("keydown", (event) => {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing && event.keyCode !== 229) {
@@ -537,7 +544,7 @@ $("clear-history").addEventListener("click", async () => {
 renderExamples();
 renderSchoolFilter();
 loadHistory();
-fetch("/api/info").then((response) => {
+generationInfoReady = fetch("/api/info").then((response) => {
   if (!response.ok) throw new Error("service unavailable");
   return response.json();
 }).then((info) => {

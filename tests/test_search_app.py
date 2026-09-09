@@ -350,15 +350,18 @@ class EducationPageTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / 'web'
         page = Page()
         page.feed((root/'index.html').read_text())
+        script = (root/'app.js').read_text()
         ids = set(page.ids)
         self.assertEqual(len(ids), len(page.ids), 'duplicate element IDs')
-        used = set(re.findall(r'\$\("([\w-]+)"\)', (root/'app.js').read_text()))
+        used = set(re.findall(r'\$\("([\w-]+)"\)', script))
         self.assertEqual(used - ids, set(), 'script references a removed element')
         visible = ' '.join(page.text)
         for term in ('청크', '근거', '유사도', '코퍼스', '컨텍스트', 'JSON', 'BGE-M3', 'EVIDENCE'):
             with self.subTest(term=term):
                 self.assertNotIn(term, visible)
         self.assertIn('자동으로 작성한 답변이 아니에요', visible)
+        self.assertIn('async function generateAnswer()', script)
+        self.assertIn('if (shouldGenerateAnswer) await generateAnswer();', script)
 
 
 if __name__ == "__main__":
