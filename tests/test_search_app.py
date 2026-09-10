@@ -13,7 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
                         assess_results, follow_up_query, keyword_rerank, keyword_terms,
                         focused_quantity_body, generation_sources,
-                        local_information_request, matches_school_level, run_server)
+                        local_information_request, matches_school_level,
+                        representative_sections, run_server)
 from rag import build_packet
 from test_rag import answer as generated_answer, hit
 
@@ -172,11 +173,33 @@ class SearchServiceTests(unittest.TestCase):
         ])
         self.assertEqual([source["chunk_id"] for source in selected], ["middle"])
 
-    def test_non_quantity_generation_keeps_top_complete_source(self):
-        sources = [hit("first", body="첫 문단\n\n둘째 문단"), hit("second")]
+    def test_non_quantity_generation_keeps_two_distinct_complete_sections(self):
+        sources = [
+            hit("first", body="첫 문단\n\n둘째 문단", path="19조 > 정정대장"),
+            hit("duplicate", body="같은 항목의 다른 조각", path="19조 > 정정대장"),
+            hit("rule", body="객관적인 증빙자료가 있는 경우에만 정정할 수 있다.", path="20조 증빙관리"),
+        ]
         selected = generation_sources("출결 처리는 어떻게 하나요?", sources)
-        self.assertEqual(len(selected), 1)
+        self.assertEqual([source["chunk_id"] for source in selected], ["first", "rule"])
         self.assertEqual(selected[0]["body"], "첫 문단\n\n둘째 문단")
+
+    def test_general_correction_question_prefers_parent_rule_section(self):
+        sources = [
+            hit("form", path="19조 자료의 정정 > 2 정정대장 기재 및 관리방법"),
+            hit("form-copy", path="19조 자료의 정정 > 2 정정대장 기재 및 관리방법"),
+            hit("rule", path="19조 자료의 정정"),
+        ]
+        selected = representative_sections(
+            "작년 생기부에 잘못 쓴 내용을 지금 고칠 수 있나요?", sources)
+        self.assertEqual([source["chunk_id"] for source in selected], ["rule"])
+
+    def test_named_subsection_keeps_specific_section(self):
+        sources = [
+            hit("form", path="19조 자료의 정정 > 2 정정대장 기재 및 관리방법"),
+            hit("rule", path="19조 자료의 정정"),
+        ]
+        selected = representative_sections("정정대장 기재 방법을 알려주세요", sources)
+        self.assertEqual([source["chunk_id"] for source in selected], ["form"])
 
     def test_local_answer_failure_does_not_change_retrieval_results(self):
         invalid = generated_answer()

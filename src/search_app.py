@@ -285,13 +285,42 @@ def focused_quantity_body(question, body):
     return candidates[0]
 
 
+def representative_sections(question, sources):
+    """Collapse sibling chunks and prefer a general rule unless the query names a subsection."""
+    normalized_question = compact(question)
+    groups = {}
+    for rank, source in enumerate(sources):
+        root = compact(source["path"].split(">", 1)[0])
+        groups.setdefault(root, []).append((rank, source))
+
+    representatives = []
+    for candidates in groups.values():
+        scored = []
+        for rank, source in candidates:
+            path_terms = [compact(term) for term in re.findall(
+                r"[0-9A-Za-z가-힣]+", source["path"]
+            ) if len(compact(term)) >= 2]
+            overlap = sum(term in normalized_question for term in path_terms)
+            depth = source["path"].count(">")
+            scored.append((source, overlap, depth, len(source["path"]), rank))
+        best_overlap = max(item[1] for item in scored)
+        if best_overlap:
+            scored.sort(key=lambda item: (-item[1], item[4]))
+        else:
+            scored.sort(key=lambda item: (item[2], item[3], item[4]))
+        representatives.append((min(item[4] for item in scored), scored[0][0]))
+    return [source for _, source in sorted(representatives)]
+
+
 def generation_sources(question, sources):
     """Build a small, citation-safe context for the CPU local model."""
-    limit = 2 if COMPARISON_QUESTION.search(question) else 1
     quantity = QUANTITY_QUESTION.search(question)
+    comparison = COMPARISON_QUESTION.search(question)
+    limit = 2 if not quantity or comparison else 1
+    candidates = sources if quantity or comparison else representative_sections(question, sources)
     conditions = list(dict.fromkeys(match.group() for match in CONDITIONS.finditer(question)))
-    selected = []
-    for source in sources:
+    selected, seen_paths = [], set()
+    for source in candidates:
         item = dict(source)
         focused = focused_quantity_body(question, item["body"])
         if quantity and focused is None:
@@ -300,7 +329,11 @@ def generation_sources(question, sources):
         combined = compact(" ".join((item["body"], item["path"], item["doc_id"])))
         if any(compact(condition) not in combined for condition in conditions):
             continue
+        path_key = compact(item["path"])
+        if path_key in seen_paths:
+            continue
         selected.append(item)
+        seen_paths.add(path_key)
         if len(selected) == limit:
             break
     # Do not turn a retrieval result into an empty generation request.

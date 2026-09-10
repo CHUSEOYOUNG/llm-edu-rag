@@ -38,17 +38,32 @@ def literal_quote_span(quote, source_text):
     if quote in source_text:
         start = source_text.index(quote)
         return start, start + len(quote), quote
-    normalized_quote = compact(quote)
+    def normalized_with_positions(text):
+        # Extracted PDFs may retain HTML line-break tags. They are formatting, not
+        # words added to the cited sentence.
+        tag_ranges = [(match.start(), match.end()) for match in re.finditer(
+            r"</?[A-Za-z][^>]{0,100}>", text
+        )]
+        normalized, positions = [], []
+        range_index = 0
+        for index, original in enumerate(text):
+            while range_index < len(tag_ranges) and index >= tag_ranges[range_index][1]:
+                range_index += 1
+            if (range_index < len(tag_ranges)
+                    and tag_ranges[range_index][0] <= index < tag_ranges[range_index][1]):
+                continue
+            for character in unicodedata.normalize("NFKC", original).lower():
+                if character != "_" and re.match(r"\w", character):
+                    normalized.append(character)
+                    positions.append(index)
+        return "".join(normalized), positions
+
+    normalized_quote, _ = normalized_with_positions(quote)
     # Short relaxed matches are too easy to find accidentally; exact matching above still accepts them.
     if len(normalized_quote) < 8:
         return None
-    normalized_source, original_positions = [], []
-    for index, original in enumerate(source_text):
-        for character in unicodedata.normalize("NFKC", original).lower():
-            if character != "_" and re.match(r"\w", character):
-                normalized_source.append(character)
-                original_positions.append(index)
-    offset = "".join(normalized_source).find(normalized_quote)
+    normalized_source, original_positions = normalized_with_positions(source_text)
+    offset = normalized_source.find(normalized_quote)
     if offset < 0:
         return None
     start = original_positions[offset]

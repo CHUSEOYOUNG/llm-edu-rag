@@ -79,6 +79,18 @@ class RagTests(unittest.TestCase):
         self.assertEqual(citation["quote"], "한글 한 글자는 3바이트로 계산한다")
         self.assertEqual(hit()["body"][citation["start"]:citation["end"]], citation["quote"])
 
+    def test_html_break_tags_are_ignored_during_literal_quote_verification(self):
+        source = hit(body="객관적인 증빙자료가<br>있는 경우에만 정정할 수 있다.")
+        packet = build_packet("정정할 수 있나요?", [source])
+        raw = answer()
+        raw["claims"][0] = {
+            "text": "증빙자료가 있으면 정정할 수 있습니다.",
+            "evidence": [evidence("객관적인 증빙자료가 있는 경우에만 정정할 수 있다.")],
+        }
+        result = validate_answer(raw, packet)
+        citation = result["claims"][0]["evidence"][0]
+        self.assertEqual(citation["quote"], source["body"].rstrip("."))
+
     def test_invalid_citations_and_uncited_claims_fail_closed(self):
         for kind in ("unknown_id", "invented_quote", "blank_quote", "no_evidence", "metadata_only", "inline_id", "extra_field"):
             with self.subTest(kind=kind):
