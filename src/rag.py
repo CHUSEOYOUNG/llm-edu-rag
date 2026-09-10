@@ -22,6 +22,7 @@ CONDITIONS = re.compile(
     r"|\d{4}\s*개정\s*교육과정|초등학교|중학교|고등학교"
     r"|\d+(?:[·~∼〜-]\d+)?학년|\d+년간"
 )
+SCHOOL_SCOPE_CONDITIONS = {"초등학교", "중학교", "고등학교"}
 
 
 def sha256(path):
@@ -69,6 +70,31 @@ def literal_quote_span(quote, source_text):
     start = original_positions[offset]
     end = original_positions[offset + len(normalized_quote) - 1] + 1
     return start, end, source_text[start:end]
+
+
+def condition_quote_span(condition, source_text):
+    """Find a visible scope condition, including parenthesized curriculum titles."""
+    exact = literal_quote_span(condition, source_text)
+    if exact is not None:
+        return exact
+    reform = re.fullmatch(r"(?P<year>\d{4})\s*개정\s*교육과정", condition)
+    if reform:
+        match = re.search(
+            rf"{re.escape(reform.group('year'))}\s*개정.{{0,40}}?교육과정",
+            source_text,
+        )
+        if match:
+            return match.start(), match.end(), match.group()
+    return None
+
+
+def missing_scope_conditions(packet):
+    """Return question conditions that no selected source visibly supports."""
+    return [condition for condition in packet.get("scope_conditions", []) if not any(
+        condition_quote_span(condition, source[field]) is not None
+        for source in packet.get("sources", [])
+        for field in ("body", "path", "doc_id")
+    )]
 
 
 class DenseRetriever:
@@ -193,8 +219,25 @@ def validate_answer(answer, packet):
         if (not isinstance(claim["text"], str) or not claim["text"].strip()
                 or re.search(r"\[S\d+\]", claim["text"])):
             raise ValueError("문장이 비었거나 모델이 인용 표기를 직접 삽입했습니다.")
-        claims.append({"text": claim["text"],
-                       "evidence": verify_evidence(claim["evidence"], by_id, require_body=True)})
+        checked_evidence = verify_evidence(claim["evidence"], by_id, require_body=True)
+        if re.search(r"연간\s*\d[\d,]*\s*시간", claim["text"]) and any(
+            re.search(r"[2-9]\d*년간의\s*기준\s*수업\s*시수", by_id[item["source_id"]]["body"])
+            for item in checked_evidence
+        ):
+            raise ValueError("표의 기간 기준과 답변의 연간 표기가 일치하지 않습니다.")
+        claims.append({"text": claim["text"], "evidence": checked_evidence})
+    compared_schools = SCHOOL_SCOPE_CONDITIONS & set(packet["scope_conditions"])
+    if len(compared_schools) >= 2:
+        cited_source_ids = {
+            evidence["source_id"] for claim in claims for evidence in claim["evidence"]
+        }
+        for school in compared_schools:
+            if not any(
+                condition_quote_span(school, by_id[source_id][field]) is not None
+                for source_id in cited_source_ids
+                for field in ("body", "path", "doc_id")
+            ):
+                raise ValueError("비교 대상별 답변 근거가 모두 필요합니다.")
     for scope in answer["scope_checks"]:
         require_keys(scope, ("condition", "status", "evidence"))
         if not isinstance(scope["condition"], str) or scope["status"] != "supported":
@@ -227,6 +270,11 @@ def answer_packet(packet, generator):
         return {"status": "insufficient_evidence", "answer": None,
                 "reason": "검색 컨텍스트에서 요청한 날짜를 확인하지 못했습니다.",
                 "missing_date_conditions": missing_dates(packet), "generation_called": False}
+    missing_conditions = missing_scope_conditions(packet)
+    if missing_conditions:
+        return {"status": "insufficient_evidence", "answer": None,
+                "reason": "검색 컨텍스트에서 요청한 적용 조건을 모두 확인하지 못했습니다.",
+                "missing_scope_conditions": missing_conditions, "generation_called": False}
     try:
         raw, provenance = generator(packet)
         result = validate_answer(raw, packet)

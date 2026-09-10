@@ -9,7 +9,8 @@ from unittest.mock import Mock, patch
 from urllib.error import HTTPError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from rag import DenseRetriever, answer_packet, build_packet, main, missing_dates, validate_answer
+from rag import (DenseRetriever, answer_packet, build_packet, condition_quote_span,
+                 main, missing_dates, missing_scope_conditions, validate_answer)
 from rag_generate import GenerationError, NoRedirect, generate, parse_response, request_payload
 from ollama_generate import (NoRedirect as OllamaNoRedirect,
                              generate as generate_local,
@@ -128,11 +129,65 @@ class RagTests(unittest.TestCase):
         raw["scope_checks"][0]["status"] = "unknown"
         with self.assertRaises(ValueError): validate_answer(raw, packet)
 
+    def test_comparison_claim_must_cite_each_school_scope(self):
+        packet = build_packet("초등학교와 중학교 수업 시간은?", [
+            hit("e", body="수업은 40분이다.", path="2 초등학교"),
+            hit("m", body="수업은 45분이다.", path="3 중학교"),
+        ])
+        raw = {
+            "status": "answered",
+            "claims": [{
+                "text": "초등학교는 40분, 중학교는 45분입니다.",
+                "evidence": [evidence("수업은 40분이다.", sid="S1")],
+            }],
+            "scope_checks": [
+                {"condition": "초등학교", "status": "supported",
+                 "evidence": [evidence("초등학교", field="path", sid="S1")]},
+                {"condition": "중학교", "status": "supported",
+                 "evidence": [evidence("중학교", field="path", sid="S2")]},
+            ],
+            "reason": "",
+        }
+        with self.assertRaisesRegex(ValueError, "비교 대상별"):
+            validate_answer(raw, packet)
+        raw["claims"][0]["evidence"].append(evidence("수업은 45분이다.", sid="S2"))
+        self.assertEqual(validate_answer(raw, packet)["status"], "draft_answer")
+
+    def test_multi_year_table_value_cannot_be_presented_as_annual(self):
+        body = "|국어|408|\n\n연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸다."
+        packet = build_packet("국어 수업 시수는 몇 시간인가요?", [hit(body=body)])
+        raw = answer()
+        raw["claims"][0] = {
+            "text": "국어 수업 시수는 연간 408시간입니다.",
+            "evidence": [evidence("|국어|408|")],
+        }
+        with self.assertRaisesRegex(ValueError, "기간 기준"):
+            validate_answer(raw, packet)
+
     def test_empty_context_does_not_call_generator(self):
         generator = Mock()
         result = answer_packet(build_packet("질문", []), generator)
         self.assertFalse(result["generation_called"])
+
+    def test_missing_non_date_scope_prevents_generation(self):
+        packet = build_packet("초등학교와 중학교 수업은?", [
+            hit(body="수업은 40분이다.", path="2 초등학교")
+        ])
+        generator = Mock()
+        result = answer_packet(packet, generator)
+        self.assertEqual(result["status"], "insufficient_evidence")
+        self.assertEqual(result["missing_scope_conditions"], ["중학교"])
+        self.assertFalse(result["generation_called"])
         generator.assert_not_called()
+
+    def test_parenthesized_curriculum_title_supports_reform_condition(self):
+        title = "(2022 개정) 초·중등학교 교육과정 [별책1] 총론"
+        match = condition_quote_span("2022 개정 교육과정", title)
+        self.assertEqual(match[2], "2022 개정) 초·중등학교 교육과정")
+        packet = build_packet("2022 개정 교육과정에서 초등학교 과목은?", [
+            hit(body="교과는 국어와 수학이다.", path="2 초등학교", doc_id=title)
+        ])
+        self.assertEqual(missing_scope_conditions(packet), [])
 
     def test_abstention_is_not_a_corpus_wide_unanswerability_claim(self):
         raw = {"status": "insufficient_evidence", "claims": [], "scope_checks": [],
@@ -324,7 +379,7 @@ class OllamaTests(unittest.TestCase):
         self.assertEqual(payload["options"]["temperature"], 0)
         self.assertEqual(payload["options"]["num_predict"], 256)
         self.assertEqual(payload["keep_alive"], "10m")
-        self.assertEqual(payload["format"]["properties"]["evidence_ids"]["minItems"], 1)
+        self.assertEqual(payload["format"]["properties"]["evidence_ids"]["minItems"], 0)
         sent = json.loads(payload["messages"][1]["content"])
         self.assertNotIn("body", sent["sources"][0])
         self.assertEqual(sent["sources"][0]["passages"], [{
@@ -337,6 +392,23 @@ class OllamaTests(unittest.TestCase):
         self.assertEqual(raw, answer())
         self.assertEqual(metadata["provider"], "ollama_local")
         self.assertEqual(metadata["total_duration_ms"], 2500)
+
+    def test_insufficient_response_requires_an_empty_evidence_list(self):
+        content = json.dumps({
+            "status": "insufficient_evidence",
+            "text": "요청한 값을 자료에서 확인하지 못했습니다.",
+            "evidence_ids": [],
+        }, ensure_ascii=False)
+        raw, _ = parse_ollama_response(self.response(content), self.evidence_map())
+        self.assertEqual(raw["status"], "insufficient_evidence")
+        self.assertEqual(raw["claims"], [])
+        invalid = json.dumps({
+            "status": "insufficient_evidence",
+            "text": "자료가 부족합니다.",
+            "evidence_ids": ["S1-P1"],
+        }, ensure_ascii=False)
+        with self.assertRaises(GenerationError):
+            parse_ollama_response(self.response(invalid), self.evidence_map())
 
     def test_scope_checks_are_built_from_literal_source_text(self):
         packet = build_packet("초등학교 수업은?", [

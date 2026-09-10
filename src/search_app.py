@@ -22,7 +22,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from ollama_generate import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from ollama_generate import generate as generate_local
 from rag import (CONDITIONS, ROOT, DenseRetriever, answer_packet, build_packet, compact,
-                 missing_dates)
+                 condition_quote_span, missing_dates)
 
 WEB = ROOT / "web"
 MAX_REQUEST_BYTES = 16384
@@ -48,6 +48,9 @@ QUANTITY_QUESTION = re.compile(
     r"몇\s*(?P<unit>분|시간|일|주|개월|달|년|회|번|개|명|쪽|학점)"
 )
 COMPARISON_QUESTION = re.compile(r"(?:각각|비교|차이|모두|둘\s*다|[가-힣]+(?:와|과)\s+[가-힣]+)")
+SCHOOL_CONDITION_MARKERS = {
+    "초등학교": "(초)", "중학교": "(중)", "고등학교": "(고)",
+}
 SCHOOL_NAME = re.compile(r"초등학교|중학교|고등학교|초등|중등|고등")
 SCHOOL_ONLY_FOLLOW_UP = re.compile(
     r"^\s*(?:(?:그럼|그러면|그렇다면)\s*)?"
@@ -294,12 +297,42 @@ def focused_quantity_body(question, body):
     unit = re.escape(match.group("unit"))
     numeric_unit = re.compile(rf"\d[\d,.]*(?:\s*[~∼〜-]\s*\d[\d,.]*)?\s*{unit}")
     blocks = [block.strip() for block in re.split(r"\n\s*\n", body) if block.strip()]
-    candidates = [block for block in blocks if numeric_unit.search(block)]
+    ignored = {"몇", "시간", "수업", "시수", "기준", "동안", "원칙", "인가요"}
+    terms = {compact(term) for term in re.findall(r"[0-9A-Za-z가-힣·~∼〜-]+", question)
+             if len(compact(term)) >= 2 and compact(term) not in ignored}
+    def relevance(block):
+        normalized = compact(block)
+        return sum(term in normalized for term in terms)
+    candidates = [block for block in blocks if numeric_unit.search(block) or (
+        "|" in block and re.search(r"\d", block) and relevance(block)
+    )]
     if not candidates:
         return None
-    # Prefer a prose rule over a large table when both contain the same unit.
-    candidates.sort(key=lambda block: (block.count("\n|") + block.count("|\n"), len(block)))
-    return candidates[0]
+    # A table often puts the unit in its heading rather than every numeric cell.
+    # Prefer the block containing the requested row/column terms, then concise prose.
+    candidates.sort(key=lambda block: (
+        -relevance(block),
+        block.count("\n|") + block.count("|\n"),
+        len(block),
+    ))
+    chosen = candidates[0]
+    # Search with the matching table, then give generation its surrounding notes.
+    # Units and time spans are often stated once below the table rather than in cells.
+    return body if "|" in chosen else chosen
+
+
+def condition_support_quality(source, condition):
+    """Prefer section-level school scope over incidental body mentions."""
+    if condition in SCHOOL_CONDITION_MARKERS:
+        if condition_quote_span(condition, source["path"]) is not None:
+            return 3
+        if SCHOOL_CONDITION_MARKERS[condition] in source["doc_id"]:
+            return 2
+        return 0
+    for quality, field in ((3, "path"), (2, "body"), (1, "doc_id")):
+        if condition_quote_span(condition, source[field]) is not None:
+            return quality
+    return 0
 
 
 def representative_sections(question, sources):
@@ -336,24 +369,39 @@ def generation_sources(question, sources):
     limit = 2 if comparison else 1
     candidates = sources if quantity or comparison else representative_sections(question, sources)
     conditions = list(dict.fromkeys(match.group() for match in CONDITIONS.finditer(question)))
-    selected, seen_paths = [], set()
-    for source in candidates:
+    prepared = []
+    for rank, source in enumerate(candidates):
         item = dict(source)
         focused = focused_quantity_body(question, item["body"])
         if quantity and focused is None:
             continue
         item["body"] = focused
-        combined = compact(" ".join((item["body"], item["path"], item["doc_id"])))
-        if any(compact(condition) not in combined for condition in conditions):
-            continue
-        path_key = compact(item["path"])
-        if path_key in seen_paths:
-            continue
-        selected.append(item)
-        seen_paths.add(path_key)
-        if len(selected) == limit:
+        support = {condition: condition_support_quality(item, condition)
+                   for condition in conditions}
+        coverage = {condition for condition, quality in support.items() if quality}
+        prepared.append((rank, item, coverage, support))
+
+    selected, seen_paths, uncovered = [], set(), set(conditions)
+    while len(selected) < limit:
+        choices = [candidate for candidate in prepared
+                   if compact(candidate[1]["path"]) not in seen_paths]
+        if not choices:
             break
-    # Do not turn a retrieval result into an empty generation request.
+        choices.sort(key=lambda candidate: (
+            -sum(candidate[3][condition] for condition in candidate[2] & uncovered),
+            -len(candidate[2] & uncovered), -sum(candidate[3].values()), candidate[0]
+        ))
+        rank, item, coverage, _ = choices[0]
+        if conditions and not coverage & uncovered:
+            break
+        selected.append(item)
+        seen_paths.add(compact(item["path"]))
+        uncovered -= coverage
+        prepared = [candidate for candidate in prepared if candidate[0] != rank]
+        if conditions and not uncovered:
+            break
+    # Do not turn a retrieval result into an empty generation request. Missing
+    # collective scope is rejected before generation by answer_packet.
     return selected or [dict(source) for source in sources[:limit]]
 
 

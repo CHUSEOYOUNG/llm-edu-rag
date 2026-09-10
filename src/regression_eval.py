@@ -161,6 +161,7 @@ def run_regression(service, questions: list[dict[str, Any]], *, top_k: int = 10,
                 "p95_ms": percentile(generation_latencies, .95),
             },
             "citation_validation": "literal source span only; semantic entailment is not measured",
+            "answer_correctness": "not measured; generated answers require manual review",
         })
     return result
 
@@ -209,3 +210,4 @@ def print_scorecard(result: dict[str, Any]) -> None:
         print(f'{row["qid"]:5}  {row["expected_status"]:23}  '
               f'{row["actual_status"]:23}  {citation:8} {row["latency_ms"]:7.0f}')
     print("overall", json.dumps(result["generation"]["overall"], ensure_ascii=False))
+    print("주의: 성공률은 상태와 원문 인용 형식만 측정하며 답변 의미의 정확성은 수동 검토 대상입니다.")

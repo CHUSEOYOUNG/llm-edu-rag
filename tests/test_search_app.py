@@ -177,6 +177,14 @@ class SearchServiceTests(unittest.TestCase):
         self.assertEqual([source["chunk_id"] for source in sources], ["answer"])
         self.assertEqual(sources[0]["body"], focused)
 
+    def test_quantity_generation_expands_a_relevant_table_to_its_parent_section(self):
+        body = """|교과|1~3학년|\n|---|---|\n|국어|442|\n|수학|374|\n\n④ 정보는 68시간 이상 편성한다."""
+        focused = focused_quantity_body(
+            "중학교 국어 수업 시수는 3년 동안 몇 시간인가요?", body
+        )
+        self.assertIn("|국어|442|", focused)
+        self.assertIn("정보는 68시간", focused)
+
     def test_quantity_generation_skips_wrong_school_scope(self):
         selected = generation_sources("중학교 수업은 몇 분인가요?", [
             hit("special", body="야간 수업은 40분으로 단축할 수 있다.", path="특수한 학교"),
@@ -201,6 +209,32 @@ class SearchServiceTests(unittest.TestCase):
         ]
         selected = generation_sources("초등학교와 중학교 과목 차이는?", sources)
         self.assertEqual([source["chunk_id"] for source in selected], ["elementary", "middle"])
+
+    def test_comparison_generation_covers_scope_across_separate_sources(self):
+        doc = "(2022 개정) 초·중등학교 교육과정"
+        sources = [
+            hit("unrelated", body="고등학교 수업은 50분이다.", path="4 고등학교", doc_id=doc),
+            hit("elementary", body="1시간 수업은 40분이다.", path="2 초등학교", doc_id=doc),
+            hit("middle", body="1시간 수업은 45분이다.", path="3 중학교", doc_id=doc),
+        ]
+        selected = generation_sources(
+            "2022 개정 교육과정에서 초등학교와 중학교 수업은 각각 몇 분인가요?",
+            sources,
+        )
+        self.assertEqual([source["chunk_id"] for source in selected],
+                         ["elementary", "middle"])
+        self.assertIn("40분", selected[0]["body"])
+        self.assertIn("45분", selected[1]["body"])
+
+    def test_school_section_scope_beats_incidental_body_mentions(self):
+        sources = [
+            hit("attendance", body="초등학교 수업일수는 190일이다.",
+                path="8조 출결상황", doc_id="기재요령(초)"),
+            hit("curriculum", body="교과 시수는 20% 범위에서 증감할 수 있다.",
+                path="2 초등학교 > 시간 배당 기준", doc_id="교육과정"),
+        ]
+        selected = generation_sources("초등학교 교과 수업시수를 줄일 수 있나요?", sources)
+        self.assertEqual([source["chunk_id"] for source in selected], ["curriculum"])
 
     def test_general_correction_question_prefers_parent_rule_section(self):
         sources = [
