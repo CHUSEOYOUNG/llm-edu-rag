@@ -48,7 +48,16 @@ class SearchServiceTests(unittest.TestCase):
         previous = "중학교 출결은 어떻게 처리하나요?"
         self.assertEqual(
             follow_up_query(previous, "그럼 지각은 어떻게 기록하나요?"),
-            ("중학교 출결은 어떻게 처리하나요 지각은 어떻게 기록하나요?", True))
+            ("중학교 지각은 어떻게 기록하나요?", True))
+        self.assertEqual(
+            follow_up_query("초등학교 선택과목 뭐있는지 알려줘", "그럼 기본과목은?"),
+            ("초등학교 기본과목은?", True))
+        self.assertEqual(
+            follow_up_query("초등학교 선택과목은 무엇인가요?", "그럼 중학교 기본과목은?"),
+            ("중학교 기본과목은?", True))
+        self.assertEqual(
+            follow_up_query("학교폭력 조치는 언제 삭제되나요?", "그럼 언제부터인가요?"),
+            ("학교폭력 조치는 언제 삭제되나요 언제부터인가요?", True))
         unrelated = "창의적 체험활동은 어떤 영역으로 구성되나요?"
         self.assertEqual(follow_up_query(previous, unrelated), (unrelated, False))
 
@@ -173,15 +182,23 @@ class SearchServiceTests(unittest.TestCase):
         ])
         self.assertEqual([source["chunk_id"] for source in selected], ["middle"])
 
-    def test_non_quantity_generation_keeps_two_distinct_complete_sections(self):
+    def test_non_quantity_generation_keeps_one_representative_complete_section(self):
         sources = [
             hit("first", body="첫 문단\n\n둘째 문단", path="19조 > 정정대장"),
             hit("duplicate", body="같은 항목의 다른 조각", path="19조 > 정정대장"),
             hit("rule", body="객관적인 증빙자료가 있는 경우에만 정정할 수 있다.", path="20조 증빙관리"),
         ]
         selected = generation_sources("출결 처리는 어떻게 하나요?", sources)
-        self.assertEqual([source["chunk_id"] for source in selected], ["first", "rule"])
+        self.assertEqual([source["chunk_id"] for source in selected], ["first"])
         self.assertEqual(selected[0]["body"], "첫 문단\n\n둘째 문단")
+
+    def test_comparison_generation_keeps_two_sections(self):
+        sources = [
+            hit("elementary", path="초등학교 편제"),
+            hit("middle", path="중학교 편제"),
+        ]
+        selected = generation_sources("초등학교와 중학교 과목 차이는?", sources)
+        self.assertEqual([source["chunk_id"] for source in selected], ["elementary", "middle"])
 
     def test_general_correction_question_prefers_parent_rule_section(self):
         sources = [

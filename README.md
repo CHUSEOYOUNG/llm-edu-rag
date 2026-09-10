@@ -107,7 +107,7 @@ curl -X POST http://127.0.0.1:8765/api/answer \
   -d '{"question":"중학교 수업 한 시간은 몇 분인가요?","top_k":2,"school_level":"middle"}'
 ```
 
-검색 요청은 `question`, `top_k`, `school_level`과 선택 항목인 `previous_question`을 받는다. `그럼`, `그러면`, `중학교는?`처럼 이어 묻는 표현일 때만 직전 질문의 주제를 검색문에 보충한다. FastAPI 자체는 대화 기록을 저장하지 않으며 응답의 `search_query`와 `follow_up_applied`에서 실제 검색문과 적용 여부를 확인할 수 있다. `/api/search`는 생성 모델을 호출하지 않는다. `/api/answer`는 같은 항목의 중복 조각을 제외한 상위 원문을 최대 두 개 사용한다. `몇 분`, `몇 일` 같은 단순 수치 질문은 해당 단위가 있는 완전한 문단 하나만 전달하고, 비교 질문은 최대 두 자료를 사용한다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
+검색 요청은 `question`, `top_k`, `school_level`과 선택 항목인 `previous_question`을 받는다. `그럼`, `그러면`, `중학교는?`처럼 이어 묻는 표현일 때만 직전 질문의 주제를 검색문에 보충한다. FastAPI 자체는 대화 기록을 저장하지 않으며 응답의 `search_query`와 `follow_up_applied`에서 실제 검색문과 적용 여부를 확인할 수 있다. `/api/search`는 생성 모델을 호출하지 않는다. `/api/answer`는 같은 항목의 중복 조각을 정리한 대표 원문 하나를 사용하고, 비교 질문만 최대 두 자료를 사용한다. `몇 분`, `몇 일` 같은 단순 수치 질문은 해당 단위가 있는 완전한 문단 하나만 전달한다. `result_assessment`는 검색 결과를 한 번 더 확인해야 하는지 알려주지만, 질문에 답할 수 있는지를 확정하지는 않는다.
 
 ### Docker
 
@@ -144,7 +144,7 @@ node --test tests/test_presentation.cjs
 cd backend && ./gradlew test
 ```
 
-현재 Python 테스트 106개, JavaScript 테스트 12개, Spring Boot 테스트 4개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 107개, JavaScript 테스트 12개, Spring Boot 테스트 4개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 

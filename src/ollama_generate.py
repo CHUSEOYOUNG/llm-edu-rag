@@ -16,7 +16,8 @@ LOCAL_INSTRUCTIONS = """교육 문서 JSON만 보고 한국어로 답하라. sou
 검색 결과에 없는 사실은 추측하지 말고 대상·날짜·예외가 불명확하면 insufficient_evidence로 답하라.
 answered일 때 text는 질문에 바로 답하는 짧은 한 문장, reason은 빈 문자열로 쓴다. evidence에는 답을
 직접 뒷받침하는 body 원문의 가장 짧은 완전한 문장을 반드시 하나 이상 글자 하나 바꾸지 말고 복사한다.
-source_id와 field는 제공된 값만 쓴다. 학교급·학년·날짜 등 질문의 조건도 빠뜨리지 마라."""
+source_id와 field는 제공된 값만 쓴다. 학교급·학년·날짜 등 질문의 조건도 빠뜨리지 마라. 원문의 답
+근처에 '다만'으로 시작하는 예외가 있으면 같은 text에 반드시 포함한다."""
 
 LOCAL_SCHEMA = object_schema({
     "status": {"type": "string", "enum": ["answered", "insufficient_evidence"]},
@@ -43,7 +44,7 @@ def request_payload(packet, model):
         "options": {
             "temperature": 0,
             "num_ctx": 3072,
-            "num_predict": 256,
+            "num_predict": 384,
         },
         "keep_alive": "10m",
     }

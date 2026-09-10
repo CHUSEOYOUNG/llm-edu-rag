@@ -57,6 +57,9 @@ SCHOOL_ONLY_FOLLOW_UP = re.compile(
 FOLLOW_UP_CUE = re.compile(
     r"^\s*(?:그럼|그러면|그렇다면|그건|그때|그\s*경우|그중(?:에)?|그것도)\s*"
 )
+FOLLOW_UP_TOPIC = re.compile(
+    r"^\s*(?P<topic>[0-9A-Za-z가-힣·~∼〜\-\s]{2,40}?)(?:은|는|이|가|도)(?:\s|[?？.!]|$)"
+)
 CONTENT_SECURITY_POLICY = (
     "default-src 'none'; script-src 'self'; style-src 'self'; "
     "connect-src 'self' http://127.0.0.1:8080 http://localhost:8080; "
@@ -188,7 +191,18 @@ def follow_up_query(previous_question, question):
         tail = FOLLOW_UP_CUE.sub("", question, count=1).strip()
         if not tail:
             return question, False
-        resolved = f"{previous} {tail}"
+        if FOLLOW_UP_TOPIC.match(tail):
+            inherited = list(dict.fromkeys(
+                match.group() for match in CONDITIONS.finditer(previous)
+            ))
+            if SCHOOL_NAME.search(tail):
+                inherited = [condition for condition in inherited
+                             if not SCHOOL_NAME.fullmatch(condition)]
+            prefix = " ".join(condition for condition in inherited
+                              if compact(condition) not in compact(tail))
+            resolved = f"{prefix} {tail}" if prefix else tail
+        else:
+            resolved = f"{previous} {tail}"
 
     resolved = re.sub(r"\s+", " ", resolved).strip()
     return (resolved, True) if len(resolved) <= 4000 else (question, False)
@@ -316,7 +330,7 @@ def generation_sources(question, sources):
     """Build a small, citation-safe context for the CPU local model."""
     quantity = QUANTITY_QUESTION.search(question)
     comparison = COMPARISON_QUESTION.search(question)
-    limit = 2 if not quantity or comparison else 1
+    limit = 2 if comparison else 1
     candidates = sources if quantity or comparison else representative_sections(question, sources)
     conditions = list(dict.fromkeys(match.group() for match in CONDITIONS.finditer(question)))
     selected, seen_paths = [], set()

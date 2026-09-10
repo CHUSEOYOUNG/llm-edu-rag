@@ -315,7 +315,7 @@ class OllamaTests(unittest.TestCase):
         self.assertFalse(payload["stream"])
         self.assertEqual(payload["format"]["type"], "object")
         self.assertEqual(payload["options"]["num_ctx"], 3072)
-        self.assertEqual(payload["options"]["num_predict"], 256)
+        self.assertEqual(payload["options"]["num_predict"], 384)
         self.assertEqual(payload["keep_alive"], "10m")
         self.assertEqual(payload["format"]["properties"]["evidence"]["minItems"], 1)
         self.assertEqual(json.loads(payload["messages"][1]["content"]), packet)
