@@ -144,7 +144,7 @@ node --test tests/test_presentation.cjs
 cd backend && ./gradlew test
 ```
 
-현재 Python 테스트 107개, JavaScript 테스트 12개, Spring Boot 테스트 4개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 112개, JavaScript 테스트 12개, Spring Boot 테스트 4개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 근거 번호를 원문 인용으로 복원, 손상된 로컬 JSON 한 차례 복구, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ## 검색 실험
 
@@ -198,7 +198,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 
 ## 답변 생성 코드
 
-웹 화면은 `src/ollama_generate.py`를 통해 로컬 `qwen3:4b-instruct`를 호출한다. 검색 결과를 출처 ID와 함께 넘기고, 생성된 문장에 사용된 인용이 실제 원문에 존재하는지 검사한다. 검사를 통과해도 의미상 정확한 답이라고 확정하지 않고 `draft_answer`로 다룬다. 이 기능에는 API 키나 호출 요금이 없다.
+웹 화면은 `src/ollama_generate.py`를 통해 로컬 `qwen3:4b-instruct`를 호출한다. 원문 문단에 근거 번호를 붙여 넘기고 모델은 답변과 번호만 고른다. 프로그램이 번호를 실제 원문 인용으로 되돌린 뒤 출처를 검사한다. 검사를 통과해도 의미상 정확한 답이라고 확정하지 않고 `draft_answer`로 다룬다. 이 기능에는 API 키나 호출 요금이 없다.
 
 `src/rag_generate.py`의 OpenAI Responses API 연결부는 비교 실험용으로 남겨 두었다. 아래 CLI에서 `--generate`를 명시한 경우에만 외부 API를 호출한다.
 
