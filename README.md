@@ -144,7 +144,32 @@ node --test tests/test_presentation.cjs
 cd backend && ./gradlew test
 ```
 
-현재 Python 테스트 112개, JavaScript 테스트 12개, Spring Boot 테스트 4개를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 근거 번호를 원문 인용으로 복원, 손상된 로컬 JSON 한 차례 복구, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 120개, JavaScript 테스트 12개와 Spring Boot 테스트를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 최근 질문 저장·개별 삭제, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 근거 번호를 원문 인용으로 복원, 손상된 로컬 JSON 한 차례 복구, 생성 요청 대기열, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+
+### 13문항 회귀 평가
+
+검색 코드를 바꿀 때는 먼저 13문항 평가셋에서 검색 점수만 측정한다. 정답 문서의 여러 학교급 판본은 하나의 근거 그룹으로 보고, 여러 사실이 모두 필요한 질문은 `Complete@K`로 따로 확인한다.
+
+```sh
+uv run python eval/run_eval.py \
+  --output experiments/regression_current.json
+```
+
+현재 검색 기준선은 답변 가능 11문항에서 `Recall@5 0.8182`, `Complete@5 0.8182`, `MRR@10 0.6364`다. q006은 필요한 두 근거 중 하나만 10위 안에 들어왔고 q008은 10위 안에서 근거를 찾지 못했다. 전체 결과는 `experiments/regression_retrieval_baseline.json`에 보존했다.
+
+Ollama가 실행 중일 때 `--generate`를 붙이면 13문항 전체의 답변 성공률, 답변 불가 질문 거절률, 원문 인용 유효성, 생성 p50·p95 지연도 별도 점수표로 만든다. Ollama나 지정 모델이 없으면 실패 응답을 모델 성능으로 기록하지 않고 실행 전에 중단한다.
+
+```sh
+uv run python eval/run_eval.py --generate \
+  --output experiments/regression_generation.json
+```
+
+변경 전 결과를 기준 파일로 보존한 뒤 `--baseline`으로 넘기면 `Recall@5`, `Complete@5`, MRR과 생성 핵심 지표가 낮아졌을 때 종료 코드 1을 반환한다.
+
+```sh
+uv run python eval/run_eval.py \
+  --baseline experiments/regression_retrieval_baseline.json
+```
 
 ## 검색 실험
 
@@ -195,6 +220,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [직전 질문을 잇는 검색](notes/2026-09-08-follow-up-search.md)
 - [Ollama 로컬 답변 생성](notes/2026-09-09-local-generation.md)
 - [로컬 답변 생성 지연 개선](notes/2026-09-10-generation-latency.md)
+- [검색·생성 회귀 평가 분리](notes/2026-09-10-regression-harness.md)
 
 ## 답변 생성 코드
 

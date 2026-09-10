@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>학교생활 안내 · 궁금한 점을 물어보세요</title>
-  <link rel="stylesheet" href="/app.css?v=20260909-chat-1">
-  <script src="/presentation.js?v=20260909-chat-1" defer></script>
-  <script src="/app.js?v=20260909-chat-1" defer></script>
+  <link rel="stylesheet" href="/app.css?v=20260910-history-1">
+  <script src="/presentation.js?v=20260910-history-1" defer></script>
+  <script src="/app.js?v=20260910-history-1" defer></script>
 </head>
 <body>
   <a class="skip" href="#question">질문 입력하기</a>
@@ -25,6 +25,14 @@
   </header>
 
   <main>
+    <section id="recent-searches" class="recent-searches" hidden aria-labelledby="recent-searches-title">
+      <div class="recent-actions">
+        <div><strong id="recent-searches-title">최근 질문</strong><p>질문을 누르면 다시 이어서 물어볼 수 있어요.</p></div>
+        <button id="clear-history" type="button" class="text-button">모두 지우기</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+    </section>
+
     <section class="intro" aria-labelledby="page-title">
       <p class="eyebrow">학교생활이 궁금할 때</p>
       <h1 id="page-title">무엇을 알려드릴까요?</h1>
@@ -59,19 +67,11 @@
       <div class="examples" id="examples"></div>
     </section>
 
-    <section id="recent-searches" class="recent-searches" hidden aria-labelledby="recent-searches-title">
-      <details>
-        <summary><span id="recent-searches-title">최근 질문</span><span aria-hidden="true">⌄</span></summary>
-        <div class="recent-content">
-          <div class="recent-actions"><p>이 기기에서 찾아본 질문이에요.</p><button id="clear-history" type="button" class="text-button">모두 지우기</button></div>
-          <div id="history-list" class="history-list"></div>
-        </div>
-      </details>
-    </section>
-
     <div id="status" class="status-message" role="status" aria-live="polite"></div>
     <div id="error" class="notice error" role="alert" hidden></div>
     <section id="empty-state" class="empty-state" aria-label="이용 방법" hidden><h2>잠시 문제가 생겼어요.</h2><p>질문을 다시 확인하거나 잠시 후 다시 시도해 주세요.</p></section>
+
+    <section id="conversation-history" class="conversation-history" hidden aria-label="이전 대화"></section>
 
     <section id="results-section" class="conversation" hidden aria-labelledby="results-title">
       <h2 id="results-title" class="sr-only">질문과 답변</h2>
@@ -92,7 +92,7 @@
             <div><p class="answer-kicker">답변을 만들지 못했어요</p><h3 id="answer-title">다시 시도해 볼까요?</h3><p>관련 자료는 아래에서 그대로 확인할 수 있어요.</p></div>
             <button id="answer-button" class="answer-button" type="button"><span id="answer-button-label">답변 다시 만들기</span><span aria-hidden="true">↻</span></button>
           </div>
-          <div id="answer-loading" class="answer-loading" role="status" hidden><span class="answer-spinner" aria-hidden="true"></span><div><strong>답변을 생각하고 있어요</strong><p>찾은 교육 자료를 읽고 확인하는 중이에요.</p></div></div>
+          <div id="answer-loading" class="answer-loading" role="status" hidden><span class="answer-spinner" aria-hidden="true"></span><div><strong>답변을 준비하고 있어요</strong><p>다른 답변이 생성 중이면 요청한 순서대로 처리해요.</p></div></div>
           <div id="answer-result" class="answer-result" hidden>
             <h3 id="answer-result-title">답변</h3>
             <div id="answer-claims" class="answer-claims"></div>
@@ -126,7 +126,7 @@
   </main>
 
   <template id="example-template"><button type="button" class="example-card"><span class="example-topic"></span><span class="example-question"></span><span class="example-arrow" aria-hidden="true">↗</span></button></template>
-  <template id="history-template"><button type="button" class="history-card"><span class="history-question"></span><span class="history-meta"><span class="history-level"></span><span>다시 질문하기</span></span></button></template>
+  <template id="history-template"><article class="history-card"><button type="button" class="history-open"><span class="history-question"></span><span class="history-meta"><span class="history-level"></span><span>다시 질문하기</span></span></button><button type="button" class="history-delete" aria-label="최근 질문 삭제">×</button></article></template>
   <template id="result-template"><button type="button" class="result-card" aria-pressed="false"><span class="topic-badge"></span><span class="card-title"></span><span class="card-document"></span><span class="card-page"></span><span class="card-preview"></span><span class="card-bottom"><span class="card-related">내용 보기</span><span aria-hidden="true">→</span></span></button></template>
 </body>
 </html>

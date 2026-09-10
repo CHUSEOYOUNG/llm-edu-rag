@@ -112,9 +112,15 @@ const schoolGuide = (() => {
     for (const item of value) {
       if (!item || typeof item !== "object") continue;
       const question = typeof item.question === "string" ? item.question.trim() : "";
-      const searchQuery = typeof item.searchQuery === "string" ? item.searchQuery.trim() : "";
+      const rawSearchQuery = item.searchQuery ?? item.search_query;
+      const rawSchoolLevel = item.schoolLevel ?? item.school_level;
+      const searchQuery = typeof rawSearchQuery === "string" ? rawSearchQuery.trim() : "";
       if (!question || !searchQuery || question.length > 4000 || searchQuery.length > 4000) continue;
-      valid.push({question, searchQuery, schoolLevel: levels.has(item.schoolLevel) ? item.schoolLevel : "all"});
+      const entry = {question, searchQuery, schoolLevel: levels.has(rawSchoolLevel) ? rawSchoolLevel : "all"};
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.id || "")) {
+        entry.id = item.id;
+      }
+      valid.push(entry);
       if (valid.length === limit) break;
     }
     return valid;

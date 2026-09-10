@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 import re
 import tempfile
+import threading
+import time
 import unittest
 from unittest.mock import Mock, patch
 
@@ -228,6 +230,44 @@ class SearchServiceTests(unittest.TestCase):
         self.assertEqual(search.search({"question": "한글은 몇 바이트인가요?"})["status"],
                          "retrieved_only")
 
+    def test_second_generation_waits_for_the_active_request(self):
+        entered = threading.Event()
+        release = threading.Event()
+        calls = 0
+
+        def generator(_packet):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                entered.set()
+                release.wait(timeout=1)
+            return generated_answer(), {"provider": "test", "model": "test"}
+
+        search = service(generator)
+        outcomes = []
+        first = threading.Thread(target=lambda: outcomes.append(search.answer({"question": "질문1"})))
+        second = threading.Thread(target=lambda: outcomes.append(search.answer({"question": "질문2"})))
+        first.start()
+        self.assertTrue(entered.wait(timeout=1))
+        second.start()
+        time.sleep(.03)
+        self.assertEqual(search.info()["generation_waiting"], 1)
+        release.set()
+        first.join(timeout=1)
+        second.join(timeout=1)
+        self.assertEqual([result["status"] for result in outcomes],
+                         ["draft_answer", "draft_answer"])
+
+    def test_generation_queue_has_a_bounded_wait(self):
+        search = SearchService(service().retriever, generator=Mock(),
+                               generation_model="test", generation_queue_timeout=.01)
+        search.generation_lock.acquire()
+        try:
+            with self.assertRaises(BusyError):
+                search.answer({"question": "질문"})
+        finally:
+            search.generation_lock.release()
+
     def test_invalid_payloads_never_reach_retrieval(self):
         search = service()
         for payload in (None, {}, [], {"question": ""}, {"question": "x"*4001},
@@ -427,6 +467,11 @@ class EducationPageTests(unittest.TestCase):
         self.assertIn('자동으로 작성한 답변이 아니에요', visible)
         self.assertIn('async function generateAnswer()', script)
         self.assertIn('if (shouldGenerateAnswer) await generateAnswer();', script)
+        html = (root/'index.html').read_text()
+        self.assertLess(html.index('id="recent-searches"'), html.index('class="intro"'))
+        self.assertIn('id="conversation-history"', html)
+        self.assertIn('class="history-delete"', html)
+        self.assertIn('archiveCurrentConversation();', script)
 
 
 if __name__ == "__main__":

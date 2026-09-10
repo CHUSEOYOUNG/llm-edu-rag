@@ -74,6 +74,13 @@ test('recent searches are validated, deduplicated, and kept newest first', () =>
   assert.deepEqual(next, [{question: '그럼 중학교는?', searchQuery: '중학교 출결', schoolLevel: 'middle'}]);
   assert.deepEqual(guide.normalizeHistory([{question: ' 질문 ', searchQuery: ' 검색 ', schoolLevel: 'unknown'}]),
     [{question: '질문', searchQuery: '검색', schoolLevel: 'all'}]);
+  assert.deepEqual(guide.normalizeHistory([{
+    id: 'd8a77b22-20b9-4a8c-aa12-c69cd7a54fd9', question: '출결',
+    search_query: '중학교 출결', school_level: 'middle'
+  }]), [{
+    id: 'd8a77b22-20b9-4a8c-aa12-c69cd7a54fd9', question: '출결',
+    searchQuery: '중학교 출결', schoolLevel: 'middle'
+  }]);
 });
 
 test('HTML markers are removed and markdown tables become readable blocks', () => {

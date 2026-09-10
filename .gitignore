@@ -9,3 +9,4 @@ __pycache__/
 .env.*
 !.env.example
 runs/
+experiments/regression_current.json

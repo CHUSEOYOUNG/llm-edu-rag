@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const form = $("search-form");
 const question = $("question");
 const HISTORY_KEY = "school-life-guide.search-history.v1";
+const SESSION_CHAT_KEY = "school-life-guide.session-chat.v1";
 const CLIENT_ID_KEY = "school-life-guide.client-id.v1";
 const BACKEND_ORIGIN = location.hostname === "localhost" ? "http://localhost:8080" : "http://127.0.0.1:8080";
 const BACKEND_API = `${BACKEND_ORIGIN}/api/v1`;
@@ -21,6 +22,9 @@ let sourceGroups = [];
 let searchTerms = [];
 let previousQuestion = null;
 let searchHistory = [];
+let conversationHistory = [];
+let currentConversation = null;
+let currentHistoryId = null;
 
 function clientId() {
   try {
@@ -121,10 +125,11 @@ function renderHistory() {
   section.hidden = searchHistory.length === 0;
   for (const item of searchHistory) {
     const fragment = $("history-template").content.cloneNode(true);
-    const button = fragment.querySelector("button");
-    button.querySelector(".history-question").textContent = item.question;
-    button.querySelector(".history-level").textContent = schoolLabels[item.schoolLevel];
-    button.addEventListener("click", () => {
+    const openButton = fragment.querySelector(".history-open");
+    const deleteButton = fragment.querySelector(".history-delete");
+    openButton.querySelector(".history-question").textContent = item.question;
+    openButton.querySelector(".history-level").textContent = schoolLabels[item.schoolLevel];
+    openButton.addEventListener("click", () => {
       question.value = item.searchQuery;
       schoolLevel = item.schoolLevel;
       schoolLevelManuallySet = true;
@@ -133,8 +138,119 @@ function renderHistory() {
       form.requestSubmit();
       $("search-area").scrollIntoView({behavior: "smooth", block: "start"});
     });
+    deleteButton.setAttribute("aria-label", `“${item.question}” 질문 삭제`);
+    deleteButton.addEventListener("click", () => deleteHistoryItem(item));
     list.append(fragment);
   }
+}
+
+function sameHistoryItem(left, right) {
+  if (left.id && right.id) return left.id === right.id;
+  return left.searchQuery === right.searchQuery && left.schoolLevel === right.schoolLevel;
+}
+
+function saveHistoryLocally() {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(searchHistory));
+  } catch {
+    // The current page still keeps the list when browser storage is unavailable.
+  }
+}
+
+async function deleteHistoryItem(item) {
+  searchHistory = searchHistory.filter((entry) => !sameHistoryItem(entry, item));
+  conversationHistory = conversationHistory.filter((entry) => !sameHistoryItem(entry, item));
+  saveHistoryLocally();
+  saveConversationHistory();
+  renderHistory();
+  renderConversationHistory();
+  $("status").textContent = "선택한 질문을 지웠어요.";
+  if (!item.id) return;
+  try {
+    const response = await fetch(`${BACKEND_API}/search-history/${encodeURIComponent(item.id)}?clientId=${encodeURIComponent(browserClientId)}`, {method: "DELETE"});
+    if (!response.ok) throw new Error("history delete failed");
+  } catch {
+    $("status").textContent = "이 화면에서는 질문을 지웠어요. 서버 기록은 연결될 때 다시 지워주세요.";
+  }
+}
+
+function normalizedConversationHistory(value) {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const questionText = typeof item.question === "string" ? item.question.trim() : "";
+    const answer = typeof item.answer === "string" ? item.answer.trim() : "";
+    if (!questionText || !answer || questionText.length > 4000 || answer.length > 12000) return [];
+    const validLevels = new Set(Object.keys(schoolLabels));
+    const normalized = {question: questionText, answer, searchQuery: item.searchQuery || questionText,
+      schoolLevel: validLevels.has(item.schoolLevel) ? item.schoolLevel : "all"};
+    if (/^[0-9a-f-]{36}$/i.test(item.id || "")) normalized.id = item.id;
+    return [normalized];
+  }).slice(-10);
+}
+
+function saveConversationHistory() {
+  try {
+    sessionStorage.setItem(SESSION_CHAT_KEY, JSON.stringify(conversationHistory));
+  } catch {
+    // Session storage is optional.
+  }
+}
+
+function renderConversationHistory() {
+  const container = $("conversation-history");
+  container.replaceChildren();
+  container.hidden = conversationHistory.length === 0;
+  for (const item of conversationHistory) {
+    const exchange = document.createElement("article");
+    exchange.className = "archived-exchange";
+
+    const userMessage = document.createElement("div");
+    userMessage.className = "message user-message";
+    const userAvatar = document.createElement("span");
+    userAvatar.className = "message-avatar";
+    userAvatar.textContent = "나";
+    const userText = document.createElement("p");
+    userText.className = "result-question";
+    userText.textContent = item.question;
+    userMessage.append(userAvatar, userText);
+
+    const assistantMessage = document.createElement("div");
+    assistantMessage.className = "message assistant-message archived-assistant-message";
+    const assistantAvatar = document.createElement("span");
+    assistantAvatar.className = "message-avatar assistant-avatar";
+    assistantAvatar.textContent = "✦";
+    const answer = document.createElement("p");
+    answer.className = "archived-answer";
+    answer.textContent = item.answer;
+    assistantMessage.append(assistantAvatar, answer);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "conversation-delete";
+    deleteButton.textContent = "질문 삭제";
+    deleteButton.setAttribute("aria-label", `“${item.question}” 대화 삭제`);
+    deleteButton.addEventListener("click", () => deleteHistoryItem(item));
+    exchange.append(userMessage, assistantMessage, deleteButton);
+    container.append(exchange);
+  }
+}
+
+function archiveCurrentConversation() {
+  if (!currentConversation?.answer) return;
+  conversationHistory = [...conversationHistory, currentConversation].slice(-10);
+  currentConversation = null;
+  saveConversationHistory();
+  renderConversationHistory();
+}
+
+function loadConversationHistory() {
+  try {
+    conversationHistory = normalizedConversationHistory(JSON.parse(sessionStorage.getItem(SESSION_CHAT_KEY) || "[]"));
+  } catch {
+    conversationHistory = [];
+  }
+  renderConversationHistory();
 }
 
 function loadHistory() {
@@ -163,17 +279,14 @@ function loadHistory() {
     });
 }
 
-function rememberSearch(data) {
+function rememberSearch(data, historyId) {
   searchHistory = schoolGuide.addHistory(searchHistory, {
+    id: historyId,
     question: data.context.original_question,
     searchQuery: data.search_query,
     schoolLevel: data.school_level
   });
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(searchHistory));
-  } catch {
-    // The list still works for this page when browser storage is unavailable.
-  }
+  saveHistoryLocally();
   renderHistory();
 }
 
@@ -342,12 +455,16 @@ function renderAnswer(data) {
       container.append(paragraph);
     }
     $("status").textContent = "";
+    if (currentConversation) {
+      currentConversation.answer = data.claims.map((claim) => claim.text).join("\n\n");
+    }
   } else {
     $("answer-result-title").textContent = "자료만으로는 답하기 어려워요";
     $("answer-result-title").classList.add("answer-result-title-muted");
     reason.textContent = data.reason || "질문을 조금 더 구체적으로 적거나 아래 원문을 직접 확인해 주세요.";
     reason.hidden = false;
     $("status").textContent = "확인할 수 있는 내용만 보여드렸어요. 아래 관련 자료도 살펴보세요.";
+    if (currentConversation) currentConversation.answer = reason.textContent;
   }
   $("answer-result").hidden = false;
 }
@@ -357,6 +474,15 @@ function renderResults(data) {
   document.body.classList.add("has-results");
   selected = null;
   const packet = data.context;
+  currentConversation = {
+    id: currentHistoryId || undefined,
+    question: packet.original_question,
+    answer: packet.sources.length
+      ? `관련 교육 자료 ${packet.sources.length}개를 찾았어요.`
+      : "관련 교육 자료를 찾지 못했어요.",
+    searchQuery: data.search_query || packet.original_question,
+    schoolLevel: data.school_level || "all"
+  };
   searchTerms = schoolGuide.highlightTerms(data.search_query || packet.original_question);
   sourceGroups = schoolGuide.groupSources(packet.sources);
   $("empty-state").hidden = true;
@@ -426,6 +552,7 @@ async function generateAnswer() {
       : error.message;
     $("answer-error").hidden = false;
     $("status").textContent = "관련 자료는 그대로 볼 수 있어요.";
+    if (currentConversation) currentConversation.answer = $("answer-error").textContent;
   } finally {
     setGenerating(false);
   }
@@ -445,6 +572,7 @@ form.addEventListener("submit", async (event) => {
     renderSchoolFilter();
   }
   const currentQuestion = question.value.trim();
+  archiveCurrentConversation();
   setLoading(true);
   $("error").hidden = true;
   $("results-section").hidden = true;
@@ -461,13 +589,15 @@ form.addEventListener("submit", async (event) => {
     const data = envelope.search || envelope;
     if (!data?.context) throw new Error("검색 결과 형식을 확인하지 못했어요.");
     lastSearchPayload = payload;
+    currentHistoryId = envelope.history_id || null;
     renderResults(data);
     previousQuestion = data.search_query;
-    rememberSearch(data);
+    rememberSearch(data, currentHistoryId);
     question.value = "";
     await generationInfoReady;
     shouldGenerateAnswer = generationEnabled && data.context.sources.length > 0;
   } catch (error) {
+    currentHistoryId = null;
     $("status").textContent = "";
     $("error").textContent = error instanceof TypeError ? "지금은 자료를 불러올 수 없어요. 화면을 새로고침하거나 잠시 후 다시 시도해 주세요." : error.message;
     $("error").hidden = false;
@@ -527,12 +657,20 @@ $("export-button").addEventListener("click", () => {
 
 $("clear-history").addEventListener("click", async () => {
   searchHistory = [];
+  conversationHistory = [];
+  currentConversation = null;
   try {
     localStorage.removeItem(HISTORY_KEY);
   } catch {
     // Nothing else is required when browser storage is unavailable.
   }
+  try {
+    sessionStorage.removeItem(SESSION_CHAT_KEY);
+  } catch {
+    // Nothing else is required when session storage is unavailable.
+  }
   renderHistory();
+  renderConversationHistory();
   $("status").textContent = "최근 찾아본 질문을 모두 지웠어요.";
   try {
     const response = await fetch(`${BACKEND_API}/search-history?clientId=${encodeURIComponent(browserClientId)}`, {method: "DELETE"});
@@ -544,6 +682,7 @@ $("clear-history").addEventListener("click", async () => {
 
 renderExamples();
 renderSchoolFilter();
+loadConversationHistory();
 loadHistory();
 generationInfoReady = fetch("/api/info").then((response) => {
   if (!response.ok) throw new Error("service unavailable");

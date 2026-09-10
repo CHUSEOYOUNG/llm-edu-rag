@@ -93,6 +93,9 @@ class RetrieverInfo(BaseModel):
     mode: str
     generation_enabled: bool
     generation_model: str | None
+    generation_busy: bool
+    generation_waiting: int
+    generation_queue_timeout_seconds: float
     model: str
     index_text: str
     short_keyword_rerank: bool
@@ -356,10 +359,17 @@ def generation_sources(question, sources):
 
 class SearchService:
     def __init__(self, retriever, source_root=ROOT / "data/raw", generator=None,
-                 generation_model=None):
+                 generation_model=None, generation_queue_timeout=20.0):
+        if (type(generation_queue_timeout) not in (int, float)
+                or generation_queue_timeout <= 0):
+            raise ValueError("생성 대기 시간은 양수여야 합니다.")
         self.retriever = retriever
         self.lock = threading.Lock()
         self.generation_lock = threading.Lock()
+        self.generation_state_lock = threading.Lock()
+        self.generation_active = False
+        self.generation_waiting = 0
+        self.generation_queue_timeout = generation_queue_timeout
         self.generator = generator
         self.generation_model = generation_model if generator else None
         source_root = source_root.resolve()
@@ -380,8 +390,14 @@ class SearchService:
 
     def info(self):
         mode = "local_retrieval_and_generation" if self.generator else "local_retrieval_only"
+        with self.generation_state_lock:
+            generation_busy = self.generation_active
+            generation_waiting = self.generation_waiting
         return {"mode": mode, "generation_enabled": bool(self.generator),
                 "generation_model": self.generation_model,
+                "generation_busy": generation_busy,
+                "generation_waiting": generation_waiting,
+                "generation_queue_timeout_seconds": self.generation_queue_timeout,
                 "model": self.retriever.config["model"], "index_text": "body",
                 "short_keyword_rerank": True,
                 "chunk_count": len(self.retriever.chunks),
@@ -432,11 +448,29 @@ class SearchService:
                 "elapsed_ms": round((time.perf_counter()-started)*1000),
                 "retriever": self.info()}
 
+    def acquire_generation(self):
+        with self.generation_state_lock:
+            self.generation_waiting += 1
+        acquired = False
+        try:
+            acquired = self.generation_lock.acquire(timeout=self.generation_queue_timeout)
+        finally:
+            with self.generation_state_lock:
+                self.generation_waiting -= 1
+                if acquired:
+                    self.generation_active = True
+        return acquired
+
+    def release_generation(self):
+        with self.generation_state_lock:
+            self.generation_active = False
+        self.generation_lock.release()
+
     def answer(self, payload):
         if self.generator is None:
             raise BusyError("이 실행에서는 답변 만들기 기능이 준비되지 않았어요.")
-        if not self.generation_lock.acquire(blocking=False):
-            raise BusyError("다른 답변을 만들고 있어요. 잠시 후 다시 시도해 주세요.")
+        if not self.acquire_generation():
+            raise BusyError("답변 요청이 많아 대기 시간이 길어졌어요. 잠시 후 다시 시도해 주세요.")
         started = time.perf_counter()
         try:
             found = self.search(payload)
@@ -454,7 +488,7 @@ class SearchService:
             generated = answer_packet(packet, self.generator)
             self.add_source_links(packet)
         finally:
-            self.generation_lock.release()
+            self.release_generation()
         return {
             **generated,
             "answer": generated.get("answer"),

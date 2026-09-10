@@ -10,4 +10,6 @@ public interface SearchHistoryRepository extends JpaRepository<SearchHistory, UU
     List<SearchHistory> findTop20ByClientIdOrderByCreatedAtDesc(UUID clientId);
 
     long deleteByClientId(UUID clientId);
+
+    long deleteByIdAndClientId(UUID id, UUID clientId);
 }

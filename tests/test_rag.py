@@ -16,7 +16,8 @@ from ollama_generate import (NoRedirect as OllamaNoRedirect,
                              literal_scope_checks,
                              parse_response as parse_ollama_response,
                              prepare_model_packet,
-                             request_payload as ollama_request_payload)
+                             request_payload as ollama_request_payload,
+                             require_available_model)
 from build_dense_index import make_manifest, read_chunks
 from chunk import chunk_section
 from normalize import normalize, normalize_pages
@@ -319,6 +320,7 @@ class OllamaTests(unittest.TestCase):
         self.assertFalse(payload["stream"])
         self.assertEqual(payload["format"]["type"], "object")
         self.assertEqual(payload["options"]["num_ctx"], 3072)
+        self.assertEqual(payload["options"]["temperature"], 0)
         self.assertEqual(payload["options"]["num_predict"], 256)
         self.assertEqual(payload["keep_alive"], "10m")
         self.assertEqual(payload["format"]["properties"]["evidence_ids"]["minItems"], 1)
@@ -370,6 +372,25 @@ class OllamaTests(unittest.TestCase):
                           model_packet["sources"][0]["passages"]], ["S1-P1", "S1-P2"])
         self.assertEqual(evidence_map["S1-P2"]["quote"],
                          "<br>② 증빙자료가 있으면 정정할 수 있다.")
+
+    @patch("ollama_generate.build_opener")
+    def test_generation_eval_preflight_requires_the_selected_model(self, builder):
+        builder.return_value.open.return_value.__enter__.return_value = io.BytesIO(
+            json.dumps({"models": [{"name": "qwen3:4b-instruct"}]}).encode()
+        )
+        self.assertEqual(require_available_model("qwen3:4b-instruct"),
+                         "qwen3:4b-instruct")
+        request = builder.return_value.open.call_args.args[0]
+        self.assertEqual(request.full_url, "http://127.0.0.1:11434/api/tags")
+        self.assertEqual(builder.return_value.open.call_args.kwargs["timeout"], 2)
+
+    @patch("ollama_generate.build_opener")
+    def test_generation_eval_preflight_rejects_a_missing_model(self, builder):
+        builder.return_value.open.return_value.__enter__.return_value = io.BytesIO(
+            json.dumps({"models": []}).encode()
+        )
+        with self.assertRaises(GenerationError):
+            require_available_model("qwen3:4b-instruct")
 
     @patch("ollama_generate.build_opener")
     def test_adapter_sends_only_to_fixed_loopback_endpoint(self, builder):
