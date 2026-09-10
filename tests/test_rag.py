@@ -17,7 +17,8 @@ from ollama_generate import (NoRedirect as OllamaNoRedirect,
                              parse_response as parse_ollama_response,
                              prepare_model_packet,
                              request_payload as ollama_request_payload,
-                             require_available_model)
+                             require_available_model,
+                             require_runnable_model)
 from build_dense_index import make_manifest, read_chunks
 from chunk import chunk_section
 from normalize import normalize, normalize_pages
@@ -391,6 +392,33 @@ class OllamaTests(unittest.TestCase):
         )
         with self.assertRaises(GenerationError):
             require_available_model("qwen3:4b-instruct")
+
+    @patch("ollama_generate.build_opener")
+    def test_generation_eval_preflight_loads_model_before_retrieval(self, builder):
+        builder.return_value.open.side_effect = [
+            io.BytesIO(json.dumps({"models": [{"name": "qwen3:4b-instruct"}]}).encode()),
+            io.BytesIO(json.dumps({"message": {"content": ""}}).encode()),
+        ]
+        self.assertEqual(require_runnable_model("qwen3:4b-instruct"),
+                         "qwen3:4b-instruct")
+        request = builder.return_value.open.call_args_list[1].args[0]
+        payload = json.loads(request.data)
+        self.assertEqual(request.full_url, "http://127.0.0.1:11434/api/chat")
+        self.assertEqual(payload["options"]["num_ctx"], 3072)
+        self.assertEqual(payload["options"]["num_predict"], 1)
+
+    @patch("ollama_generate.build_opener")
+    def test_generation_eval_preflight_explains_model_memory_failure(self, builder):
+        builder.return_value.open.side_effect = [
+            io.BytesIO(json.dumps({"models": [{"name": "qwen3:4b-instruct"}]}).encode()),
+            HTTPError("", 500, "", {}, io.BytesIO(json.dumps({
+                "error": "failed to allocate Metal buffer (out of memory) private"
+            }).encode())),
+        ]
+        with self.assertRaises(GenerationError) as result:
+            require_runnable_model("qwen3:4b-instruct")
+        self.assertIn("메모리에 올리지 못했습니다", str(result.exception))
+        self.assertNotIn("private", str(result.exception))
 
     @patch("ollama_generate.build_opener")
     def test_adapter_sends_only_to_fixed_loopback_endpoint(self, builder):

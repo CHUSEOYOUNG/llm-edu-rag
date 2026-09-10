@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from ollama_generate import (DEFAULT_MODEL, generate as generate_local,
-                             require_available_model)  # noqa: E402
+                             require_runnable_model)  # noqa: E402
 from rag_generate import GenerationError  # noqa: E402
 from rag import DenseRetriever  # noqa: E402
 from regression_eval import (print_scorecard, read_jsonl, regression_failures,
@@ -35,7 +35,8 @@ def main() -> int:
         parser.error(f"기준 평가 파일을 찾을 수 없습니다: {args.baseline}")
     if args.generate:
         try:
-            require_available_model(args.model)
+            print(f"Ollama 모델 실구동 점검: {args.model}", flush=True)
+            require_runnable_model(args.model)
         except GenerationError as exc:
             parser.error(str(exc))
     retriever = DenseRetriever(ROOT)
