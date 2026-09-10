@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
                         assess_results, follow_up_query, keyword_rerank, keyword_terms,
+                        focused_quantity_body, generation_sources,
                         local_information_request, matches_school_level, run_server)
 from rag import build_packet
 from test_rag import answer as generated_answer, hit
@@ -152,6 +153,30 @@ class SearchServiceTests(unittest.TestCase):
         self.assertEqual(result["generation"]["provider"], "ollama_local")
         self.assertLessEqual(len(result["context"]["sources"]), 3)
         generator.assert_called_once()
+
+    def test_quantity_generation_keeps_matching_complete_paragraph_only(self):
+        body = """|구분|연간 수업 시간|\n|---|---|\n|합계|1,000시간|\n\n① 1시간의 수업은 40분을 원칙으로 한다.\n\n② 학교가 탄력적으로 운영할 수 있다."""
+        focused = focused_quantity_body("초등학교 수업은 몇 분인가요?", body)
+        self.assertEqual(focused, "① 1시간의 수업은 40분을 원칙으로 한다.")
+        sources = generation_sources("초등학교 수업은 몇 분인가요?", [
+            hit("answer", body=body, path="초등학교"),
+            hit("other", body="수업일수는 190일이다."),
+        ])
+        self.assertEqual([source["chunk_id"] for source in sources], ["answer"])
+        self.assertEqual(sources[0]["body"], focused)
+
+    def test_quantity_generation_skips_wrong_school_scope(self):
+        selected = generation_sources("중학교 수업은 몇 분인가요?", [
+            hit("special", body="야간 수업은 40분으로 단축할 수 있다.", path="특수한 학교"),
+            hit("middle", body="1시간 수업은 45분을 원칙으로 한다.", path="3 중학교"),
+        ])
+        self.assertEqual([source["chunk_id"] for source in selected], ["middle"])
+
+    def test_non_quantity_generation_keeps_top_complete_source(self):
+        sources = [hit("first", body="첫 문단\n\n둘째 문단"), hit("second")]
+        selected = generation_sources("출결 처리는 어떻게 하나요?", sources)
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0]["body"], "첫 문단\n\n둘째 문단")
 
     def test_local_answer_failure_does_not_change_retrieval_results(self):
         invalid = generated_answer()

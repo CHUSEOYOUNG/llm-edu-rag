@@ -21,7 +21,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ollama_generate import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from ollama_generate import generate as generate_local
-from rag import ROOT, DenseRetriever, answer_packet, build_packet, compact, missing_dates
+from rag import (CONDITIONS, ROOT, DenseRetriever, answer_packet, build_packet, compact,
+                 missing_dates)
 
 WEB = ROOT / "web"
 MAX_REQUEST_BYTES = 16384
@@ -43,6 +44,10 @@ LOCAL_INFORMATION = re.compile(
     r"|(?:오늘|이번\s*(?:학기|주|달)|올해).{0,30}"
     r"(?:급식|메뉴|축제|상담|행사|일정|마감|발표)"
 )
+QUANTITY_QUESTION = re.compile(
+    r"몇\s*(?P<unit>분|시간|일|주|개월|달|년|회|번|개|명|쪽|학점)"
+)
+COMPARISON_QUESTION = re.compile(r"(?:각각|비교|차이|모두|둘\s*다|[가-힣]+(?:와|과)\s+[가-힣]+)")
 SCHOOL_NAME = re.compile(r"초등학교|중학교|고등학교|초등|중등|고등")
 SCHOOL_ONLY_FOLLOW_UP = re.compile(
     r"^\s*(?:(?:그럼|그러면|그렇다면)\s*)?"
@@ -264,6 +269,44 @@ def assess_results(question, hits, threshold=STRONG_CANDIDATE_THRESHOLD):
     return {"level": level, "answerability_verified": False, "reason": reason}
 
 
+def focused_quantity_body(question, body):
+    """Keep one complete paragraph that contains the requested numeric unit."""
+    match = QUANTITY_QUESTION.search(question)
+    if not match:
+        return body
+    unit = re.escape(match.group("unit"))
+    numeric_unit = re.compile(rf"\d[\d,.]*(?:\s*[~∼〜-]\s*\d[\d,.]*)?\s*{unit}")
+    blocks = [block.strip() for block in re.split(r"\n\s*\n", body) if block.strip()]
+    candidates = [block for block in blocks if numeric_unit.search(block)]
+    if not candidates:
+        return None
+    # Prefer a prose rule over a large table when both contain the same unit.
+    candidates.sort(key=lambda block: (block.count("\n|") + block.count("|\n"), len(block)))
+    return candidates[0]
+
+
+def generation_sources(question, sources):
+    """Build a small, citation-safe context for the CPU local model."""
+    limit = 2 if COMPARISON_QUESTION.search(question) else 1
+    quantity = QUANTITY_QUESTION.search(question)
+    conditions = list(dict.fromkeys(match.group() for match in CONDITIONS.finditer(question)))
+    selected = []
+    for source in sources:
+        item = dict(source)
+        focused = focused_quantity_body(question, item["body"])
+        if quantity and focused is None:
+            continue
+        item["body"] = focused
+        combined = compact(" ".join((item["body"], item["path"], item["doc_id"])))
+        if any(compact(condition) not in combined for condition in conditions):
+            continue
+        selected.append(item)
+        if len(selected) == limit:
+            break
+    # Do not turn a retrieval result into an empty generation request.
+    return selected or [dict(source) for source in sources[:limit]]
+
+
 class SearchService:
     def __init__(self, retriever, source_root=ROOT / "data/raw", generator=None,
                  generation_model=None):
@@ -350,11 +393,11 @@ class SearchService:
         started = time.perf_counter()
         try:
             found = self.search(payload)
-            # Two complete source sections keep local CPU generation responsive.
-            # Never cut a section midway because a missing table note can change meaning.
-            sources = found["context"]["sources"][:2]
+            # Keep full paragraphs so citations remain literal while avoiding unrelated
+            # table/section tokens that dominate CPU-only prompt evaluation.
+            sources = generation_sources(found["search_query"], found["context"]["sources"])
             packet = build_packet(
-                found["search_query"], sources, max_context_chars=5000
+                found["search_query"], sources, max_context_chars=2500
             )
             packet["display_question"] = found["context"]["original_question"]
             packet["search_query"] = found["search_query"]

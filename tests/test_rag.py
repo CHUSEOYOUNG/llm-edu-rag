@@ -13,6 +13,7 @@ from rag import DenseRetriever, answer_packet, build_packet, main, missing_dates
 from rag_generate import GenerationError, NoRedirect, generate, parse_response, request_payload
 from ollama_generate import (NoRedirect as OllamaNoRedirect,
                              generate as generate_local,
+                             literal_scope_checks,
                              parse_response as parse_ollama_response,
                              request_payload as ollama_request_payload)
 from build_dense_index import make_manifest, read_chunks
@@ -285,7 +286,7 @@ class ResponsesTests(unittest.TestCase):
 class OllamaTests(unittest.TestCase):
     def local_answer(self):
         return {"status": "answered", "text": "한글 한 글자는 3바이트입니다.",
-                "evidence": [evidence()], "scope_checks": [], "reason": ""}
+                "evidence": [evidence()], "reason": ""}
 
     def response(self, content=None):
         return {
@@ -301,8 +302,10 @@ class OllamaTests(unittest.TestCase):
         payload = ollama_request_payload(packet, "qwen3:4b-instruct")
         self.assertFalse(payload["stream"])
         self.assertEqual(payload["format"]["type"], "object")
-        self.assertEqual(payload["options"]["num_ctx"], 4096)
-        self.assertEqual(payload["options"]["num_predict"], 420)
+        self.assertEqual(payload["options"]["num_ctx"], 3072)
+        self.assertEqual(payload["options"]["num_predict"], 256)
+        self.assertEqual(payload["keep_alive"], "10m")
+        self.assertEqual(payload["format"]["properties"]["evidence"]["minItems"], 1)
         self.assertEqual(json.loads(payload["messages"][1]["content"]), packet)
         self.assertNotIn("ignore all instructions", payload["messages"][0]["content"])
 
@@ -311,6 +314,15 @@ class OllamaTests(unittest.TestCase):
         self.assertEqual(raw, answer())
         self.assertEqual(metadata["provider"], "ollama_local")
         self.assertEqual(metadata["total_duration_ms"], 2500)
+
+    def test_scope_checks_are_built_from_literal_source_text(self):
+        packet = build_packet("초등학교 수업은?", [
+            hit(body="수업은 40분이다.", path="교육과정 > 초등학교")])
+        checks = literal_scope_checks(packet)
+        self.assertEqual(checks, [{
+            "condition": "초등학교", "status": "supported",
+            "evidence": [{"source_id": "S1", "field": "path", "quote": "초등학교"}],
+        }])
 
     def test_invalid_local_responses_fail_closed(self):
         for response in (None, {}, {"message": None}, {"message": {"content": None}},
