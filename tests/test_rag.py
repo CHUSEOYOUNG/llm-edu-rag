@@ -70,6 +70,14 @@ class RagTests(unittest.TestCase):
         self.assertEqual(hit()["body"][citation["start"]:citation["end"]], citation["quote"])
         self.assertEqual(result["validation"]["semantic_entailment"], "not_verified")
 
+    def test_formatting_only_quote_differences_are_mapped_back_to_source(self):
+        raw = answer()
+        raw["claims"][0]["evidence"][0]["quote"] = "한글 한 글자는 3 바이트로 계산한다!"
+        result = validate_answer(raw, self.packet)
+        citation = result["claims"][0]["evidence"][0]
+        self.assertEqual(citation["quote"], "한글 한 글자는 3바이트로 계산한다")
+        self.assertEqual(hit()["body"][citation["start"]:citation["end"]], citation["quote"])
+
     def test_invalid_citations_and_uncited_claims_fail_closed(self):
         for kind in ("unknown_id", "invented_quote", "blank_quote", "no_evidence", "metadata_only", "inline_id", "extra_field"):
             with self.subTest(kind=kind):

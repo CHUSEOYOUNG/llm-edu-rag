@@ -33,6 +33,29 @@ def compact(text):
     return re.sub(r"[\W_]+", "", unicodedata.normalize("NFKC", text)).lower()
 
 
+def literal_quote_span(quote, source_text):
+    """Locate a quote while tolerating formatting-only whitespace and punctuation changes."""
+    if quote in source_text:
+        start = source_text.index(quote)
+        return start, start + len(quote), quote
+    normalized_quote = compact(quote)
+    # Short relaxed matches are too easy to find accidentally; exact matching above still accepts them.
+    if len(normalized_quote) < 8:
+        return None
+    normalized_source, original_positions = [], []
+    for index, original in enumerate(source_text):
+        for character in unicodedata.normalize("NFKC", original).lower():
+            if character != "_" and re.match(r"\w", character):
+                normalized_source.append(character)
+                original_positions.append(index)
+    offset = "".join(normalized_source).find(normalized_quote)
+    if offset < 0:
+        return None
+    start = original_positions[offset]
+    end = original_positions[offset + len(normalized_quote) - 1] + 1
+    return start, end, source_text[start:end]
+
+
 class DenseRetriever:
     def __init__(self, root=ROOT):
         import numpy as np
@@ -122,10 +145,12 @@ def verify_evidence(items, by_id, require_body=False):
         if sid not in by_id or field not in ("body", "path", "doc_id"):
             raise ValueError("검색 컨텍스트에 없는 출처입니다.")
         source = by_id[sid]
-        if not quote.strip() or quote not in source[field]:
+        match = literal_quote_span(quote, source[field]) if quote.strip() else None
+        if match is None:
             raise ValueError("인용문이 제공된 출처 원문에 없습니다.")
-        start = source[field].index(quote)
-        checked.append({**item, "chunk_id": source["chunk_id"], "start": start, "end": start+len(quote)})
+        start, end, verified_quote = match
+        checked.append({**item, "quote": verified_quote, "chunk_id": source["chunk_id"],
+                        "start": start, "end": end})
     if require_body and not any(item["field"] == "body" for item in checked):
         raise ValueError("사실 문장에는 본문 근거가 필요합니다.")
     return checked
