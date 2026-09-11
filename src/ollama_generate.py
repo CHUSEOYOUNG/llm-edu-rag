@@ -8,6 +8,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from rag import condition_quote_span
 from rag_generate import GenerationError, STRING, object_schema
+from table_context import contains_numeric_value
 
 
 OLLAMA_CHAT_URL = "http://127.0.0.1:11434/api/chat"
@@ -19,11 +20,15 @@ answered는 인용할 passage가 질문에서 요구한 대상과 값·날짜·�
 비슷한 용어나 숫자가 있다는 이유만으로 관계를 추측하지 마라. 대상·날짜·예외가 불명확하거나
 자료에 없다고 답해야 하면 insufficient_evidence와 빈 evidence_ids를 반환하라.
 answered일 때 text는 질문에 바로 답하는 짧은 1~2문장으로 쓴다. evidence_ids에는 답을 직접
-뒷받침하는 passages의 제공된 ID만 1~2개 고르고 없는 ID를 만들지 마라. 학교급·학년·날짜 등 질문의
+뒷받침하는 passages의 제공된 ID만 1~2개 고르고 없는 ID를 만들지 마라. passage ID는 text에 쓰지
+말고 evidence_ids 배열에만 넣어라. 학교급·학년·날짜 등 질문의
 조건도 빠뜨리지 마라. 과목이나 활동 목록을 답할 때는 바로 이어지는 학년별 목록도 text에 포함한다.
 표의 합계나 시수는 원문이 밝힌 적용 기간을 그대로 쓰고 연간·학기당 값으로 바꾸지 마라. 특히
 “연간 34주를 기준으로 2년간 또는 3년간의 기준 수업 시수”라고 쓰였으면 표의 숫자는 해당 기간의
-총 시수이지 1년의 시수가 아니다. 하나의 수치나 제한이 여러 대상에 함께 적용되면 어느 대상에
+총 시수이지 1년의 시수가 아니다. table_facts가 있으면 질문과 표의 행·열이 정확히 연결된 값이다.
+그 값과 period를 그대로 한 문장으로만 답하고 다른 해설을 덧붙이지 마라.
+value_evidence_id와 period_evidence_id를 모두 인용하라.
+하나의 수치나 제한이 여러 대상에 함께 적용되면 어느 대상에
 적용되는지 생략하지 말고 근거에 없는 설명은 덧붙이지 마라.
 insufficient_evidence일 때는 text에 부족한 점만 짧게 쓰고 자료에 없는 사실을 답변처럼 쓰지 마라."""
 
@@ -145,6 +150,14 @@ def readable_passage(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+def clean_answer_text(text):
+    """Remove internal passage identifiers that the UI adds after validation."""
+    marker = re.compile(r"\bS\d+-P\d+\b|(?:value|period)_evidence_id", re.IGNORECASE)
+    parts = re.split(r"(?<=[.!?])\s+", text.strip())
+    safe = [part for part in parts if part and not marker.search(part)]
+    return " ".join(safe).strip() if safe else text.strip()
+
+
 def prepare_model_packet(packet):
     model_sources, evidence_by_id = [], {}
     for source in packet.get("sources", []):
@@ -165,6 +178,29 @@ def prepare_model_packet(packet):
             "school_level_filter", "scope_filters_applied",
         ) if key in packet
     }
+    model_facts = []
+    for fact in packet.get("table_facts", []):
+        source = next((item for item in model_sources
+                       if item["source_id"] == fact["source_id"]), None)
+        if source is None:
+            continue
+        def evidence_id_for(quote):
+            if not quote:
+                return None
+            normalized_quote = readable_passage(quote)
+            return next((passage["evidence_id"] for passage in source["passages"]
+                         if normalized_quote in passage["text"]), None)
+        model_fact = {
+            key: fact[key] for key in (
+                "source_id", "row_label", "column_label", "value", "unit",
+                "period", "basis",
+            )
+        }
+        model_fact["value_evidence_id"] = evidence_id_for(fact["value_quote"])
+        model_fact["period_evidence_id"] = evidence_id_for(fact["period_quote"])
+        model_facts.append(model_fact)
+    if model_facts:
+        model_packet["table_facts"] = model_facts
     model_packet["sources"] = model_sources
     return model_packet, evidence_by_id
 
@@ -228,6 +264,7 @@ def parse_response(response, evidence_by_id):
     if ((status == "answered" and not 1 <= len(evidence_ids) <= 2)
             or (status == "insufficient_evidence" and evidence_ids)):
         raise GenerationError("로컬 모델의 상태와 근거 번호가 서로 맞지 않습니다.")
+    text = clean_answer_text(text)
     try:
         evidence = [evidence_by_id[evidence_id] for evidence_id in dict.fromkeys(evidence_ids)]
     except KeyError:
@@ -250,6 +287,34 @@ def parse_response(response, evidence_by_id):
         "prompt_tokens": response.get("prompt_eval_count"),
         "output_tokens": response.get("eval_count"),
     }
+
+
+def complete_structured_table_evidence(answer, model_packet, evidence_by_id):
+    """Attach both literal table and period passages after an exact fact match."""
+    if answer.get("status") != "answered":
+        return 0
+    completed = 0
+    for claim in answer.get("claims", []):
+        normalized = re.sub(r"[\W_]", "", claim["text"])
+        for fact in model_packet.get("table_facts", []):
+            required_text = [
+                fact.get("row_label"), fact.get("column_label"), fact.get("period"),
+            ]
+            if any(not value or re.sub(r"[\W_]", "", value) not in normalized
+                   for value in required_text):
+                continue
+            if not contains_numeric_value(claim["text"], fact.get("value", "")):
+                continue
+            evidence_ids = [
+                fact.get("value_evidence_id"), fact.get("period_evidence_id")
+            ]
+            if any(evidence_id not in evidence_by_id for evidence_id in evidence_ids):
+                continue
+            claim["evidence"] = [evidence_by_id[evidence_id]
+                                 for evidence_id in dict.fromkeys(evidence_ids)]
+            completed += 1
+            break
+    return completed
 
 
 def literal_scope_checks(packet):
@@ -309,6 +374,9 @@ def generate(packet, model=None, timeout=90):
                     output_limit = 384
                 continue
             raise
+        provenance["structured_table_evidence_completed"] = (
+            complete_structured_table_evidence(answer, model_packet, evidence_by_id)
+        )
         provenance["retry_count"] = attempt
         if answer["status"] == "answered":
             answer["scope_checks"] = literal_scope_checks(packet)

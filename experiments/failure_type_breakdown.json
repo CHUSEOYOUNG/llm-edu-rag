@@ -195,13 +195,11 @@
         },
         "generation": {
           "n": 2,
-          "task_success_rate": 0.5,
-          "answer_success_rate": 0.5,
-          "citation_valid_rate": 0.5,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       },
       "temporal_multi_hop": {
@@ -314,13 +312,11 @@
         },
         "generation": {
           "n": 7,
-          "task_success_rate": 0.8571,
-          "answer_success_rate": 0.8571,
-          "citation_valid_rate": 0.8571,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       }
     },
@@ -464,13 +460,11 @@
         },
         "generation": {
           "n": 7,
-          "task_success_rate": 0.8571,
-          "answer_success_rate": 0.8571,
-          "citation_valid_rate": 0.8571,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       },
       "multi_claim": {
@@ -524,13 +518,11 @@
         },
         "generation": {
           "n": 1,
-          "task_success_rate": 0.0,
-          "answer_success_rate": 0.0,
-          "citation_valid_rate": 0.0,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       },
       "quantity": {
@@ -559,13 +551,11 @@
         },
         "generation": {
           "n": 5,
-          "task_success_rate": 0.8,
-          "answer_success_rate": 0.8,
-          "citation_valid_rate": 0.8,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       },
       "school_scope": {
@@ -623,13 +613,11 @@
         },
         "generation": {
           "n": 2,
-          "task_success_rate": 0.5,
-          "answer_success_rate": 0.5,
-          "citation_valid_rate": 0.5,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q011"
-          ]
+          "failed_qids": []
         }
       },
       "temporal_condition": {
@@ -673,6 +661,6 @@
   "inputs": {
     "taxonomy_sha256": "b959a8bebd061b8c0bc2515001b284807e7f7b6a38ea3fcf43d63752cecf4a71",
     "questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
-    "regression_sha256": "ff743e323bb4df537223cd660dddaf919cf27ee675280740bd0b5aa70d0bb7e3"
+    "regression_sha256": "bc69afe1436ce0c0e978a4039a5dd1703fd7066c48aeb1574bc0ce89741f0141"
   }
 }

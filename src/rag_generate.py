@@ -21,6 +21,7 @@ claims에는 사실 문장별 text와 evidence를 넣어라. 각 문장은 body 
 quote는 그 필드의 연속된 원문을 그대로 복사하라. 말줄임표나 수정한 인용은 금지한다.
 text에 [S1] 같은 인용 표기를 직접 쓰지 마라. 프로그램이 검증 후 붙인다.
 표 숫자를 인용할 때는 해당 과목·학교급·기간을 식별할 수 있는 헤더/주석도 함께 인용하라.
+table_facts가 있으면 질문과 연결된 행·열·값·기간이므로 그대로 한 문장으로 답하라.
 answered일 때 모든 scope_conditions에 대해 scope_checks를 하나씩 만들고
 condition은 입력 문구 그대로, status=supported, evidence는 해당 범위를 뒷받침하는 인용이다.
 지원할 수 없는 조건은 unknown으로 처리하고 답변을 보류하라.

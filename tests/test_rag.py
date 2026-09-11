@@ -13,6 +13,8 @@ from rag import (DenseRetriever, answer_packet, build_packet, condition_quote_sp
                  main, missing_dates, missing_scope_conditions, validate_answer)
 from rag_generate import GenerationError, NoRedirect, generate, parse_response, request_payload
 from ollama_generate import (NoRedirect as OllamaNoRedirect,
+                             clean_answer_text,
+                             complete_structured_table_evidence,
                              generate as generate_local,
                              literal_scope_checks,
                              parse_response as parse_ollama_response,
@@ -20,6 +22,7 @@ from ollama_generate import (NoRedirect as OllamaNoRedirect,
                              request_payload as ollama_request_payload,
                              require_available_model,
                              require_runnable_model)
+from table_context import contains_numeric_value, extract_table_facts
 from build_dense_index import make_manifest, read_chunks
 from chunk import chunk_section
 from normalize import normalize, normalize_pages
@@ -163,6 +166,78 @@ class RagTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "기간 기준"):
             validate_answer(raw, packet)
+
+    def test_structured_table_fact_requires_and_accepts_the_source_period(self):
+        body = (
+            "|구분<br>1~2학년|3~4학년|5~6학년|\n"
+            "|---|---|---|\n"
+            "|국어<br>국어 482|408|408|\n\n"
+            "② 시간 배당은 연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸 것이다."
+        )
+        packet = build_packet(
+            "초등학교 3~4학년 국어 수업 시수는 몇 시간인가요?",
+            [hit(body=body, path="2 초등학교")],
+        )
+        self.assertEqual(packet["table_facts"][0]["value"], "408")
+        raw = answer()
+        raw["claims"][0] = {
+            "text": "초등학교 3~4학년군 국어 수업 시수는 408시간입니다.",
+            "evidence": [evidence("|국어<br>국어 482|408|408|")],
+        }
+        raw["scope_checks"] = [
+            {"condition": "초등학교", "status": "supported",
+             "evidence": [evidence("초등학교", field="path")]},
+            {"condition": "3~4학년", "status": "supported",
+             "evidence": [evidence("3~4학년")]}]
+        with self.assertRaisesRegex(ValueError, "적용 기간"):
+            validate_answer(raw, packet)
+        raw["claims"][0]["text"] = (
+            "초등학교 3~4학년군 국어 수업 시수는 2년간 총 1408시간입니다."
+        )
+        raw["claims"][0]["evidence"].append(evidence(
+            "연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸 것이다."
+        ))
+        with self.assertRaisesRegex(ValueError, "구조화한 값"):
+            validate_answer(raw, packet)
+        raw["claims"][0]["text"] = (
+            "초등학교 3~4학년군 국어 수업 시수는 2년간 총 408시간입니다."
+        )
+        raw["claims"][0]["evidence"] = [evidence("|국어<br>국어 482|408|408|")]
+        with self.assertRaisesRegex(ValueError, "원문 인용"):
+            validate_answer(raw, packet)
+        raw["claims"][0]["evidence"].append(evidence(
+            "연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸 것이다."
+        ))
+        self.assertEqual(validate_answer(raw, packet)["status"], "draft_answer")
+
+    def test_damaged_markdown_table_is_linked_by_question_row_and_column(self):
+        body = (
+            "<표 1>\n\n"
+            "|구분<br>1~2학년|3~4학년|5~6학년|\n"
+            "|---|---|---|\n"
+            "|국어<br>국어 482|408|408|\n"
+            "|수학 256<br>사회/도덕|272|272|\n\n"
+            "② 학년군 시간 배당은 연간 34주를 기준으로 "
+            "2년간의 기준 수업 시수를 나타낸 것이다."
+        )
+        sources = build_packet("질문", [hit(body=body)])["sources"]
+        facts = extract_table_facts(
+            "초등학교 3~4학년 국어 수업 시수는 몇 시간인가요?", sources
+        )
+        self.assertEqual(facts, [{
+            "source_id": "S1", "row_label": "국어", "column_label": "3~4학년",
+            "value": "408", "unit": "시간", "period": "2년간",
+            "basis": "연간 34주 기준", "value_quote": "|국어<br>국어 482|408|408|",
+            "period_quote": (
+                "② 학년군 시간 배당은 연간 34주를 기준으로 "
+                "2년간의 기준 수업 시수를 나타낸 것이다."
+            ),
+        }])
+        self.assertEqual(extract_table_facts(
+            "초등학교 국어 수업 시수는 몇 시간인가요?", sources
+        ), [])
+        self.assertTrue(contains_numeric_value("총 408시간", "408"))
+        self.assertFalse(contains_numeric_value("총 1408시간", "408"))
 
     def test_empty_context_does_not_call_generator(self):
         generator = Mock()
@@ -401,6 +476,14 @@ class OllamaTests(unittest.TestCase):
         self.assertEqual(metadata["provider"], "ollama_local")
         self.assertEqual(metadata["total_duration_ms"], 2500)
 
+    def test_internal_passage_ids_are_removed_from_display_text(self):
+        text = (
+            "중학교 국어 수업 시수는 3년간 442시간입니다. "
+            "표에서 확인됩니다. (value_evidence_id: S1-P2)"
+        )
+        self.assertEqual(clean_answer_text(text),
+                         "중학교 국어 수업 시수는 3년간 442시간입니다. 표에서 확인됩니다.")
+
     def test_insufficient_response_requires_an_empty_evidence_list(self):
         content = json.dumps({
             "status": "insufficient_evidence",
@@ -453,6 +536,60 @@ class OllamaTests(unittest.TestCase):
                           model_packet["sources"][0]["passages"]], ["S1-P1", "S1-P2"])
         self.assertEqual(evidence_map["S1-P2"]["quote"],
                          "<br>② 증빙자료가 있으면 정정할 수 있다.")
+
+    def test_model_packet_links_structured_table_fact_to_literal_passages(self):
+        body = (
+            "|구분<br>1~2학년|3~4학년|5~6학년|\n"
+            "|---|---|---|\n"
+            "|국어<br>국어 482|408|408|\n\n"
+            "② 시간 배당은 연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸 것이다."
+        )
+        packet = build_packet(
+            "초등학교 3~4학년 국어 수업 시수는 몇 시간인가요?",
+            [hit(body=body, path="2 초등학교")],
+        )
+        model_packet, evidence_map = prepare_model_packet(packet)
+        fact = model_packet["table_facts"][0]
+        self.assertEqual((fact["row_label"], fact["column_label"], fact["value"]),
+                         ("국어", "3~4학년", "408"))
+        self.assertEqual((fact["period"], fact["basis"]),
+                         ("2년간", "연간 34주 기준"))
+        self.assertIn(fact["value_evidence_id"], evidence_map)
+        self.assertIn(fact["period_evidence_id"], evidence_map)
+
+        raw = {
+            "status": "answered",
+            "claims": [{
+                "text": "초등학교 3~4학년 국어는 2년간 408시간입니다.",
+                "evidence": [evidence_map[fact["value_evidence_id"]]],
+            }],
+            "scope_checks": [],
+            "reason": "",
+        }
+        self.assertEqual(complete_structured_table_evidence(
+            raw, model_packet, evidence_map
+        ), 1)
+        self.assertEqual(raw["claims"][0]["evidence"], [
+            evidence_map[fact["value_evidence_id"]],
+            evidence_map[fact["period_evidence_id"]],
+        ])
+
+    def test_table_evidence_is_not_completed_for_a_mismatched_answer(self):
+        content = json.dumps({
+            "status": "answered",
+            "text": "초등학교 3~4학년 국어는 2년간 1408시간입니다.",
+            "evidence_ids": ["S1-P1"],
+        }, ensure_ascii=False)
+        raw, _ = parse_ollama_response(self.response(content), self.evidence_map())
+        self.assertEqual(complete_structured_table_evidence(
+            raw, {"table_facts": [{
+                "row_label": "국어", "column_label": "3~4학년",
+                "value": "408", "period": "2년간",
+                "value_evidence_id": "S1-P1", "period_evidence_id": "S1-P2",
+            }]}, {**self.evidence_map(), "S1-P2": evidence("2년간")}
+        ), 0)
+        self.assertEqual(raw["claims"][0]["text"],
+                         "초등학교 3~4학년 국어는 2년간 1408시간입니다.")
 
     @patch("ollama_generate.build_opener")
     def test_generation_eval_preflight_requires_the_selected_model(self, builder):

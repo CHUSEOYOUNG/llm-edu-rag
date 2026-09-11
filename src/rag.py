@@ -14,6 +14,7 @@ import sys
 import unicodedata
 
 from rag_generate import GenerationError, generate
+from table_context import contains_numeric_value, extract_table_facts
 
 ROOT = Path(__file__).resolve().parents[1]
 DATE = r"\d{4}년\s*\d{1,2}월\s*\d{1,2}일"
@@ -163,13 +164,15 @@ def build_packet(question, hits, max_context_chars=24000):
                         **{field: hit[field] for field in ("body", "path", "doc_id")},
                         **provenance})
         used += size
-    return {
+    packet = {
         "original_question": question, "search_query": question,
         "scope_conditions": list(dict.fromkeys(m.group() for m in CONDITIONS.finditer(question))),
         "scope_extraction": "partial_regex; original question remains authoritative",
         "scope_filters_applied": False, "sources": sources,
         "context_chars": used, "omitted_chunk_ids": omitted,
     }
+    packet["table_facts"] = extract_table_facts(question, sources)
+    return packet
 
 
 def missing_dates(packet):
@@ -228,7 +231,7 @@ def validate_answer(answer, packet):
     for claim in answer["claims"]:
         require_keys(claim, ("text", "evidence"))
         if (not isinstance(claim["text"], str) or not claim["text"].strip()
-                or re.search(r"\[S\d+\]", claim["text"])):
+                or re.search(r"\[S\d+\]|\bS\d+-P\d+\b|evidence_id", claim["text"], re.I)):
             raise ValueError("문장이 비었거나 모델이 인용 표기를 직접 삽입했습니다.")
         checked_evidence = verify_evidence(claim["evidence"], by_id, require_body=True)
         if re.search(r"연간\s*\d[\d,]*\s*시간", claim["text"]) and any(
@@ -237,6 +240,29 @@ def validate_answer(answer, packet):
         ):
             raise ValueError("표의 기간 기준과 답변의 연간 표기가 일치하지 않습니다.")
         claims.append({"text": claim["text"], "evidence": checked_evidence})
+    for fact in packet.get("table_facts", []):
+        cited_claims = [claim for claim in claims if any(
+            evidence["source_id"] == fact["source_id"] for evidence in claim["evidence"]
+        )]
+        if not cited_claims:
+            continue
+        matching_claims = [claim for claim in cited_claims
+                           if contains_numeric_value(claim["text"], fact["value"])]
+        if not matching_claims:
+            raise ValueError("표에서 구조화한 값과 답변의 수치가 일치하지 않습니다.")
+        if not any(
+                fact["row_label"] in claim["text"]
+                and compact(fact["column_label"]) in compact(claim["text"])
+                for claim in matching_claims):
+            raise ValueError("표의 행과 학년 범위가 답변에 빠졌습니다.")
+        if fact["period"] and not any(
+                fact["period"] in claim["text"] for claim in matching_claims):
+            raise ValueError("표의 수업 시수에는 원문에 적힌 적용 기간이 필요합니다.")
+        if fact["period"] and not any(
+                fact["period"] in evidence["quote"]
+                for matching_claim in matching_claims
+                for evidence in matching_claim["evidence"]):
+            raise ValueError("표의 적용 기간을 뒷받침하는 원문 인용이 필요합니다.")
     compared_schools = SCHOOL_SCOPE_CONDITIONS & set(packet["scope_conditions"])
     if len(compared_schools) >= 2:
         cited_source_ids = {

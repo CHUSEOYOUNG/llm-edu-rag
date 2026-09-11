@@ -30,6 +30,7 @@ def main() -> int:
     parser.add_argument("--baseline", type=Path, help="감소 시 실패시킬 기존 평가 JSON")
     parser.add_argument("--tolerance", type=float, default=0.0)
     args = parser.parse_args()
+    questions_path = args.questions.resolve()
 
     if args.baseline and not args.baseline.is_file():
         parser.error(f"기준 평가 파일을 찾을 수 없습니다: {args.baseline}")
@@ -44,11 +45,12 @@ def main() -> int:
                  if args.generate else None)
     service = SearchService(retriever, generator=generator,
                             generation_model=args.model if args.generate else None)
-    result = run_regression(service, read_jsonl(args.questions),
+    result = run_regression(service, read_jsonl(questions_path),
                             top_k=args.top_k, generate=args.generate)
     result["created_at"] = datetime.now(timezone.utc).isoformat()
     result["configuration"] = {
-        "questions": str(args.questions.relative_to(ROOT)),
+        "questions": str(questions_path.relative_to(ROOT))
+        if questions_path.is_relative_to(ROOT) else questions_path.name,
         "top_k": args.top_k,
         "retriever_model": retriever.config["model"],
         "index_text": retriever.config["index_text"],
