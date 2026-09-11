@@ -123,7 +123,7 @@ def run(taxonomy: dict, questions: list[dict], regression: dict) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--regression", type=Path,
-                        default=ROOT / "experiments/regression_generation_scope_query.json")
+                        default=ROOT / "experiments/regression_generation_school_comparison.json")
     parser.add_argument("--output", type=Path,
                         default=ROOT / "experiments/failure_type_breakdown.json")
     args = parser.parse_args()

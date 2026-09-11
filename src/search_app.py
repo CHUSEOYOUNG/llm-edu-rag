@@ -21,7 +21,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ollama_generate import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from ollama_generate import generate as generate_local
-from query_planning import interleave_rankings, supplemental_content_query
+from query_planning import (interleave_rankings, school_comparison_queries,
+                            supplemental_content_query)
 from rag import (CONDITIONS, DATE, ROOT, DenseRetriever, answer_packet, build_packet, compact,
                  condition_quote_span, missing_dates)
 
@@ -386,7 +387,7 @@ def representative_sections(question, sources):
     return [source for _, source in sorted(representatives)]
 
 
-def generation_sources(question, sources, prefer_first=False):
+def generation_sources(question, sources, prefer_first=False, prefer_school_rank=False):
     """Build a small, citation-safe context for the CPU local model."""
     quantity = QUANTITY_QUESTION.search(question)
     comparison = COMPARISON_QUESTION.search(question)
@@ -408,6 +409,21 @@ def generation_sources(question, sources, prefer_first=False):
         prepared.append((rank, item, coverage, support))
 
     selected, seen_paths, uncovered = [], set(), set(conditions)
+    if prefer_school_rank:
+        for school in (condition for condition in conditions
+                       if condition in SCHOOL_CONDITION_MARKERS):
+            choice = next((candidate for candidate in prepared
+                           if candidate[3].get(school, 0) >= 2
+                           and compact(candidate[1]["path"]) not in seen_paths), None)
+            if choice is None:
+                continue
+            rank, item, coverage, _ = choice
+            selected.append(item)
+            seen_paths.add(compact(item["path"]))
+            uncovered -= coverage
+            prepared = [candidate for candidate in prepared if candidate[0] != rank]
+            if len(selected) == limit:
+                return selected
     if prefer_first and prepared:
         _, item, coverage, _ = prepared.pop(0)
         selected.append(item)
@@ -503,12 +519,30 @@ class SearchService:
         try:
             terms = keyword_terms(search_query)
             content_query = supplemental_content_query(search_query)
+            comparison_queries = (school_comparison_queries(search_query)
+                                  if school_level == "all" else [])
             if school_level != "all":
                 candidate_k = len(self.retriever.chunks)
             else:
-                expand = terms or content_query is not None
+                expand = terms or content_query is not None or comparison_queries
                 candidate_k = min(len(self.retriever.chunks), max(k, 100)) if expand else k
-            if content_query is None:
+            if comparison_queries:
+                school_groups = []
+                for plan in comparison_queries:
+                    ranking = self.retriever.search(plan["query"], len(self.retriever.chunks))
+                    school_groups.append([
+                        hit for hit in ranking
+                        if matches_school_level(hit, plan["school_level"])
+                    ])
+                original_candidates = self.retriever.search(search_query, candidate_k)
+                candidate_groups = [*school_groups, original_candidates]
+                candidates = interleave_rankings(
+                    candidate_groups, sum(len(group) for group in candidate_groups) or 1
+                )
+                hits = interleave_rankings(candidate_groups, k)
+                retrieval_queries = [plan["query"] for plan in comparison_queries]
+                retrieval_queries.append(search_query)
+            elif content_query is None:
                 candidates = self.retriever.search(search_query, candidate_k)
                 candidates = [hit for hit in candidates
                               if matches_school_level(hit, school_level)]
@@ -532,6 +566,7 @@ class SearchService:
             packet["search_query"] = search_query
             packet["retrieval_queries"] = retrieval_queries
             packet["supplemental_query_applied"] = content_query is not None
+            packet["school_comparison_queries_applied"] = bool(comparison_queries)
             packet["follow_up_applied"] = follow_up_applied
             packet["scope_filters_applied"] = school_level != "all"
             packet["school_level_filter"] = school_level
@@ -579,6 +614,9 @@ class SearchService:
             sources = generation_sources(
                 found["search_query"], found["context"]["sources"],
                 prefer_first=found["context"].get("supplemental_query_applied", False),
+                prefer_school_rank=found["context"].get(
+                    "school_comparison_queries_applied", False
+                ),
             )
             packet = build_packet(
                 found["search_query"], sources, max_context_chars=2500
@@ -590,6 +628,9 @@ class SearchService:
             )
             packet["supplemental_query_applied"] = found["context"].get(
                 "supplemental_query_applied", False
+            )
+            packet["school_comparison_queries_applied"] = found["context"].get(
+                "school_comparison_queries_applied", False
             )
             packet["follow_up_applied"] = found["follow_up_applied"]
             packet["scope_filters_applied"] = found["school_level"] != "all"

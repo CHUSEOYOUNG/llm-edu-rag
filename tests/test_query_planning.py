@@ -3,7 +3,8 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-from query_planning import interleave_rankings, supplemental_content_query
+from query_planning import (interleave_rankings, school_comparison_queries,
+                            supplemental_content_query)
 
 
 class QueryPlanningTests(unittest.TestCase):
@@ -33,9 +34,28 @@ class QueryPlanningTests(unittest.TestCase):
             ["answer", "scope", "shared"],
         )
 
+    def test_school_comparison_is_split_without_answer_words(self):
+        question = (
+            "2022 개정 교육과정 기준으로 초등학교와 중학교의 "
+            "수업 한 시간은 각각 몇 분이 원칙인가요?"
+        )
+        self.assertEqual(school_comparison_queries(question), [
+            {"school_level": "elementary",
+             "query": "초등학교 교육과정 수업 한 시간 몇 분"},
+            {"school_level": "middle",
+             "query": "중학교 교육과정 수업 한 시간 몇 분"},
+        ])
+
+    def test_single_school_question_is_not_split(self):
+        self.assertEqual(school_comparison_queries(
+            "중학교 수업 한 시간은 몇 분인가요?"
+        ), [])
+
     def test_invalid_inputs_are_rejected(self):
         with self.assertRaises(ValueError):
             supplemental_content_query(" ")
+        with self.assertRaises(ValueError):
+            school_comparison_queries(" ")
         with self.assertRaises(ValueError):
             interleave_rankings([], 5)
         with self.assertRaises(ValueError):

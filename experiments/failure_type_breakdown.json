@@ -64,27 +64,25 @@
         "retrieval": {
           "n": 3,
           "metrics": {
-            "hit@1": 0.0,
-            "recall@1": 0.0,
+            "hit@1": 1.0,
+            "recall@1": 0.5,
             "complete@1": 0.0,
-            "hit@5": 0.6667,
-            "recall@5": 0.6667,
-            "complete@5": 0.6667,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
             "hit@10": 1.0,
-            "recall@10": 0.8333,
-            "complete@10": 0.6667,
-            "mrr@10": 0.3889
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
           }
         },
         "generation": {
           "n": 3,
-          "task_success_rate": 0.6667,
-          "answer_success_rate": 0.6667,
-          "citation_valid_rate": 0.6667,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q006"
-          ]
+          "failed_qids": []
         }
       },
       "format_lookup": {
@@ -248,27 +246,25 @@
         "retrieval": {
           "n": 4,
           "metrics": {
-            "hit@1": 0.25,
-            "recall@1": 0.25,
+            "hit@1": 1.0,
+            "recall@1": 0.625,
             "complete@1": 0.25,
-            "hit@5": 0.75,
-            "recall@5": 0.75,
-            "complete@5": 0.75,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
             "hit@10": 1.0,
-            "recall@10": 0.875,
-            "complete@10": 0.75,
-            "mrr@10": 0.5417
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
           }
         },
         "generation": {
           "n": 4,
-          "task_success_rate": 0.75,
-          "answer_success_rate": 0.75,
-          "citation_valid_rate": 0.75,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q006"
-          ]
+          "failed_qids": []
         }
       },
       "none": {
@@ -358,27 +354,25 @@
         "retrieval": {
           "n": 3,
           "metrics": {
-            "hit@1": 0.0,
-            "recall@1": 0.0,
+            "hit@1": 1.0,
+            "recall@1": 0.5,
             "complete@1": 0.0,
-            "hit@5": 0.6667,
-            "recall@5": 0.6667,
-            "complete@5": 0.6667,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
             "hit@10": 1.0,
-            "recall@10": 0.8333,
-            "complete@10": 0.6667,
-            "mrr@10": 0.3889
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
           }
         },
         "generation": {
           "n": 3,
-          "task_success_rate": 0.6667,
-          "answer_success_rate": 0.6667,
-          "citation_valid_rate": 0.6667,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q006"
-          ]
+          "failed_qids": []
         }
       },
       "exception": {
@@ -421,8 +415,8 @@
         "retrieval": {
           "n": 3,
           "metrics": {
-            "hit@1": 0.6667,
-            "recall@1": 0.6667,
+            "hit@1": 1.0,
+            "recall@1": 0.8333,
             "complete@1": 0.6667,
             "hit@5": 1.0,
             "recall@5": 1.0,
@@ -430,7 +424,7 @@
             "hit@10": 1.0,
             "recall@10": 1.0,
             "complete@10": 1.0,
-            "mrr@10": 0.8333
+            "mrr@10": 1.0
           }
         },
         "generation": {
@@ -551,26 +545,25 @@
         "retrieval": {
           "n": 5,
           "metrics": {
-            "hit@1": 0.6,
-            "recall@1": 0.6,
+            "hit@1": 1.0,
+            "recall@1": 0.8,
             "complete@1": 0.6,
-            "hit@5": 0.8,
-            "recall@5": 0.8,
-            "complete@5": 0.8,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
             "hit@10": 1.0,
-            "recall@10": 0.9,
-            "complete@10": 0.8,
-            "mrr@10": 0.7333
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
           }
         },
         "generation": {
           "n": 5,
-          "task_success_rate": 0.6,
-          "answer_success_rate": 0.6,
-          "citation_valid_rate": 0.6,
+          "task_success_rate": 0.8,
+          "answer_success_rate": 0.8,
+          "citation_valid_rate": 0.8,
           "unanswerable_rejection_rate": null,
           "failed_qids": [
-            "q006",
             "q011"
           ]
         }
@@ -586,27 +579,25 @@
         "retrieval": {
           "n": 4,
           "metrics": {
-            "hit@1": 0.25,
-            "recall@1": 0.25,
+            "hit@1": 1.0,
+            "recall@1": 0.625,
             "complete@1": 0.25,
-            "hit@5": 0.75,
-            "recall@5": 0.75,
-            "complete@5": 0.75,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
             "hit@10": 1.0,
-            "recall@10": 0.875,
-            "complete@10": 0.75,
-            "mrr@10": 0.5417
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
           }
         },
         "generation": {
           "n": 4,
-          "task_success_rate": 0.75,
-          "answer_success_rate": 0.75,
-          "citation_valid_rate": 0.75,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
           "unanswerable_rejection_rate": null,
-          "failed_qids": [
-            "q006"
-          ]
+          "failed_qids": []
         }
       },
       "table": {
@@ -682,6 +673,6 @@
   "inputs": {
     "taxonomy_sha256": "b959a8bebd061b8c0bc2515001b284807e7f7b6a38ea3fcf43d63752cecf4a71",
     "questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
-    "regression_sha256": "3205c4afb9615a5a5b06d254c58ce21bb58aba142ee6a88a66450fa4116e847b"
+    "regression_sha256": "ff743e323bb4df537223cd660dddaf919cf27ee675280740bd0b5aa70d0bb7e3"
   }
 }

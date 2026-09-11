@@ -144,6 +144,32 @@ class SearchServiceTests(unittest.TestCase):
         self.assertIn("scope", [source["chunk_id"] for source in result["context"]["sources"]])
         self.assertTrue(result["context"]["supplemental_query_applied"])
 
+    def test_school_comparison_search_combines_school_specific_queries(self):
+        retriever = Mock()
+        retriever.config = {"model": "test-model", "index_text": "body"}
+        retriever.chunks = [hit(f"c{i}") for i in range(8)]
+        elementary = hit("elementary", body="수업은 40분이다.", path="2 초등학교")
+        special = hit("special", body="야간 수업은 단축한다.", path="특수한 학교")
+        middle = hit("middle", body="수업은 45분이다.", path="3 중학교")
+        retriever.search.side_effect = [
+            [elementary], [special, middle], [special],
+        ]
+        question = (
+            "2022 개정 교육과정 기준으로 초등학교와 중학교의 "
+            "수업 한 시간은 각각 몇 분이 원칙인가요?"
+        )
+        result = SearchService(retriever).search({"question": question, "top_k": 5})
+        self.assertEqual([call.args[0] for call in retriever.search.call_args_list], [
+            "초등학교 교육과정 수업 한 시간 몇 분",
+            "중학교 교육과정 수업 한 시간 몇 분",
+            question,
+        ])
+        self.assertEqual(
+            {source["chunk_id"] for source in result["context"]["sources"]},
+            {"elementary", "special", "middle"},
+        )
+        self.assertTrue(result["context"]["school_comparison_queries_applied"])
+
     def test_date_support_replaces_only_the_last_result(self):
         question = "2028년 3월 1일부터 적용되는 교과는 무엇인가요?"
         ranked = [hit("answer"), hit("second"), hit("third")]
@@ -267,6 +293,22 @@ class SearchServiceTests(unittest.TestCase):
                          ["elementary", "middle"])
         self.assertIn("40분", selected[0]["body"])
         self.assertIn("45분", selected[1]["body"])
+
+    def test_planned_comparison_prefers_top_source_for_each_school(self):
+        doc = "(2022 개정) 초·중등학교 교육과정"
+        sources = [
+            hit("elementary", body="자율·자치, 동아리, 진로", path="2 초등학교", doc_id=doc),
+            hit("middle", body="자율·자치, 동아리, 진로", path="3 중학교", doc_id=doc),
+            hit("misleading", body="초등학교 기록", path="중학교 내용으로 생략",
+                doc_id="학교생활기록부 기재요령(초)"),
+        ]
+        selected = generation_sources(
+            "2022 개정 교육과정에서 초등학교와 중학교 영역은?",
+            sources,
+            prefer_school_rank=True,
+        )
+        self.assertEqual([source["chunk_id"] for source in selected],
+                         ["elementary", "middle"])
 
     def test_school_section_scope_beats_incidental_body_mentions(self):
         sources = [

@@ -17,6 +17,16 @@ CONTENT_REQUEST = re.compile(
     r"무엇|어떤|목록|종류|교과|과목|영역|내용|기준|방법"
 )
 SCOPE_HEAVY = re.compile(rf"{DATE}|{NOTICE}")
+SCHOOL_NAMES = {
+    "초등학교": "elementary",
+    "중학교": "middle",
+    "고등학교": "high",
+}
+SCHOOL_COMPARISON = re.compile(
+    r"초등학교\s*(?:와|과|및|·|,)\s*중학교"
+    r"|중학교\s*(?:와|과|및|·|,)\s*고등학교"
+    r"|초등학교\s*(?:와|과|및|·|,)\s*고등학교"
+)
 
 
 def supplemental_content_query(question: str) -> str | None:
@@ -44,6 +54,55 @@ def supplemental_content_query(question: str) -> str | None:
     meaningful = [token for token in re.findall(r"[0-9A-Za-z가-힣]+", result)
                   if len(token) >= 2]
     return result if len(meaningful) >= 2 and result != question.strip() else None
+
+
+def school_comparison_queries(question: str) -> list[dict[str, str]]:
+    """Split an explicit multi-school comparison into school-specific searches."""
+    if not isinstance(question, str) or not question.strip():
+        raise ValueError("질문은 비어 있을 수 없습니다.")
+    schools = [name for name in SCHOOL_NAMES if name in question]
+    if len(schools) < 2 or not SCHOOL_COMPARISON.search(question):
+        return []
+
+    results = []
+    for target in schools:
+        rewritten = question
+        for other in schools:
+            if other == target:
+                continue
+            rewritten = re.sub(
+                rf"{re.escape(target)}\s*(?:와|과|및|·|,)\s*{re.escape(other)}의?",
+                target,
+                rewritten,
+            )
+            rewritten = re.sub(
+                rf"{re.escape(other)}\s*(?:와|과|및|·|,)\s*{re.escape(target)}의?",
+                target,
+                rewritten,
+            )
+        rewritten = re.sub(
+            r"\d{4}\s*개정\s*교육과정\s*기준으로\s*", "교육과정 ", rewritten
+        )
+        rewritten = re.sub(
+            rf"^교육과정\s+{re.escape(target)}\b", f"{target} 교육과정", rewritten
+        )
+        rewritten = re.sub(r"\b각각\b\s*", "", rewritten)
+        rewritten = re.sub(
+            r"([0-9A-Za-z가-힣]+)(?:은|는)\s+(?=(?:최소\s+)?몇|어떤)",
+            r"\1 ",
+            rewritten,
+        )
+        rewritten = re.sub(r"이?\s*원칙인가요\s*[?？]?\s*$", "", rewritten)
+        rewritten = re.sub(r"편성해야\s*하나요\s*[?？]?\s*$", "편성", rewritten)
+        rewritten = re.sub(
+            r"어떤\s+([0-9A-Za-z가-힣]+)으로\s+구성되나요\s*[?？]?\s*$",
+            r"\1 구성",
+            rewritten,
+        )
+        rewritten = re.sub(r"\s+", " ", rewritten).strip()
+        if rewritten != question.strip():
+            results.append({"school_level": SCHOOL_NAMES[target], "query": rewritten})
+    return results
 
 
 def interleave_rankings(rankings: list[list[dict]], limit: int) -> list[dict]:
