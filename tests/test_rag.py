@@ -189,6 +189,14 @@ class RagTests(unittest.TestCase):
         ])
         self.assertEqual(missing_scope_conditions(packet), [])
 
+    def test_grade_range_condition_accepts_document_separator_variants(self):
+        match = condition_quote_span("1·2학년", "2028년부터 초등학교 1, 2학년 적용")
+        self.assertEqual(match[2], "1, 2학년")
+        packet = build_packet("초등학교 1·2학년 교과는?", [
+            hit(body="교과는 국어와 수학이다.", path="초등학교 1, 2학년")
+        ])
+        self.assertEqual(missing_scope_conditions(packet), [])
+
     def test_abstention_is_not_a_corpus_wide_unanswerability_claim(self):
         raw = {"status": "insufficient_evidence", "claims": [], "scope_checks": [],
                "reason": "검색된 근거에서 요청한 정보를 확인하지 못했습니다."}

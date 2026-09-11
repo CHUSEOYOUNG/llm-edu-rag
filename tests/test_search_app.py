@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from search_app import (BusyError, SearchService, condition_audit, create_app,
                         assess_results, follow_up_query, keyword_rerank, keyword_terms,
-                        focused_quantity_body, generation_sources,
+                        ensure_date_support, focused_quantity_body, generation_sources,
                         local_information_request, matches_school_level,
                         representative_sections, run_server)
 from rag import build_packet
@@ -118,6 +118,48 @@ class SearchServiceTests(unittest.TestCase):
         result = SearchService(retriever).search({"question": "출결", "top_k": 5})
         retriever.search.assert_called_once_with("출결", 100)
         self.assertEqual(result["context"]["sources"][0]["chunk_id"], "overview")
+
+    def test_scope_heavy_search_combines_content_and_original_queries(self):
+        retriever = Mock()
+        retriever.config = {"model": "test-model", "index_text": "body"}
+        retriever.chunks = [hit(f"c{i}") for i in range(120)]
+        answer = hit("answer", body="1, 2학년의 교과는 국어와 수학이다.",
+                     path="초등학교 1·2학년")
+        scope = hit("scope", body="부칙", path="2028년 3월 1일 초등학교 1·2학년")
+        fillers = [hit(f"f{i}") for i in range(99)]
+        retriever.search.side_effect = [
+            [answer, *fillers],
+            [fillers[0], scope, *fillers[1:]],
+        ]
+        question = (
+            "국가교육위원회 고시 제2026-1호에서, 2028년 3월 1일부터 "
+            "초등학교 1·2학년에 적용하도록 정한 교과는 무엇인가요?"
+        )
+        result = SearchService(retriever).search({"question": question, "top_k": 5})
+        self.assertEqual(retriever.search.call_count, 2)
+        self.assertEqual(retriever.search.call_args_list[0].args[0],
+                         "초등학교 1·2학년에 교과는 무엇인가요?")
+        self.assertEqual(retriever.search.call_args_list[1].args[0], question)
+        self.assertEqual(result["context"]["sources"][0]["chunk_id"], "answer")
+        self.assertIn("scope", [source["chunk_id"] for source in result["context"]["sources"]])
+        self.assertTrue(result["context"]["supplemental_query_applied"])
+
+    def test_date_support_replaces_only_the_last_result(self):
+        question = "2028년 3월 1일부터 적용되는 교과는 무엇인가요?"
+        ranked = [hit("answer"), hit("second"), hit("third")]
+        scope = hit("scope", path="2028년 3월 1일 시행")
+        selected = ensure_date_support(question, ranked, [*ranked, scope], 3)
+        self.assertEqual([item["chunk_id"] for item in selected],
+                         ["answer", "second", "scope"])
+
+    def test_date_question_keeps_content_and_scope_for_generation(self):
+        question = "2028년 3월 1일부터 초등학교 교과는 무엇인가요?"
+        sources = generation_sources(question, [
+            hit("answer", body="초등학교 교과는 국어와 수학이다.",
+                path="학교급별 교육과정 > 초등학교 > 편제"),
+            hit("scope", body="부칙", path="다 2028년 3월 1일 초등학교 시행"),
+        ], prefer_first=True)
+        self.assertEqual({source["chunk_id"] for source in sources}, {"answer", "scope"})
 
     def test_school_filter_keeps_specific_and_explicit_general_material(self):
         elementary = hit("e", doc_id="2026 학교생활기록부 기재요령(초)_F_260219")

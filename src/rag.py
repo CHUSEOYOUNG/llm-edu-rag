@@ -77,6 +77,17 @@ def condition_quote_span(condition, source_text):
     exact = literal_quote_span(condition, source_text)
     if exact is not None:
         return exact
+    grade_range = re.fullmatch(
+        r"(?P<start>\d+)\s*[·~∼〜-]\s*(?P<end>\d+)학년", condition
+    )
+    if grade_range:
+        match = re.search(
+            rf"{re.escape(grade_range.group('start'))}\s*[,，·~∼〜-]\s*"
+            rf"{re.escape(grade_range.group('end'))}\s*학년",
+            source_text,
+        )
+        if match:
+            return match.start(), match.end(), match.group()
     reform = re.fullmatch(r"(?P<year>\d{4})\s*개정\s*교육과정", condition)
     if reform:
         match = re.search(

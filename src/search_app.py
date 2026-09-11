@@ -21,7 +21,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from ollama_generate import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from ollama_generate import generate as generate_local
-from rag import (CONDITIONS, ROOT, DenseRetriever, answer_packet, build_packet, compact,
+from query_planning import interleave_rankings, supplemental_content_query
+from rag import (CONDITIONS, DATE, ROOT, DenseRetriever, answer_packet, build_packet, compact,
                  condition_quote_span, missing_dates)
 
 WEB = ROOT / "web"
@@ -272,6 +273,29 @@ def condition_audit(packet):
     ]} for condition in packet["scope_conditions"]]
 
 
+def ensure_date_support(question, hits, candidates, limit):
+    """Keep an explicit date-bearing source alongside content results when possible."""
+    selected = list(hits[:limit])
+    if limit < 2:
+        return selected
+    dates = list(dict.fromkeys(match.group() for match in re.finditer(DATE, question)))
+    for condition in dates:
+        if any(condition_quote_span(condition, hit[field]) is not None
+               for hit in selected for field in ("body", "path", "doc_id")):
+            continue
+        supporting = next((hit for hit in candidates
+                           if hit["chunk_id"] not in {item["chunk_id"] for item in selected}
+                           and any(condition_quote_span(condition, hit[field]) is not None
+                                   for field in ("body", "path", "doc_id"))), None)
+        if supporting is None:
+            continue
+        if len(selected) < limit:
+            selected.append(supporting)
+        else:
+            selected[-1] = supporting
+    return selected
+
+
 def local_information_request(question):
     return bool(LOCAL_INFORMATION.search(compact(question)))
 
@@ -362,11 +386,13 @@ def representative_sections(question, sources):
     return [source for _, source in sorted(representatives)]
 
 
-def generation_sources(question, sources):
+def generation_sources(question, sources, prefer_first=False):
     """Build a small, citation-safe context for the CPU local model."""
     quantity = QUANTITY_QUESTION.search(question)
     comparison = COMPARISON_QUESTION.search(question)
-    limit = 2 if comparison else 1
+    has_explicit_date = any(re.fullmatch(DATE, match.group())
+                            for match in CONDITIONS.finditer(question))
+    limit = 2 if comparison or has_explicit_date else 1
     candidates = sources if quantity or comparison else representative_sections(question, sources)
     conditions = list(dict.fromkeys(match.group() for match in CONDITIONS.finditer(question)))
     prepared = []
@@ -382,6 +408,11 @@ def generation_sources(question, sources):
         prepared.append((rank, item, coverage, support))
 
     selected, seen_paths, uncovered = [], set(), set(conditions)
+    if prefer_first and prepared:
+        _, item, coverage, _ = prepared.pop(0)
+        selected.append(item)
+        seen_paths.add(compact(item["path"]))
+        uncovered -= coverage
     while len(selected) < limit:
         choices = [candidate for candidate in prepared
                    if compact(candidate[1]["path"]) not in seen_paths]
@@ -471,15 +502,36 @@ class SearchService:
         started = time.perf_counter()
         try:
             terms = keyword_terms(search_query)
+            content_query = supplemental_content_query(search_query)
             if school_level != "all":
                 candidate_k = len(self.retriever.chunks)
             else:
-                candidate_k = min(len(self.retriever.chunks), max(k, 100)) if terms else k
-            candidates = self.retriever.search(search_query, candidate_k)
-            candidates = [hit for hit in candidates if matches_school_level(hit, school_level)]
-            hits = keyword_rerank(search_query, candidates)[:k]
+                expand = terms or content_query is not None
+                candidate_k = min(len(self.retriever.chunks), max(k, 100)) if expand else k
+            if content_query is None:
+                candidates = self.retriever.search(search_query, candidate_k)
+                candidates = [hit for hit in candidates
+                              if matches_school_level(hit, school_level)]
+                hits = keyword_rerank(search_query, candidates)[:k]
+                retrieval_queries = [search_query]
+            else:
+                # The content query retrieves the requested fact; the original query
+                # still contributes legal/date scope evidence and remains authoritative.
+                content_candidates = self.retriever.search(content_query, candidate_k)
+                original_candidates = self.retriever.search(search_query, candidate_k)
+                candidate_groups = [[hit for hit in group
+                                     if matches_school_level(hit, school_level)]
+                                    for group in (content_candidates, original_candidates)]
+                candidates = interleave_rankings(
+                    candidate_groups, sum(len(group) for group in candidate_groups) or 1
+                )
+                hits = interleave_rankings(candidate_groups, k)
+                hits = ensure_date_support(search_query, hits, candidates, k)
+                retrieval_queries = [content_query, search_query]
             packet = build_packet(question, hits)
             packet["search_query"] = search_query
+            packet["retrieval_queries"] = retrieval_queries
+            packet["supplemental_query_applied"] = content_query is not None
             packet["follow_up_applied"] = follow_up_applied
             packet["scope_filters_applied"] = school_level != "all"
             packet["school_level_filter"] = school_level
@@ -524,12 +576,21 @@ class SearchService:
             found = self.search(payload)
             # Keep full paragraphs so citations remain literal while avoiding unrelated
             # table/section tokens that dominate CPU-only prompt evaluation.
-            sources = generation_sources(found["search_query"], found["context"]["sources"])
+            sources = generation_sources(
+                found["search_query"], found["context"]["sources"],
+                prefer_first=found["context"].get("supplemental_query_applied", False),
+            )
             packet = build_packet(
                 found["search_query"], sources, max_context_chars=2500
             )
             packet["display_question"] = found["context"]["original_question"]
             packet["search_query"] = found["search_query"]
+            packet["retrieval_queries"] = found["context"].get(
+                "retrieval_queries", [found["search_query"]]
+            )
+            packet["supplemental_query_applied"] = found["context"].get(
+                "supplemental_query_applied", False
+            )
             packet["follow_up_applied"] = found["follow_up_applied"]
             packet["scope_filters_applied"] = found["school_level"] != "all"
             packet["school_level_filter"] = found["school_level"]
