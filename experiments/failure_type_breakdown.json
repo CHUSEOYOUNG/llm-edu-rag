@@ -1,0 +1,687 @@
+{
+  "analysis": "question_failure_type_breakdown",
+  "status": "assistant_reviewed_draft_not_expert_validated",
+  "question_count": 13,
+  "regression_schema_version": 1,
+  "dimensions": {
+    "family": {
+      "conditional_exception": {
+        "question_count": 2,
+        "qids": [
+          "q002",
+          "q004"
+        ],
+        "retrieval": {
+          "n": 2,
+          "metrics": {
+            "hit@1": 0.0,
+            "recall@1": 0.0,
+            "complete@1": 0.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.4167
+          }
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "corpus_abstention": {
+        "question_count": 2,
+        "qids": [
+          "q012",
+          "q013"
+        ],
+        "retrieval": {
+          "n": 0,
+          "metrics": {}
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": null,
+          "citation_valid_rate": null,
+          "unanswerable_rejection_rate": 1.0,
+          "failed_qids": []
+        }
+      },
+      "cross_scope_comparison": {
+        "question_count": 3,
+        "qids": [
+          "q006",
+          "q007",
+          "q009"
+        ],
+        "retrieval": {
+          "n": 3,
+          "metrics": {
+            "hit@1": 0.0,
+            "recall@1": 0.0,
+            "complete@1": 0.0,
+            "hit@5": 0.6667,
+            "recall@5": 0.6667,
+            "complete@5": 0.6667,
+            "hit@10": 1.0,
+            "recall@10": 0.8333,
+            "complete@10": 0.6667,
+            "mrr@10": 0.3889
+          }
+        },
+        "generation": {
+          "n": 3,
+          "task_success_rate": 0.6667,
+          "answer_success_rate": 0.6667,
+          "citation_valid_rate": 0.6667,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q006"
+          ]
+        }
+      },
+      "format_lookup": {
+        "question_count": 1,
+        "qids": [
+          "q003"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "list_lookup": {
+        "question_count": 1,
+        "qids": [
+          "q005"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "policy_lookup": {
+        "question_count": 1,
+        "qids": [
+          "q001"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "table_lookup": {
+        "question_count": 2,
+        "qids": [
+          "q010",
+          "q011"
+        ],
+        "retrieval": {
+          "n": 2,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 0.5,
+          "answer_success_rate": 0.5,
+          "citation_valid_rate": 0.5,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q011"
+          ]
+        }
+      },
+      "temporal_multi_hop": {
+        "question_count": 1,
+        "qids": [
+          "q008"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      }
+    },
+    "evidence_layout": {
+      "multi_passage": {
+        "question_count": 4,
+        "qids": [
+          "q006",
+          "q007",
+          "q008",
+          "q009"
+        ],
+        "retrieval": {
+          "n": 4,
+          "metrics": {
+            "hit@1": 0.25,
+            "recall@1": 0.25,
+            "complete@1": 0.25,
+            "hit@5": 0.75,
+            "recall@5": 0.75,
+            "complete@5": 0.75,
+            "hit@10": 1.0,
+            "recall@10": 0.875,
+            "complete@10": 0.75,
+            "mrr@10": 0.5417
+          }
+        },
+        "generation": {
+          "n": 4,
+          "task_success_rate": 0.75,
+          "answer_success_rate": 0.75,
+          "citation_valid_rate": 0.75,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q006"
+          ]
+        }
+      },
+      "none": {
+        "question_count": 2,
+        "qids": [
+          "q012",
+          "q013"
+        ],
+        "retrieval": {
+          "n": 0,
+          "metrics": {}
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": null,
+          "citation_valid_rate": null,
+          "unanswerable_rejection_rate": 1.0,
+          "failed_qids": []
+        }
+      },
+      "single_passage": {
+        "question_count": 7,
+        "qids": [
+          "q001",
+          "q002",
+          "q003",
+          "q004",
+          "q005",
+          "q010",
+          "q011"
+        ],
+        "retrieval": {
+          "n": 7,
+          "metrics": {
+            "hit@1": 0.7143,
+            "recall@1": 0.7143,
+            "complete@1": 0.7143,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.8333
+          }
+        },
+        "generation": {
+          "n": 7,
+          "task_success_rate": 0.8571,
+          "answer_success_rate": 0.8571,
+          "citation_valid_rate": 0.8571,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q011"
+          ]
+        }
+      }
+    },
+    "operation": {
+      "abstention": {
+        "question_count": 2,
+        "qids": [
+          "q012",
+          "q013"
+        ],
+        "retrieval": {
+          "n": 0,
+          "metrics": {}
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": null,
+          "citation_valid_rate": null,
+          "unanswerable_rejection_rate": 1.0,
+          "failed_qids": []
+        }
+      },
+      "comparison": {
+        "question_count": 3,
+        "qids": [
+          "q006",
+          "q007",
+          "q009"
+        ],
+        "retrieval": {
+          "n": 3,
+          "metrics": {
+            "hit@1": 0.0,
+            "recall@1": 0.0,
+            "complete@1": 0.0,
+            "hit@5": 0.6667,
+            "recall@5": 0.6667,
+            "complete@5": 0.6667,
+            "hit@10": 1.0,
+            "recall@10": 0.8333,
+            "complete@10": 0.6667,
+            "mrr@10": 0.3889
+          }
+        },
+        "generation": {
+          "n": 3,
+          "task_success_rate": 0.6667,
+          "answer_success_rate": 0.6667,
+          "citation_valid_rate": 0.6667,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q006"
+          ]
+        }
+      },
+      "exception": {
+        "question_count": 2,
+        "qids": [
+          "q002",
+          "q004"
+        ],
+        "retrieval": {
+          "n": 2,
+          "metrics": {
+            "hit@1": 0.0,
+            "recall@1": 0.0,
+            "complete@1": 0.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.4167
+          }
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "list": {
+        "question_count": 3,
+        "qids": [
+          "q005",
+          "q008",
+          "q009"
+        ],
+        "retrieval": {
+          "n": 3,
+          "metrics": {
+            "hit@1": 0.6667,
+            "recall@1": 0.6667,
+            "complete@1": 0.6667,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.8333
+          }
+        },
+        "generation": {
+          "n": 3,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "lookup": {
+        "question_count": 7,
+        "qids": [
+          "q001",
+          "q002",
+          "q003",
+          "q004",
+          "q005",
+          "q010",
+          "q011"
+        ],
+        "retrieval": {
+          "n": 7,
+          "metrics": {
+            "hit@1": 0.7143,
+            "recall@1": 0.7143,
+            "complete@1": 0.7143,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.8333
+          }
+        },
+        "generation": {
+          "n": 7,
+          "task_success_rate": 0.8571,
+          "answer_success_rate": 0.8571,
+          "citation_valid_rate": 0.8571,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q011"
+          ]
+        }
+      },
+      "multi_claim": {
+        "question_count": 1,
+        "qids": [
+          "q004"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 0.0,
+            "recall@1": 0.0,
+            "complete@1": 0.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 0.5
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      },
+      "period_interpretation": {
+        "question_count": 1,
+        "qids": [
+          "q011"
+        ],
+        "retrieval": {
+          "n": 1,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 1,
+          "task_success_rate": 0.0,
+          "answer_success_rate": 0.0,
+          "citation_valid_rate": 0.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q011"
+          ]
+        }
+      },
+      "quantity": {
+        "question_count": 5,
+        "qids": [
+          "q003",
+          "q006",
+          "q007",
+          "q010",
+          "q011"
+        ],
+        "retrieval": {
+          "n": 5,
+          "metrics": {
+            "hit@1": 0.6,
+            "recall@1": 0.6,
+            "complete@1": 0.6,
+            "hit@5": 0.8,
+            "recall@5": 0.8,
+            "complete@5": 0.8,
+            "hit@10": 1.0,
+            "recall@10": 0.9,
+            "complete@10": 0.8,
+            "mrr@10": 0.7333
+          }
+        },
+        "generation": {
+          "n": 5,
+          "task_success_rate": 0.6,
+          "answer_success_rate": 0.6,
+          "citation_valid_rate": 0.6,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q006",
+            "q011"
+          ]
+        }
+      },
+      "school_scope": {
+        "question_count": 4,
+        "qids": [
+          "q006",
+          "q007",
+          "q008",
+          "q009"
+        ],
+        "retrieval": {
+          "n": 4,
+          "metrics": {
+            "hit@1": 0.25,
+            "recall@1": 0.25,
+            "complete@1": 0.25,
+            "hit@5": 0.75,
+            "recall@5": 0.75,
+            "complete@5": 0.75,
+            "hit@10": 1.0,
+            "recall@10": 0.875,
+            "complete@10": 0.75,
+            "mrr@10": 0.5417
+          }
+        },
+        "generation": {
+          "n": 4,
+          "task_success_rate": 0.75,
+          "answer_success_rate": 0.75,
+          "citation_valid_rate": 0.75,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q006"
+          ]
+        }
+      },
+      "table": {
+        "question_count": 2,
+        "qids": [
+          "q010",
+          "q011"
+        ],
+        "retrieval": {
+          "n": 2,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 0.5,
+          "answer_success_rate": 0.5,
+          "citation_valid_rate": 0.5,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": [
+            "q011"
+          ]
+        }
+      },
+      "temporal_condition": {
+        "question_count": 2,
+        "qids": [
+          "q001",
+          "q008"
+        ],
+        "retrieval": {
+          "n": 2,
+          "metrics": {
+            "hit@1": 1.0,
+            "recall@1": 1.0,
+            "complete@1": 1.0,
+            "hit@5": 1.0,
+            "recall@5": 1.0,
+            "complete@5": 1.0,
+            "hit@10": 1.0,
+            "recall@10": 1.0,
+            "complete@10": 1.0,
+            "mrr@10": 1.0
+          }
+        },
+        "generation": {
+          "n": 2,
+          "task_success_rate": 1.0,
+          "answer_success_rate": 1.0,
+          "citation_valid_rate": 1.0,
+          "unanswerable_rejection_rate": null,
+          "failed_qids": []
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Question categories were drafted after observing development failures.",
+    "Operation groups overlap and must not be summed as disjoint samples.",
+    "Groups with one or two questions are descriptive cases, not stable estimates.",
+    "Citation validity checks provenance format, not semantic entailment."
+  ],
+  "inputs": {
+    "taxonomy_sha256": "b959a8bebd061b8c0bc2515001b284807e7f7b6a38ea3fcf43d63752cecf4a71",
+    "questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
+    "regression_sha256": "3205c4afb9615a5a5b06d254c58ce21bb58aba142ee6a88a66450fa4116e847b"
+  }
+}

@@ -146,7 +146,7 @@ node --test tests/test_presentation.cjs
 cd backend && ./gradlew test
 ```
 
-현재 Python 테스트 140개, JavaScript 테스트 12개와 Spring Boot 테스트를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 적용 조건·내용 검색문 분리, 최근 질문 저장·개별 삭제, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 근거 번호를 원문 인용으로 복원, 손상된 로컬 JSON 한 차례 복구, 생성 요청 대기열, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
+현재 Python 테스트 142개, JavaScript 테스트 12개와 Spring Boot 테스트를 둔다. FastAPI 요청 스키마와 OpenAPI 문서, 정적 파일 제공, 잘못된 요청 차단, 학교급 필터, 직전 질문을 잇는 검색, 적용 조건·내용 검색문 분리, 최근 질문 저장·개별 삭제, PDF 페이지 연결, 깨진 표 표시, 로컬 생성 요청 분리, 잘못된 인용 차단, 생성 컨텍스트 축소 시 학교급 보존, 근거 번호를 원문 인용으로 복원, 손상된 로컬 JSON 한 차례 복구, 생성 요청 대기열, 질문 구조별 실패 분석, 답변 가능 여부 평가셋 분리, Qdrant 색인 재로딩, Spring 컨텍스트와 FastAPI 프록시 계약, 컨테이너 구성의 주요 안전 조건도 테스트에 포함되어 있다. GitHub Actions는 같은 검사와 CPU 전용 Docker 이미지 빌드를 실행한다.
 
 ### 13문항 회귀 평가
 
@@ -226,6 +226,7 @@ Dense top-20을 `BAAI/bge-reranker-v2-m3`로 재정렬하는 실험에서는 MRR
 - [검색·생성 회귀 평가 분리](notes/2026-09-10-regression-harness.md)
 - [적용 조건과 내용 검색문 분리](notes/2026-09-11-scope-query-separation.md)
 - [골드셋 확장 검수 큐](notes/2026-09-11-gold-expansion-queue.md)
+- [질문 구조별 실패 분석](notes/2026-09-11-failure-type-analysis.md)
 
 ## 답변 생성 코드
 

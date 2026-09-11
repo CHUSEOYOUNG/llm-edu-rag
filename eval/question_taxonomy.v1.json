@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "assistant_reviewed_draft_not_expert_validated",
+  "description": "질문의 정답 내용이 아니라 필요한 근거 구조와 처리 연산을 분류한다.",
+  "rows": [
+    {"qid": "q001", "family": "policy_lookup", "evidence_layout": "single_passage", "operations": ["lookup", "temporal_condition"], "rationale": "삭제 시점을 한 규정 문단에서 확인한다."},
+    {"qid": "q002", "family": "conditional_exception", "evidence_layout": "single_passage", "operations": ["lookup", "exception"], "rationale": "원칙적 정정 불가와 객관적 증빙 예외를 함께 확인한다."},
+    {"qid": "q003", "family": "format_lookup", "evidence_layout": "single_passage", "operations": ["lookup", "quantity"], "rationale": "글자별 Byte 값을 한 문단에서 확인한다."},
+    {"qid": "q004", "family": "conditional_exception", "evidence_layout": "single_passage", "operations": ["lookup", "exception", "multi_claim"], "rationale": "감축 허용 범위와 감축 금지 교과가 같은 조항에 있다."},
+    {"qid": "q005", "family": "list_lookup", "evidence_layout": "single_passage", "operations": ["lookup", "list"], "rationale": "중학교 선택 교과 목록을 한 편제 문단에서 확인한다."},
+    {"qid": "q006", "family": "cross_scope_comparison", "evidence_layout": "multi_passage", "operations": ["comparison", "quantity", "school_scope"], "rationale": "초등학교와 중학교 수업 시간 근거가 서로 다른 문단에 있다."},
+    {"qid": "q007", "family": "cross_scope_comparison", "evidence_layout": "multi_passage", "operations": ["comparison", "quantity", "school_scope"], "rationale": "초등학교와 중학교 정보 교육 시수를 각각 확인해야 한다."},
+    {"qid": "q008", "family": "temporal_multi_hop", "evidence_layout": "multi_passage", "operations": ["list", "temporal_condition", "school_scope"], "rationale": "시행일·적용 학년과 실제 교과 목록이 서로 다른 문단에 있다."},
+    {"qid": "q009", "family": "cross_scope_comparison", "evidence_layout": "multi_passage", "operations": ["comparison", "list", "school_scope"], "rationale": "초등학교와 중학교 편제 문단을 함께 확인한다."},
+    {"qid": "q010", "family": "table_lookup", "evidence_layout": "single_passage", "operations": ["lookup", "table", "quantity"], "rationale": "중학교 표에서 3년 기준 시수를 읽는다."},
+    {"qid": "q011", "family": "table_lookup", "evidence_layout": "single_passage", "operations": ["lookup", "table", "quantity", "period_interpretation"], "rationale": "초등학교 표 값과 2년 기준 주석을 함께 해석해야 한다."},
+    {"qid": "q012", "family": "corpus_abstention", "evidence_layout": "none", "operations": ["abstention"], "rationale": "고정 코퍼스에 대학 입시 반영 비율이 없다."},
+    {"qid": "q013", "family": "corpus_abstention", "evidence_layout": "none", "operations": ["abstention"], "rationale": "고정 코퍼스에 교사 임용시험 접수 일정이 없다."}
+  ]
+}
