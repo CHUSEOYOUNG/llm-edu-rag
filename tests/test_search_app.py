@@ -46,6 +46,15 @@ class SearchServiceTests(unittest.TestCase):
             ("고등학교 수업은 몇 분인가요", True))
         self.assertEqual(follow_up_query(None, "중학교는?"), ("중학교는?", False))
 
+    def test_grade_only_follow_up_replaces_the_previous_grade(self):
+        self.assertEqual(
+            follow_up_query(
+                "초등학교 3~4학년군 국어 수업 시수는 몇 시간이야?",
+                "그럼 5~6학년은?",
+            ),
+            ("초등학교 5~6학년군 국어 수업 시수는 몇 시간이야", True),
+        )
+
     def test_only_explicit_follow_up_language_reuses_the_previous_question(self):
         previous = "중학교 출결은 어떻게 처리하나요?"
         self.assertEqual(
@@ -252,6 +261,20 @@ class SearchServiceTests(unittest.TestCase):
         )
         self.assertIn("|국어|442|", focused)
         self.assertIn("정보는 68시간", focused)
+
+    def test_table_question_with_korean_particle_keeps_the_full_table(self):
+        body = """|교과|3~4학년|5~6학년|\n|---|---|---|\n|수학|272|272|\n\n⑤ 정보교육은 34시간 이상 편성한다."""
+        focused = focused_quantity_body(
+            "초등학교 3~4학년군 수학의 기준 수업 시수는 몇 시간인가요?", body
+        )
+        self.assertEqual(focused, body)
+
+    def test_total_hours_question_keeps_table_and_period_note(self):
+        body = """|구분|1~3학년|\n|---|---|\n|총 수업 시간 수|3,366|\n\n③ 총 수업 시간 수는 3년간의 최소 수업 시수다."""
+        self.assertEqual(
+            focused_quantity_body("중학교 3년간 최소 총 수업 시간은 몇 시간인가요?", body),
+            body,
+        )
 
     def test_quantity_generation_skips_wrong_school_scope(self):
         selected = generation_sources("중학교 수업은 몇 분인가요?", [

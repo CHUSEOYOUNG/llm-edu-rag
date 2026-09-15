@@ -56,6 +56,8 @@ PDF
 
 다음 평가를 위한 50문항 초안도 별도로 만들었다. 단일 근거, 여러 근거, 표·수치, 후속 질문, 답 없음 유형을 10개씩 두고 개발 35문항과 최종 테스트 15문항으로 나눴다. 아직 사람 검수를 마치지 않은 새 37문항은 아래 결과나 현재 회귀 평가에 포함하지 않았다. 구성과 검수 방법은 [평가셋 V2 작성 안내](eval/gold_v2/README.md)에서 볼 수 있다.
 
+개발 분할 35문항은 별도의 assistant-reviewed 초안으로도 측정했다. 답변 가능 27문항의 검색 결과는 Recall@5와 Complete@5가 모두 `1.0000`, MRR@10은 `0.8377`이었다. 최종 테스트 15문항은 실행하지 않았다. 이 과정에서 초·중·고 기재요령에 반복된 동등 근거가 골드에서 빠지면 검색 실패로 잘못 집계된다는 점도 확인해 대체 근거를 보완했다. 자세한 과정은 [V2 개발 기준선 기록](notes/2026-09-15-gold-v2-development-baseline.md)에 남겼다.
+
 | 구분 | 지표 | 결과 |
 |---|---|---:|
 | 검색 | Recall@5 | 1.0000 |
@@ -189,7 +191,7 @@ uv run python eval/build_gold_v2.py
 uv run python eval/validate_gold_v2.py
 ```
 
-현재 Python 테스트는 155개, 화면 JavaScript 테스트는 12개다. GitHub Actions에서는 Python·JavaScript·Spring 테스트와 CPU용 Docker 이미지 빌드를 확인한다.
+현재 Python 테스트는 164개, 화면 JavaScript 테스트는 12개다. GitHub Actions에서는 Python·JavaScript·Spring 테스트와 CPU용 Docker 이미지 빌드를 확인한다.
 
 ## 폴더 구성
 

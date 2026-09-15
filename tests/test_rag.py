@@ -463,6 +463,10 @@ class OllamaTests(unittest.TestCase):
         self.assertEqual(payload["options"]["num_predict"], 256)
         self.assertEqual(payload["keep_alive"], "10m")
         self.assertEqual(payload["format"]["properties"]["evidence_ids"]["minItems"], 0)
+        self.assertEqual(
+            payload["format"]["properties"]["evidence_ids"]["items"]["enum"],
+            ["S1-P1"],
+        )
         sent = json.loads(payload["messages"][1]["content"])
         self.assertNotIn("body", sent["sources"][0])
         self.assertEqual(sent["sources"][0]["passages"], [{
@@ -573,6 +577,26 @@ class OllamaTests(unittest.TestCase):
             evidence_map[fact["value_evidence_id"]],
             evidence_map[fact["period_evidence_id"]],
         ])
+
+    def test_table_fact_strips_korean_particle_from_subject(self):
+        body = (
+            "|구분 1~2학년|3~4학년|5~6학년|\n"
+            "|---|---|---|\n"
+            "|수학 256 사회/도덕|272|272|\n"
+            "|즐거운 생활 256 영어|136|204|\n\n"
+            "② 시간 배당은 연간 34주를 기준으로 2년간의 기준 수업 시수를 나타낸 것이다."
+        )
+        cases = [
+            ("초등학교 3~4학년군 수학의 기준 수업 시수는 몇 시간인가요?", "수학", "3~4학년", "272"),
+            ("초등학교 5~6학년군 영어의 기준 수업 시수는 몇 시간인가요?", "영어", "5~6학년", "204"),
+        ]
+        for question, label, grade, value in cases:
+            with self.subTest(question=question):
+                packet = build_packet(question, [hit(body=body, path="2 초등학교")])
+                model_packet, _ = prepare_model_packet(packet)
+                fact = model_packet["table_facts"][0]
+                self.assertEqual((fact["row_label"], fact["column_label"], fact["value"]),
+                                 (label, grade, value))
 
     def test_table_evidence_is_not_completed_for_a_mismatched_answer(self):
         content = json.dumps({

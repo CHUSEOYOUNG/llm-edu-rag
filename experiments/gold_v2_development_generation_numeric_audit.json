@@ -1,0 +1,179 @@
+{
+  "analysis": "retrospective_reference_number_match",
+  "evaluated_count": 19,
+  "matched_count": 13,
+  "reference_number_match_rate": 0.6842,
+  "per_question": [
+    {
+      "qid": "v2q001",
+      "expected_numbers": [
+        "2"
+      ],
+      "answer": "학교폭력으로 4호나 5호 조치를 받은 경우, 생기부에서 학생의 졸업일로부터 2년이 지난 후에 지워집니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q003",
+      "expected_numbers": [
+        "1",
+        "3"
+      ],
+      "answer": "생기부 글자수 셀 때 한글 한 글자는 3바이트로 계산됩니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q004",
+      "expected_numbers": [
+        "20"
+      ],
+      "answer": "초등학교에서 교과 수업 시수는 학교의 특성, 학생 및 교사·학부모의 요구에 따라 자율적으로 조정할 수 있지만, 체육 및 예술(음악/미술) 교과는 기준 수업 시수를 감축할 수 없습니다. 창의적 체험활동은 20% 범위 내에서 시수를 증감할 수 있습니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q006",
+      "expected_numbers": [
+        "40",
+        "45"
+      ],
+      "answer": "2022 개정 교육과정 기준으로 초등학교의 수업 한 시간은 40분을 원칙으로 하고, 중학교의 수업 한 시간은 45분을 원칙으로 한다. [S1] [S2]",
+      "match": true
+    },
+    {
+      "qid": "v2q007",
+      "expected_numbers": [
+        "34",
+        "68"
+      ],
+      "answer": "2022 개정 교육과정 기준으로 초등학교의 정보 교육은 최소 34시간, 중학교의 정보 교육은 최소 68시간을 편성해야 한다. [S1] [S2]",
+      "match": true
+    },
+    {
+      "qid": "v2q008",
+      "expected_numbers": [
+        "1",
+        "2"
+      ],
+      "answer": "코퍼스에 포함된 국가교육위원회 고시 제2026-1호에서는 2028년 3월 1일부터 초등학교 1·2학년에 적용되는 교과로 국어, 수학, 바른 생활, 슬기로운 생활, 건강한 생활, 즐거운 생활을 정하고 있습니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q010",
+      "expected_numbers": [
+        "442"
+      ],
+      "answer": "중학교 국어 수업 시수는 3년간 442시간입니다. 이는 연간 34주 기준으로 3년간의 기준 수업 시수를 나타내며, 표에서 1~3학년 국어 수업 시수가 442시간으로 명시되어 있습니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q011",
+      "expected_numbers": [
+        "408"
+      ],
+      "answer": "초등학교 3~4학년 국어 수업 시수는 2년간 408시간입니다. 이는 연간 34주를 기준으로 한 기준 수업 시수입니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q014",
+      "expected_numbers": [
+        "5"
+      ],
+      "answer": "질병으로 인한 결석은 결석한 날로부터 5일 이내에 결석 신고서와 의사의 진단서를 제출해야 합니다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q019",
+      "expected_numbers": [
+        "2",
+        "3"
+      ],
+      "answer": "학년을 수료하려면 수업일수의 3분의 2 이상 출석해야 한다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q020",
+      "expected_numbers": [
+        "1",
+        "20",
+        "35",
+        "50",
+        "6"
+      ],
+      "answer": null,
+      "match": false
+    },
+    {
+      "qid": "v2q021",
+      "expected_numbers": [
+        "5"
+      ],
+      "answer": "만성질환 학생이 질병결석으로 인정받으려면, 결석한 날로부터 5일 이내에 의사의 진단서(소견서)를 첨부한 결석 신고서를 제출해야 하며, 같은 학기에는 매번 진단서를 내야 하지 않으며, 학기 초 최초 제출한 의사의 진단서로 해당 학기 전체의 질병 결석을 갈음할 수 있다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q025",
+      "expected_numbers": [
+        "2",
+        "272"
+      ],
+      "answer": null,
+      "match": false
+    },
+    {
+      "qid": "v2q026",
+      "expected_numbers": [
+        "2",
+        "204"
+      ],
+      "answer": null,
+      "match": false
+    },
+    {
+      "qid": "v2q027",
+      "expected_numbers": [
+        "3",
+        "374"
+      ],
+      "answer": null,
+      "match": false
+    },
+    {
+      "qid": "v2q028",
+      "expected_numbers": [
+        "3",
+        "3366"
+      ],
+      "answer": null,
+      "match": false
+    },
+    {
+      "qid": "v2q033",
+      "expected_numbers": [
+        "2",
+        "408"
+      ],
+      "answer": "초등학교 5~6학년군 국어 수업 시수는 2년간 2,176시간이며, 이는 연간 34주를 기준으로 산정한 값입니다. [S1]",
+      "match": false
+    },
+    {
+      "qid": "v2q034",
+      "expected_numbers": [
+        "45"
+      ],
+      "answer": "중학교 수업 한 시간은 45분을 원칙으로 한다. [S1]",
+      "match": true
+    },
+    {
+      "qid": "v2q037",
+      "expected_numbers": [
+        "68"
+      ],
+      "answer": "중학교 정보교육은 최소 68시간이 편성된다. [S1]",
+      "match": true
+    }
+  ],
+  "limitation": "Number coverage does not verify units, relationships, or non-numeric meaning.",
+  "inputs": {
+    "questions_sha256": "585991d46b38d321e77d0235c69413a068e83751c9c4d835a418243fecf044f8",
+    "result_sha256": "8a8882bc0af0b082382199cb0160b5bb1ff59fb88138a7aa6f052ecc0cda7474"
+  }
+}

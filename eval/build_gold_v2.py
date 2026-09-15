@@ -263,7 +263,7 @@ def new_candidates() -> list[dict[str, Any]]:
             "원칙적으로 정정할 수 없다.", [chunk(HIGH, "s225::19조::0")],
             "followup_record_correction_without_evidence"),
         follow_up("authored-f004", "development",
-            "중학교 선택 교과에는 어떤 과목이 있어?", "중학교 선택 교과에는 한문, 환경, 생활 외국어, 보건, 진로와 직업 등이 있어.", "생활 외국어에는 뭐가 있어?",
+            "중학교 선택 교과에는 어떤 과목이 있어?", "중학교 선택 교과에는 한문, 환경, 생활 외국어, 보건, 진로와 직업 등이 있어.", "그럼 생활 외국어에는 뭐가 있어?",
             "중학교 선택 교과의 생활 외국어에는 어떤 과목이 있나요?",
             "생활 독일어, 프랑스어, 스페인어, 중국어, 일본어, 러시아어, 아랍어, 베트남어가 있다.",
             [chunk(CURRICULUM, "s022::1::0")], "followup_middle_living_foreign_languages"),

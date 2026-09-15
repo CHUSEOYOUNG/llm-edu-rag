@@ -19,8 +19,9 @@ PERIOD_NOTE = re.compile(
 TABLE_SEPARATOR = re.compile(r"^\s*:?-{3,}:?\s*$")
 QUESTION_STOPWORDS = {
     "초등학교", "중학교", "고등학교", "학년", "수업", "시수", "시간",
-    "몇", "인가요", "알려줘", "기준", "교과", "과목",
+    "학년군", "몇", "인가요", "알려줘", "기준", "교과", "과목",
 }
+KOREAN_PARTICLE = re.compile(r"(?:에서|에게|으로|까지|부터|은|는|이|가|을|를|의|에|로)$")
 
 
 def readable(text: str) -> str:
@@ -48,10 +49,11 @@ def contains_numeric_value(text: str, value: str) -> bool:
 
 
 def question_terms(question: str) -> list[str]:
-    terms = {
-        term for term in re.findall(r"[가-힣]{2,}", question)
-        if term not in QUESTION_STOPWORDS and not term.endswith("학년")
-    }
+    terms = set()
+    for raw in re.findall(r"[가-힣]{2,}", question):
+        term = KOREAN_PARTICLE.sub("", raw)
+        if len(term) >= 2 and term not in QUESTION_STOPWORDS and not term.endswith("학년"):
+            terms.add(term)
     return sorted(terms, key=lambda term: (-len(term), term))
 
 

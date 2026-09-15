@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "question_count": 5,
+  "retrieval": {
+    "evaluated_count": 5,
+    "overall": {
+      "hit@1": 1.0,
+      "recall@1": 0.9,
+      "complete@1": 0.8,
+      "hit@5": 1.0,
+      "recall@5": 1.0,
+      "complete@5": 1.0,
+      "hit@10": 1.0,
+      "recall@10": 1.0,
+      "complete@10": 1.0,
+      "mrr@10": 1.0
+    },
+    "latency": {
+      "p50_ms": 1455.8,
+      "p95_ms": 5592.9
+    },
+    "per_question": [
+      {
+        "qid": "v2q020",
+        "category": "multi_evidence",
+        "question": "학생선수가 대회나 훈련으로 빠질 때 학교급별 허용일수와 지각·조퇴·결과의 일수 환산 기준은 어떻게 되나요?",
+        "expected_resolved_question": "학생선수가 대회나 훈련으로 빠질 때 학교급별 허용일수와 지각·조퇴·결과의 일수 환산 기준은 어떻게 되나요?",
+        "actual_search_query": "학생선수가 대회나 훈련으로 빠질 때 학교급별 허용일수와 지각·조퇴·결과의 일수 환산 기준은 어떻게 되나요?",
+        "follow_up_applied": false,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 0.5,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "2026 학교생활기록부 기재요령(초)_F_260219::s509::나::3",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s342::나::2",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s136::나::2",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s509::나::2",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s342::나::1",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s146::다::0",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s519::다::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s352::다::0",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s136::나::1",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s353::4::5"
+        ],
+        "latency_ms": 5592.9
+      },
+      {
+        "qid": "v2q025",
+        "category": "table_numeric",
+        "question": "초등학교 3~4학년군 수학의 기준 수업 시수는 몇 시간인가요?",
+        "expected_resolved_question": "초등학교 3~4학년군 수학의 기준 수업 시수는 몇 시간인가요?",
+        "actual_search_query": "초등학교 3~4학년군 수학의 기준 수업 시수는 몇 시간인가요?",
+        "follow_up_applied": false,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s027::나::0",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s030::1::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s339::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s026::2::0",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s133::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s366::1::4"
+        ],
+        "latency_ms": 566.6
+      },
+      {
+        "qid": "v2q026",
+        "category": "table_numeric",
+        "question": "초등학교 5~6학년군 영어의 기준 수업 시수는 몇 시간인가요?",
+        "expected_resolved_question": "초등학교 5~6학년군 영어의 기준 수업 시수는 몇 시간인가요?",
+        "actual_search_query": "초등학교 5~6학년군 영어의 기준 수업 시수는 몇 시간인가요?",
+        "follow_up_applied": false,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s027::나::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s026::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s028::3::2",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s001::라::1",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s030::1::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0",
+          "[별책41] 한국어 교육과정(제2017-131호)::s595::나::15"
+        ],
+        "latency_ms": 164.4
+      },
+      {
+        "qid": "v2q027",
+        "category": "table_numeric",
+        "question": "중학교 수학의 3년간 기준 수업 시수는 몇 시간인가요?",
+        "expected_resolved_question": "중학교 수학의 3년간 기준 수업 시수는 몇 시간인가요?",
+        "actual_search_query": "중학교 수학의 3년간 기준 수업 시수는 몇 시간인가요?",
+        "follow_up_applied": false,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s030::1::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s027::나::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s026::2::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s339::8조::0",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s133::8조::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s366::1::4"
+        ],
+        "latency_ms": 1455.8
+      },
+      {
+        "qid": "v2q028",
+        "category": "table_numeric",
+        "question": "중학교 3년간 최소 총 수업 시간은 몇 시간인가요?",
+        "expected_resolved_question": "중학교 3년간 최소 총 수업 시간은 몇 시간인가요?",
+        "actual_search_query": "중학교 3년간 최소 총 수업 시간은 몇 시간인가요?",
+        "follow_up_applied": false,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s033::5::0",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s030::1::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s027::나::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s026::2::0",
+          "2026 학교생활기록부 기재요령(중)_F_260227::s339::8조::0",
+          "2026 학교생활기록부 기재요령(고)_F_260219::s133::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::2"
+        ],
+        "latency_ms": 2690.4
+      }
+    ],
+    "by_category": {
+      "multi_evidence": {
+        "evaluated_count": 1,
+        "overall": {
+          "hit@1": 1.0,
+          "recall@1": 0.5,
+          "complete@1": 0.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        }
+      },
+      "table_numeric": {
+        "evaluated_count": 4,
+        "overall": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        }
+      }
+    }
+  },
+  "generation": {
+    "enabled": true,
+    "per_question": [
+      {
+        "qid": "v2q020",
+        "category": "multi_evidence",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "draft_answer",
+        "task_success": true,
+        "citation_ok": true,
+        "latency_ms": 6533.5,
+        "answer": "학생선수가 대회나 훈련에 참가할 때, 1일 단위로 누적하여 관리되며, 초등학교는 20일, 중학교는 35일, 고등학교는 50일의 허용일수에서 해당 일수를 제외한다. 지각·조퇴·결과는 6시간(수업시간) 누적 시 1일로 간주한다. [S1]",
+        "reason": ""
+      },
+      {
+        "qid": "v2q025",
+        "category": "table_numeric",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "validation_failed",
+        "task_success": false,
+        "citation_ok": false,
+        "latency_ms": 7475.2,
+        "answer": null,
+        "reason": "표에서 구조화한 값과 답변의 수치가 일치하지 않습니다."
+      },
+      {
+        "qid": "v2q026",
+        "category": "table_numeric",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "draft_answer",
+        "task_success": true,
+        "citation_ok": true,
+        "latency_ms": 7344.9,
+        "answer": "초등학교 5~6학년군 영어의 기준 수업 시수는 2년간 2,176시간이며, 이는 연간 34주를 기준으로 산정한 값입니다. [S1]",
+        "reason": ""
+      },
+      {
+        "qid": "v2q027",
+        "category": "table_numeric",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "draft_answer",
+        "task_success": true,
+        "citation_ok": true,
+        "latency_ms": 8067.2,
+        "answer": "중학교 수학의 3년간 기준 수업 시수는 374시간이다. 이는 연간 34주를 기준으로 3년간의 기준 수업 시수를 나타낸 것으로, 표에서 1~3학년 수학 항목에 명시되어 있다. [S1]",
+        "reason": ""
+      },
+      {
+        "qid": "v2q028",
+        "category": "table_numeric",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "draft_answer",
+        "task_success": true,
+        "citation_ok": true,
+        "latency_ms": 9129.6,
+        "answer": "중학교 3년간의 최소 총 수업 시간은 연간 34주를 기준으로 3년간 기준 수업 시수인 3,366시간이다. 이는 교과(군) 및 창의적 체험활동의 수업 시수를 학년별로 배당한 총 수업 시간으로, 3년간의 최소 수업 시수를 나타낸다. [S1]",
+        "reason": ""
+      }
+    ],
+    "overall": {
+      "task_success_rate": 0.8,
+      "answer_success_rate": 0.8,
+      "unanswerable_rejection_rate": null,
+      "citation_valid_rate": 0.8
+    },
+    "latency": {
+      "p50_ms": 7475.2,
+      "p95_ms": 9129.6
+    },
+    "citation_validation": "literal source span only; semantic entailment is not measured",
+    "answer_correctness": "not measured; generated answers require manual review",
+    "by_category": {
+      "multi_evidence": {
+        "evaluated_count": 1,
+        "task_success_rate": 1.0,
+        "answer_success_rate": 1.0,
+        "unanswerable_rejection_rate": null,
+        "citation_valid_rate": 1.0
+      },
+      "table_numeric": {
+        "evaluated_count": 4,
+        "task_success_rate": 0.75,
+        "answer_success_rate": 0.75,
+        "unanswerable_rejection_rate": null,
+        "citation_valid_rate": 0.75
+      }
+    }
+  },
+  "created_at": "2026-09-15T02:14:41.082280+00:00",
+  "configuration": {
+    "questions": "gold-v2-generation-failures.jsonl",
+    "top_k": 10,
+    "retriever_model": "BAAI/bge-m3",
+    "index_text": "body",
+    "generation_model": "qwen3:4b-instruct"
+  }
+}

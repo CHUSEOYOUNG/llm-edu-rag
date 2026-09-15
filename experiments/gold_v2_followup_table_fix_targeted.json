@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "question_count": 1,
+  "retrieval": {
+    "evaluated_count": 1,
+    "overall": {
+      "hit@1": 1.0,
+      "recall@1": 1.0,
+      "complete@1": 1.0,
+      "hit@5": 1.0,
+      "recall@5": 1.0,
+      "complete@5": 1.0,
+      "hit@10": 1.0,
+      "recall@10": 1.0,
+      "complete@10": 1.0,
+      "mrr@10": 1.0
+    },
+    "latency": {
+      "p50_ms": 3714.5,
+      "p95_ms": 3714.5
+    },
+    "per_question": [
+      {
+        "qid": "v2q033",
+        "category": "follow_up",
+        "question": "그럼 5~6학년은?",
+        "expected_resolved_question": "초등학교 5~6학년군 국어의 기준 수업 시수는 몇 시간인가요?",
+        "actual_search_query": "초등학교 5~6학년군 국어 수업 시수는 몇 시간이야",
+        "follow_up_applied": true,
+        "metrics": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        },
+        "ranked_chunk_ids": [
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s023::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s027::나::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s026::2::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s028::3::2",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::3",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s020::2::2",
+          "2026 학교생활기록부 기재요령(초)_F_260219::s504::8조::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s030::1::0",
+          "(2022 개정) 초·중등학교 교육과정 [별책1] 총론_ 국가교육위원회 고시 제2026-1호(2026.1.21.)::s001::라::1"
+        ],
+        "latency_ms": 3714.5
+      }
+    ],
+    "by_category": {
+      "follow_up": {
+        "evaluated_count": 1,
+        "overall": {
+          "hit@1": 1.0,
+          "recall@1": 1.0,
+          "complete@1": 1.0,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "complete@5": 1.0,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "complete@10": 1.0,
+          "mrr@10": 1.0
+        }
+      }
+    }
+  },
+  "generation": {
+    "enabled": true,
+    "per_question": [
+      {
+        "qid": "v2q033",
+        "category": "follow_up",
+        "answerable": true,
+        "expected_status": "draft_answer",
+        "actual_status": "draft_answer",
+        "task_success": true,
+        "citation_ok": true,
+        "reference_number_match": true,
+        "latency_ms": 7608.1,
+        "answer": "초등학교 5~6학년군 국어 수업 시수는 2년간 기준으로 408시간이다. 이는 연간 34주를 기준으로 한 값으로, 기준 기간이 2년간임을 명시한다. [S1]",
+        "reason": ""
+      }
+    ],
+    "overall": {
+      "task_success_rate": 1.0,
+      "answer_success_rate": 1.0,
+      "unanswerable_rejection_rate": null,
+      "citation_valid_rate": 1.0,
+      "reference_number_match_rate": 1.0
+    },
+    "latency": {
+      "p50_ms": 7608.1,
+      "p95_ms": 7608.1
+    },
+    "citation_validation": "literal source span only; semantic entailment is not measured",
+    "answer_correctness": "reference numbers are checked; non-numeric semantic correctness requires manual review",
+    "by_category": {
+      "follow_up": {
+        "evaluated_count": 1,
+        "task_success_rate": 1.0,
+        "answer_success_rate": 1.0,
+        "unanswerable_rejection_rate": null,
+        "citation_valid_rate": 1.0,
+        "reference_number_match_rate": 1.0
+      }
+    }
+  },
+  "created_at": "2026-09-15T02:20:57.334923+00:00",
+  "configuration": {
+    "questions": "gold-v2-followup-table-fix.jsonl",
+    "top_k": 10,
+    "retriever_model": "BAAI/bge-m3",
+    "index_text": "body",
+    "generation_model": "qwen3:4b-instruct"
+  }
+}

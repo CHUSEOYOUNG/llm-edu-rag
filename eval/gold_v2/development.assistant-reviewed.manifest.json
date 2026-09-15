@@ -1,0 +1,76 @@
+{
+  "schema_version": "gold-v2-development-manifest-1",
+  "status": "assistant_reviewed_draft_not_expert_validated",
+  "question_count": 35,
+  "existing_question_count": 13,
+  "new_question_count": 22,
+  "category_counts": {
+    "follow_up": 5,
+    "multi_evidence": 8,
+    "single_fact": 8,
+    "table_numeric": 6,
+    "unanswerable": 8
+  },
+  "inputs": {
+    "candidates_sha256": "2906953770b5230cafa8fd49bc149f058992d800e74e167c123b83a44f91825a",
+    "existing_questions_sha256": "2116b1dc85622e847dd27a29d17205a3f9c0ad1a7294dafdf755eb7b7239fab6",
+    "chunks_sha256": "0f5e633df4db1470f40e4d7b3650168897f8fa348082b26ef61b4c681d57efec"
+  },
+  "review_checks": [
+    "All answerable draft evidence IDs exist in the fixed local corpus.",
+    "Draft answers were compared with the cited chunk text.",
+    "Follow-up rows retain the previous user question and an expected standalone rewrite.",
+    "Unanswerable labels were checked for literal corpus matches and remain provisional."
+  ],
+  "negative_literal_audit": {
+    "u002": {
+      "literal_term_counts": {
+        "급식": 6,
+        "점심 메뉴": 0,
+        "식단": 0
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    },
+    "u003": {
+      "literal_term_counts": {
+        "교복": 0,
+        "교복 가격": 0
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    },
+    "u004": {
+      "literal_term_counts": {
+        "학교 축제": 1,
+        "축제": 1
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    },
+    "u010": {
+      "literal_term_counts": {
+        "전학 신청": 0,
+        "신청 마감": 0
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    },
+    "u011": {
+      "literal_term_counts": {
+        "장학금": 10,
+        "대상자 발표": 0
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    },
+    "u012": {
+      "literal_term_counts": {
+        "학부모 상담 주간": 0,
+        "상담 주간": 0
+      },
+      "interpretation": "A term match may discuss record-writing examples or prohibited content. No row was found that supplies the requested school-specific schedule, price, or announcement."
+    }
+  },
+  "limitations": [
+    "No teacher, policy expert, or independent annotator has approved these rows.",
+    "Literal citation anchoring does not prove semantic completeness.",
+    "Unanswerable status is relative to this fixed six-document corpus.",
+    "The final test split remains sealed and is not included in this file."
+  ]
+}

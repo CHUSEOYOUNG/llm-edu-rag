@@ -1,7 +1,12 @@
+from pathlib import Path
+import sys
 import unittest
+from unittest.mock import Mock
 
-from regression_eval import (citation_is_valid, evidence_groups, regression_failures,
-                             retrieval_metrics, run_regression)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from regression_eval import (citation_is_valid, evidence_groups, reference_numbers_match,
+                             regression_failures, retrieval_metrics, run_regression)
 
 
 class FakeService:
@@ -52,6 +57,47 @@ class RegressionEvaluationTests(unittest.TestCase):
         self.assertEqual(regression_failures(score(.8), score(.8)), [])
         self.assertIn("retrieval.overall.recall@5: 0.8000 -> 0.7000",
                       regression_failures(score(.7), score(.8)))
+
+    def test_follow_up_passes_previous_question_and_reports_resolved_query(self):
+        service = FakeService()
+        original_search = service.search
+        service.search = Mock(side_effect=original_search)
+        question = {
+            "qid": "f1", "type": "fact", "primary_category": "follow_up",
+            "question": "그럼 중학교는?", "previous_question": "초등학교는 몇 분인가요?",
+            "expected_resolved_question": "중학교는 몇 분인가요?",
+            "evidence_groups": [{"alternatives": [{"chunk_id": "gold"}]}],
+        }
+        result = run_regression(service, [question])
+        self.assertEqual(service.search.call_args.args[0]["previous_question"],
+                         "초등학교는 몇 분인가요?")
+        self.assertEqual(result["retrieval"]["by_category"]["follow_up"]["evaluated_count"], 1)
+
+    def test_pending_or_sealed_questions_are_rejected(self):
+        base = {"qid": "q", "question": "질문", "type": "fact"}
+        for change in ({"annotation_status": "pending_human_review"},
+                       {"release_status": "sealed"}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                run_regression(FakeService(), [{**base, **change}])
+
+    def test_reference_number_match_detects_wrong_table_total(self):
+        self.assertTrue(reference_numbers_match("2년간 204시간", "2년간 204시간입니다."))
+        self.assertFalse(reference_numbers_match("2년간 204시간", "2년간 2,176시간입니다."))
+        self.assertIsNone(reference_numbers_match("과목 목록", "국어와 수학입니다."))
+
+    def test_progress_reports_each_question_index(self):
+        events = []
+        questions = [
+            {"qid": qid, "type": "fact", "question": qid,
+             "evidence_groups": [{"alternatives": [{"chunk_id": "gold"}]}]}
+            for qid in ("q1", "q2")
+        ]
+        run_regression(FakeService(), questions,
+                       progress=lambda *event: events.append(event))
+        self.assertEqual(events, [
+            ("search", 1, 2, "q1"),
+            ("search", 2, 2, "q2"),
+        ])
 
 
 if __name__ == "__main__":

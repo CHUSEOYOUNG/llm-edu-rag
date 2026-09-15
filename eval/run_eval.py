@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""13문항 검색/생성 회귀 평가 실행기."""
+"""검색/생성 회귀 평가 실행기."""
 
 import argparse
 from datetime import datetime, timezone
@@ -45,8 +45,13 @@ def main() -> int:
                  if args.generate else None)
     service = SearchService(retriever, generator=generator,
                             generation_model=args.model if args.generate else None)
+    def progress(stage, index, total, qid):
+        if stage == "generate":
+            print(f"[{index}/{total}] {qid} 생성 완료", flush=True)
+
     result = run_regression(service, read_jsonl(questions_path),
-                            top_k=args.top_k, generate=args.generate)
+                            top_k=args.top_k, generate=args.generate,
+                            progress=progress if args.generate else None)
     result["created_at"] = datetime.now(timezone.utc).isoformat()
     result["configuration"] = {
         "questions": str(questions_path.relative_to(ROOT))

@@ -59,6 +59,12 @@ SCHOOL_ONLY_FOLLOW_UP = re.compile(
     r"(?P<school>초등학교|중학교|고등학교|초등|중등|고등)"
     r"(?:은|는|도|의\s*경우)?\s*(?:요|인가요|어때요)?\s*[?？.!]*\s*$"
 )
+GRADE_ONLY_FOLLOW_UP = re.compile(
+    r"^\s*(?:(?:그럼|그러면|그렇다면)\s*)?"
+    r"(?P<grade>\d+(?:[·~∼〜-]\d+)?학년(?:군)?)"
+    r"(?:은|는|도|의\s*경우)?\s*(?:요|인가요|어때요)?\s*[?？.!]*\s*$"
+)
+GRADE_NAME = re.compile(r"\d+(?:[·~∼〜-]\d+)?학년(?:군)?")
 FOLLOW_UP_CUE = re.compile(
     r"^\s*(?:그럼|그러면|그렇다면|그건|그때|그\s*경우|그중(?:에)?|그것도)\s*"
 )
@@ -173,12 +179,21 @@ def follow_up_query(previous_question, question):
         return question, False
 
     school_only = SCHOOL_ONLY_FOLLOW_UP.fullmatch(question)
+    grade_only = GRADE_ONLY_FOLLOW_UP.fullmatch(question)
     has_cue = FOLLOW_UP_CUE.match(question)
-    if not school_only and not has_cue:
+    if not school_only and not grade_only and not has_cue:
         return question, False
 
     previous = previous_question.strip().rstrip(" ?？.!\n\t")
-    if school_only:
+    if grade_only:
+        target = grade_only.group("grade")
+        previous_grade = GRADE_NAME.search(previous)
+        if previous_grade and previous_grade.group().endswith("학년군") and not target.endswith("학년군"):
+            target += "군"
+        resolved = GRADE_NAME.sub(target, previous, count=1)
+        if resolved == previous:
+            resolved = f"{previous} {target}"
+    elif school_only:
         alias = school_only.group("school")
         target = {"초등": "초등학교", "중등": "중학교", "고등": "고등학교"}.get(alias, alias)
         seen = False
@@ -322,6 +337,13 @@ def focused_quantity_body(question, body):
     unit = re.escape(match.group("unit"))
     numeric_unit = re.compile(rf"\d[\d,.]*(?:\s*[~∼〜-]\s*\d[\d,.]*)?\s*{unit}")
     blocks = [block.strip() for block in re.split(r"\n\s*\n", body) if block.strip()]
+    table_question = re.search(
+        r"(?:수업\s*시수|기준\s*수업|총\s*수업\s*시간|이수\s*학점)", question
+    )
+    if table_question and any("|" in block and re.search(r"\d", block) for block in blocks):
+        # Row/column labels and the period note may live in different parts of the
+        # same extracted table section. Keep the parent section intact.
+        return body
     ignored = {"몇", "시간", "수업", "시수", "기준", "동안", "원칙", "인가요"}
     terms = {compact(term) for term in re.findall(r"[0-9A-Za-z가-힣·~∼〜-]+", question)
              if len(compact(term)) >= 2 and compact(term) not in ignored}

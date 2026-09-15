@@ -26,6 +26,7 @@
 ```bash
 ./.venv/bin/python eval/build_gold_v2.py
 ./.venv/bin/python eval/validate_gold_v2.py
+./.venv/bin/python eval/build_gold_v2_development.py
 ```
 
 로컬 코퍼스가 없는 환경에서는 두 번째 명령에 `--skip-chunk-check`를 붙일 수 있다. 다만 근거 ID 검사는 생략되므로 검수 완료로 볼 수 없다.
@@ -39,3 +40,11 @@
 5. 답 없음 문항은 고정 코퍼스 전체에 답이 정말 없는지 확인한다.
 6. 후속 질문은 이전 대화 없이 현재 발화만 보면 불완전한지, 독립 질문 재작성이 맞는지 확인한다.
 7. 최종 테스트 문항은 검수 뒤에도 개발 중 실행하지 않는다.
+
+현재 `development.assistant-reviewed.jsonl`에는 기존 13문항과 로컬 코퍼스를 다시 대조한 개발 후보 22문항이 들어 있다. 이는 개발 회귀용 초안이며 전문가 검수 완료본은 아니다. 다음처럼 검색 기준선을 실행할 수 있다.
+
+```bash
+./.venv/bin/python eval/run_eval.py \
+  --questions eval/gold_v2/development.assistant-reviewed.jsonl \
+  --output experiments/gold_v2_development_retrieval_reviewed.json
+```

@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "eval"))
 
 from build_gold_v2 import PLAN, build  # noqa: E402
+from build_gold_v2_development import NEW_DEVELOPMENT_IDS, build as build_development  # noqa: E402
 from validate_gold_v2 import validate  # noqa: E402
 
 
@@ -55,6 +56,17 @@ class GoldV2Tests(unittest.TestCase):
         summary = validate(PLAN, rows)
         self.assertFalse(summary["valid"])
         self.assertTrue(any("단순 말바꾸기" in error for error in summary["errors"]))
+
+    def test_development_export_excludes_the_sealed_test_split(self):
+        rows, manifest = build_development()
+        self.assertEqual(len(rows), 35)
+        self.assertEqual(manifest["new_question_count"], len(NEW_DEVELOPMENT_IDS))
+        self.assertTrue(all(row["annotation_status"] == "assistant_reviewed_draft"
+                            for row in rows))
+        self.assertTrue(all(row["source_id"] not in {
+            candidate["source_id"] for candidate in build() if candidate["split"] == "test"
+        } for row in rows))
+        self.assertEqual(sum(row["type"] == "unans" for row in rows), 8)
 
 
 if __name__ == "__main__":

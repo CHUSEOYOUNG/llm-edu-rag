@@ -206,10 +206,25 @@ def prepare_model_packet(packet):
 
 
 def _request_payload(model_packet, model, num_predict):
+    allowed_evidence_ids = [
+        passage["evidence_id"]
+        for source in model_packet.get("sources", [])
+        for passage in source.get("passages", [])
+    ]
+    schema = {
+        **LOCAL_SCHEMA,
+        "properties": {
+            **LOCAL_SCHEMA["properties"],
+            "evidence_ids": {
+                **LOCAL_SCHEMA["properties"]["evidence_ids"],
+                "items": {"type": "string", "enum": allowed_evidence_ids},
+            },
+        },
+    }
     return {
         "model": model,
         "stream": False,
-        "format": LOCAL_SCHEMA,
+        "format": schema,
         "messages": [
             {"role": "system", "content": LOCAL_INSTRUCTIONS},
             {"role": "user", "content": json.dumps(model_packet, ensure_ascii=False)},
