@@ -54,6 +54,8 @@ PDF
 
 현재 회귀셋은 답변 가능한 질문 11개와 코퍼스에 답이 없는 질문 2개로 구성했다. 표본이 작고 같은 질문으로 개선 방향도 정했기 때문에 아래 수치는 **개발 중 회귀 확인용**이다. 일반 성능이나 최종 테스트 성능으로 보기는 어렵다.
 
+다음 평가를 위한 50문항 초안도 별도로 만들었다. 단일 근거, 여러 근거, 표·수치, 후속 질문, 답 없음 유형을 10개씩 두고 개발 35문항과 최종 테스트 15문항으로 나눴다. 아직 사람 검수를 마치지 않은 새 37문항은 아래 결과나 현재 회귀 평가에 포함하지 않았다. 구성과 검수 방법은 [평가셋 V2 작성 안내](eval/gold_v2/README.md)에서 볼 수 있다.
+
 | 구분 | 지표 | 결과 |
 |---|---|---:|
 | 검색 | Recall@5 | 1.0000 |
@@ -180,7 +182,14 @@ node --test tests/test_presentation.cjs
 cd backend && ./gradlew test
 ```
 
-현재 Python 테스트는 151개, 화면 JavaScript 테스트는 12개다. GitHub Actions에서는 Python·JavaScript·Spring 테스트와 CPU용 Docker 이미지 빌드를 확인한다.
+50문항 평가셋 초안을 다시 만들고 검사하려면 다음 명령을 사용한다.
+
+```sh
+uv run python eval/build_gold_v2.py
+uv run python eval/validate_gold_v2.py
+```
+
+현재 Python 테스트는 155개, 화면 JavaScript 테스트는 12개다. GitHub Actions에서는 Python·JavaScript·Spring 테스트와 CPU용 Docker 이미지 빌드를 확인한다.
 
 ## 폴더 구성
 
@@ -198,7 +207,7 @@ tests/        Python·JavaScript 테스트
 
 ## 아직 남은 일
 
-- 검수된 질문을 30~50개로 늘리고 최종 평가용 질문을 따로 분리하기
+- 50문항 초안의 답·근거를 사람 검수하고 최종 테스트 15문항 확정하기
 - 다른 병합 셀 표에서도 행·열·기간 구조화가 동작하는지 검수하기
 - 답변과 인용문 사이의 의미적 일치까지 평가하기
 - 문서 개정 이력과 실제 적용 시점을 더 엄격하게 확인하기
