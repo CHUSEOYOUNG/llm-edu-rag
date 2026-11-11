@@ -57,6 +57,10 @@ class GoldV2Tests(unittest.TestCase):
         self.assertFalse(summary["valid"])
         self.assertTrue(any("단순 말바꾸기" in error for error in summary["errors"]))
 
+    @unittest.skipUnless(
+        (ROOT / "data/processed/chunks.jsonl").exists(),
+        "data/processed/chunks.jsonl은 저장소에 포함하지 않으므로 로컬에서만 검증한다",
+    )
     def test_development_export_excludes_the_sealed_test_split(self):
         rows, manifest = build_development()
         self.assertEqual(len(rows), 35)
