@@ -73,3 +73,28 @@ jobs:
           test "$(docker image inspect --format '{{.Config.User}}' llm-edu-rag:test)" = "app"
           docker run --rm --entrypoint python llm-edu-rag:test -c \
             "import sys, torch; sys.path.insert(0, '/app/src'); import search_app; assert torch.version.cuda is None; print(search_app.app.title)"
+
+  publish-image:
+    # 테스트와 이미지 검증이 모두 통과한 main 브랜치 푸시만 GHCR에 게시한다.
+    needs: [unit-tests, container-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Log in to GitHub Container Registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and push CPU runtime image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          docker build --tag "$image:${GITHUB_SHA::12}" --tag "$image:latest" .
+          docker push "$image:${GITHUB_SHA::12}"
+          docker push "$image:latest"
